@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'app',
 ]
 
 # Middleware
@@ -133,8 +134,8 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
-MEDIA_URL = '/IMG_Database/'
-MEDIA_ROOT = BASE_DIR / 'IMG_Database'
+MEDIA_URL = '/cover_img/'
+MEDIA_ROOT = BASE_DIR / 'cover_img'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
