@@ -1,0 +1,11 @@
+Django~=5.2.6
+djangorestframework~=3.16.1
+djangorestframework_simplejwt==5.5.1
+django-cors-headers==4.8.0
+mysqlclient==2.2.7
+sqlparse==0.5.3
+tzdata==2025.2
+asgiref==3.9.1
+PyJWT~=2.10.1
+pip~=25.2
+pillow~=11.3.0

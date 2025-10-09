@@ -1,22 +1,18 @@
 from rest_framework import serializers
-from .models import CustomUser
-from .models import Games
-from .models import GamePlots
-from .models import UserHistory
-from .models import ChatBot
+from .models import UserModel, Games, GamePlots, UserHistory, ChatBot
 
 
 # Serializer od użytkownika
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser  # Powiązanie z modelem od klienta
+        model = UserModel  # Powiązanie z modelem od klienta
         fields = ["id", "username", 'email', 'user_password', 'date_joined']  # Pola do serializacji z bazy danych
         extra_kwargs = {
             "user_password": {"write_only": True}}  # Hasło dostępne tylko do zapisu niewidoczne w odpowiedzi
 
     # Tworzenie użytkownika
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(
+        user = UserModel.objects.create_user(
             username=validated_data['login'],
             user_password=validated_data['user_password'],
             email=validated_data['email'],
@@ -27,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Games
-        fields = ['id', 'title', 'release_year', 'genre', 'cover_image', 'created_at']
+        fields = ['id', 'title', 'release_date', 'genre', 'studio', 'score', 'cover_image', 'created_at']
 
 
 class GamePlotsSerializer(serializers.ModelSerializer):
