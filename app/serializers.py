@@ -3,20 +3,18 @@ from .models import UserModel, Games, GamePlots, UserHistory, ChatBot
 
 
 class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserModel  # Powiązanie z modelem od klienta
-        fields = ["id", "username", 'email', 'user_password', 'date_joined']  # Pola do serializacji z bazy danych
-        extra_kwargs = {
-            "user_password": {"write_only": True}}  # Hasło dostępne tylko do zapisu niewidoczne w odpowiedzi
+    password = serializers.CharField(write_only=True)
 
-    # Tworzenie użytkownika
+    class Meta:
+        model = UserModel
+        fields = ["id", "username", "email", "password"]
+
     def create(self, validated_data):
-        user = UserModel.objects.create_user(
-            username=validated_data['login'],
-            user_password=validated_data['user_password'],
-            email=validated_data['email'],
+        return UserModel.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
         )
-        return user
 
 
 class GamesSerializer(serializers.ModelSerializer):
