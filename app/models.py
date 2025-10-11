@@ -81,7 +81,6 @@ class GamePlots(models.Model):
     game_id = models.ForeignKey(Games, on_delete=models.CASCADE, related_name="plots", db_column='game_id')
     full_plot = models.TextField(db_column='full_plot')
     summary = models.TextField(db_column='summary')
-    source_url = models.CharField(max_length=500, db_column='source_url')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:

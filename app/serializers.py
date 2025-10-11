@@ -28,7 +28,7 @@ class GamePlotsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GamePlots
-        fields = ['id', 'game_id', 'full_plot', 'summary', 'source_url', 'created_at']
+        fields = ['id', 'game_id', 'full_plot', 'summary', 'created_at']
 
 
 class UserHistorySerializer(serializers.ModelSerializer):
