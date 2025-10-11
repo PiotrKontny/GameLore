@@ -36,6 +36,9 @@ class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
                 attrs[uname_field] = login_val
         return super().validate(attrs)
 
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginOrEmailTokenObtainPairSerializer
+
 class RegisterUser(APIView):
     permission_classes = [AllowAny]
 
