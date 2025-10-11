@@ -6,7 +6,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model, user_logged_in
-from .serializers import GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer, ChatBotSerializer
+from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
+                          ChatBotSerializer)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Games, GamePlots, UserModel, UserHistory, ChatBot
 from rest_framework.permissions import AllowAny, IsAuthenticated

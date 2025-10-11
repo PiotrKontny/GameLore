@@ -11,7 +11,7 @@ class UserModel(models.Model):
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128, db_column='user_password')
+    user_password = models.CharField(max_length=128, db_column='user_password')
     date_joined = models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = "username"

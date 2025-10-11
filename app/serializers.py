@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import UserModel, Games, GamePlots, UserHistory, ChatBot
 
 
-# Serializer od użytkownika
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel  # Powiązanie z modelem od klienta
@@ -34,7 +33,6 @@ class GamePlotsSerializer(serializers.ModelSerializer):
         fields = ['id', 'game_id', 'full_plot', 'summary', 'source_url', 'created_at']
 
 
-# Serializer od tabeli COMPOSITION
 class UserHistorySerializer(serializers.ModelSerializer):
     user_id = UserSerializer()
     game_id = GamesSerializer()
@@ -44,7 +42,6 @@ class UserHistorySerializer(serializers.ModelSerializer):
         fields = ['id', 'user_id', 'game_id', 'viewed_at']
 
 
-# Serializer od tabeli ORDERS
 class ChatBotSerializer(serializers.ModelSerializer):
     user_id = UserSerializer()
     game_id = GamesSerializer()
