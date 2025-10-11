@@ -1,25 +1,47 @@
 from django.utils.timezone import now
 import os
 from django.utils import timezone
-from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.core.validators import RegexValidator, FileExtensionValidator
 from django.contrib.auth.hashers import make_password, check_password
 
+
+class UserManager(BaseUserManager):
+    def create_user(self, username, email, password=None, **extra_fields):
+        if not username:
+            raise ValueError("Username is required")
+        if not email:
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        if password:
+            user.password = make_password(password)  # zapisze do kolumny user_password
+        else:
+            user.password = make_password(self.make_random_password())
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None, **extra_fields):
+        return self.create_user(username, email, password, **extra_fields)
+
+
 class UserModel(models.Model):
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    user_password = models.CharField(max_length=128, db_column='user_password')
+    password = models.CharField(max_length=128, db_column='user_password')
     date_joined = models.DateTimeField(default=timezone.now)
+
+    objects = UserManager()  # <<< DODANE
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
 
     class Meta:
         db_table = "Users"
-        managed = False  # tabela już istnieje w bazie
+        managed = False
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -27,23 +49,17 @@ class UserModel(models.Model):
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
 
-    # --- wymagane przez Django Auth, żeby nie rzucał błędu ---
     @property
     def is_active(self):
         return True
-
     @property
     def is_authenticated(self):
-        """Dla Django: zalogowany użytkownik zawsze True"""
         return True
-
     @property
     def is_anonymous(self):
-        """Dla Django: użytkownik nigdy nie jest anonimowy"""
         return False
 
-    def __str__(self):
-        return self.username
+    def __str__(self): return self.username
 
 class Games(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
