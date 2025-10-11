@@ -7,4 +7,5 @@ urlpatterns = [
     path('gameplots', views.GamePlotsView.as_view()),
     #path("login/", views.LoginOrEmailTokenObtainPairSerializer.as_view(), name="login"),
     path('register/', views.RegisterUser.as_view(), name='register'),
+    path('login/', views.LoginView.as_view(), name='login'),
 ]
