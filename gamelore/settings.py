@@ -4,6 +4,7 @@ Django settings for Lost_Found_Pets project.
 
 from datetime import timedelta
 from pathlib import Path
+import os
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-4j0a9kw(fa)yqh3xc4040emihqhpu-vn24%%iw0!f7j1@10-hl'
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '::1']
-AUTH_USER_MODEL = "app.UserModel"
 
 # Apps
 INSTALLED_APPS = [
@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'app',
     'frontend.apps.FrontendConfig',
+    'ai',
 ]
 
 # Middleware
@@ -137,8 +138,9 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
-MEDIA_URL = '/cover_img/'
-MEDIA_ROOT = BASE_DIR / 'cover_img'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

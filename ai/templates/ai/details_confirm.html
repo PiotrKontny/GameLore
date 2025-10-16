@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>{{ data.title }}</title></head>
+<body>
+  <h1>{{ data.title }}</h1>
+  {% if data.cover_image_relpath %}
+    <img src="{{ MEDIA_URL }}{{ data.cover_image_relpath }}" alt="cover" style="max-width:200px">
+  {% endif %}
+
+  <ul>
+    <li><b>Release date:</b> {{ data.release_date }}</li>
+    <li><b>Studio:</b> {{ data.studio }}</li>
+    <li><b>Genre:</b> {{ data.genre }}</li>
+    <li><b>Score:</b> {{ data.score }}</li>
+  </ul>
+
+  <h2>Pełna fabuła</h2>
+  <pre style="white-space:pre-wrap">{{ data.full_plot }}</pre>
+
+  {% if data.summary %}
+    <h2>Streszczenie</h2>
+    <pre style="white-space:pre-wrap">{{ data.summary }}</pre>
+  {% endif %}
+
+  <form method="post" action="{% url 'ai_save' %}">
+  {% csrf_token %}
+  <button type="submit">Zapisz do bazy</button>
+</form>
+
+  <p><a href="{% url 'ai_results' %}">← Wróć do wyników</a></p>
+</body>
+</html>

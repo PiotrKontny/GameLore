@@ -24,4 +24,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('app/', include('app.urls')),
     path('', include('frontend.urls')),
-]
+    path('ai/', include('ai.urls')),
+    path('api/', include('ai.api_urls')),  # REST JSON
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
