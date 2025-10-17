@@ -304,10 +304,12 @@ async def search_mobygames(game_name: str):
 
 async def scrape_game_info(url: str, media_root: str, save_image: bool = True, is_base: bool = False):
     """
-    Scrapuje informacje o grze. Obsługuje przypadki:
-    - Base Game (edycje, kolekcjonerki)
+    Scrapuje informacje o grze z MobyGames i (jeśli to możliwe) fabułę z Wikipedii.
+    Obsługuje przypadki:
     - Compilation / Bundle (This Compilation Includes)
+    - Base Game / Edition (z ograniczonym przeskakiwaniem)
     """
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -320,7 +322,14 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
         await page.goto(url, timeout=30000)
         await page.wait_for_load_state("networkidle")
 
-        # --- Sprawdź, czy to kompilacja ("This Compilation Includes") ---
+        # ————————————————————————————————————————————————————————————————
+        # 1) Pobierz tytuł jak najwcześniej (ważne dla sprawdzenia Base Game)
+        title = None
+        if await page.query_selector("h1.mb-0"):
+            title = (await page.inner_text("h1.mb-0")).strip()
+
+        # ————————————————————————————————————————————————————————————————
+        # 2) Sprawdź, czy to kompilacja ("This Compilation Includes")
         compilation_games = []
         try:
             await page.wait_for_timeout(1000)
@@ -330,7 +339,6 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             for div in soup.find_all("div", class_="border"):
                 b = div.find("b")
                 if b and "This Compilation Includes" in b.get_text(strip=True):
-                    # To jest kompilacja
                     for li in div.select("ul li"):
                         links = li.find_all("a", href=True)
                         if not links:
@@ -338,12 +346,12 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         href = links[-1]["href"]
                         if href.startswith("/"):
                             href = f"https://www.mobygames.com{href}"
-                        title = links[-1].get_text(strip=True)
+                        title_ = links[-1].get_text(strip=True)
                         year_tag = li.find("small", class_="text-muted")
                         year = year_tag.get_text(strip=True) if year_tag else None
 
                         compilation_games.append({
-                            "title": title,
+                            "title": title_,
                             "url": href,
                             "year": year
                         })
@@ -352,12 +360,11 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             print(f"[!] Compilation check failed: {e}")
 
         if compilation_games:
-            # Zwracamy listę gier w kompilacji, zamiast pełnych danych
-            page_title = None
             try:
                 page_title = (await page.inner_text("h1.mb-0")).strip()
             except:
                 page_title = "Unknown Compilation"
+
             await browser.close()
             print(f"[DEBUG] Compilation detected: {page_title} ({len(compilation_games)} games)")
             for g in compilation_games:
@@ -368,7 +375,13 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 "included_games": compilation_games
             }
 
-        # --- Sprawdź czy istnieje sekcja Base Game ---
+        # ————————————————————————————————————————————————————————————————
+        # 3) Sprawdź "Base Game" (np. dla edycji, remasterów, GOTY itd.)
+        EDITION_KEYWORDS = [
+            "edition", "remaster", "definitive", "goty", "game of the year",
+            "complete", "ultimate", "director's cut", "hd", "collection"
+        ]
+
         base_game_url = None
         if not is_base:
             try:
@@ -390,20 +403,22 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             except Exception as e:
                 print(f"[!] Base Game check failed: {e}")
 
-        # --- Jeśli znaleziono Base Game i to nie jest już wywołanie dla niej → zrób restart procesu
+        # ——— tylko edycje / wersje wracają do podstawki
         if base_game_url and not is_base:
-            print(f"→ Base Game detected: {base_game_url}")
-            await browser.close()
-            return await scrape_game_info(base_game_url, media_root, save_image, is_base=True)
+            if title and any(k in title.lower() for k in EDITION_KEYWORDS):
+                print(f"→ Edition detected in title '{title}' → following base game: {base_game_url}")
+                await browser.close()
+                return await scrape_game_info(base_game_url, media_root, save_image, is_base=True)
+            else:
+                print(f"[INFO] 'Base Game' present, but '{title}' is not an edition → staying on this page.")
 
-        # --- Normalne scrapowanie danych gry ---
-        title = None
-        if await page.query_selector("h1.mb-0"):
-            title = (await page.inner_text("h1.mb-0")).strip()
-
+        # ————————————————————————————————————————————————————————————————
+        # 4) Scrapowanie danych gry (normalny przypadek)
         released = None
         studio = []
         moby_score = None
+        genre = []
+        cover_image_url = None
 
         if await page.query_selector("div.info-release"):
             dt_tags = await page.query_selector_all("div.info-release dl.metadata dt")
@@ -416,7 +431,6 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                     dev_links = await dd.query_selector_all("a")
                     studio = [(await link.inner_text()).strip() for link in dev_links]
 
-        genre = []
         if await page.query_selector("div.info-genres"):
             dt_tags = await page.query_selector_all("div.info-genres dl.metadata dt")
             dd_tags = await page.query_selector_all("div.info-genres dl.metadata dd")
@@ -430,11 +444,11 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
         if await page.query_selector("div.info-score div.mobyscore"):
             moby_score = (await page.inner_text("div.info-score div.mobyscore")).strip()
 
-        cover_image_url = None
         if await page.query_selector("div.info-box img.img-box"):
             cover_image_url = await page.get_attribute("div.info-box img.img-box", "src")
 
-        # --- Pobranie i zapisanie okładki gry ---
+        # ————————————————————————————————————————————————————————————————
+        # 5) Zapisanie okładki lokalnie
         local_image_relpath = None
         if save_image and cover_image_url and title:
             try:
@@ -451,13 +465,16 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             except Exception as e:
                 print(f"[ERROR] Could not save image: {e}")
 
-        # --- Wikipedia ---
+        # ————————————————————————————————————————————————————————————————
+        # 6) Wikipedia — fabuła i streszczenie
         full_plot_md = None
         summary_md = None
         structured_plot = {}
 
+        wiki_url = None
         if title:
             wiki_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
+            print(f"[DEBUG] Wikipedia lookup: {wiki_url}")  # <<<<<< tu nowy debug
             try:
                 await page.goto(wiki_url, timeout=30000)
                 html = await page.content()
@@ -468,8 +485,8 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 if structured_plot:
                     full_plot_md = build_markdown_with_headings(structured_plot)
                     summary_md = summarize_plot_sections(structured_plot)
-            except:
-                pass
+            except Exception as e:
+                print(f"[!] Wikipedia scrape failed: {e}")
 
         # --- Fallback: opis z MobyGames ---
         if not full_plot_md:
@@ -515,6 +532,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             except Exception as e:
                 print(f"[!] Fallback Moby description error: {e}")
 
+        # --- Ostateczny fallback (żeby NIGDY nie zwrócić None) ---
         if not full_plot_md:
             full_plot_md = "No plot available"
         if not summary_md:
@@ -523,7 +541,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
         await browser.close()
 
         return {
-            "title": title,
+            "title": title or "Unknown",
             "release_date": released,
             "studio": ", ".join(studio) if studio else None,
             "genre": ", ".join(genre) if genre else None,
@@ -532,6 +550,6 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "cover_image_url": cover_image_url,
             "cover_image_relpath": local_image_relpath,
             "full_plot": full_plot_md,
-            "summary": summary_md
+            "summary": summary_md,
+            "is_compilation": False  # <<< nowy bezpiecznik
         }
-

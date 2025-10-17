@@ -102,7 +102,12 @@ def details_view(request):
     # 3) Scrapowanie danych
     data = asyncio.run(scrape_game_info(url, media_root=settings.MEDIA_ROOT, save_image=True))
 
-    # 🔹 jeśli to kompilacja, przekieruj do strony wyboru
+    if not data:
+        print(f"[ERROR] Scraper returned None for URL: {url}")
+        return render(request, "ai/error.html", {
+            "message": "Nie udało się pobrać danych o grze. Spróbuj ponownie."
+        })
+
     if data.get("is_compilation"):
         return redirect(f"/ai/compilation/?url={url}")
 
@@ -187,36 +192,44 @@ def scrape_details_view(request):
     if not url:
         return render(request, "ai/error.html", {"message": "Brak adresu URL"})
 
-    # najpierw spróbuj wyciągnąć nazwę gry z URL (ostatnia część po '/game/')
-    # tylko orientacyjnie, bo na Mobygames linki mają /game/xxxx/title
+    from .models import Games, GamePlot
     import re
+
+    # ——— 1️⃣ Wyciągnięcie tytułu z URL-a
     title_guess = None
     m = re.search(r'/game/\d+/(.+?)/?$', url)
     if m:
-        title_guess = m.group(1).replace('-', ' ').title()
+        title_guess = m.group(1).replace('-', ' ').replace('_', ' ').strip().title()
 
-    # jeśli udało się uzyskać tytuł, sprawdź w bazie
-    from .models import Games, GamePlot
+    # ——— 2️⃣ Szybkie sprawdzenie po "podobieństwie" (nie idealnym dopasowaniu)
     if title_guess:
-        existing = Games.objects.filter(title__iexact=title_guess).first()
-        if existing:
-            print(f"[INFO] Skipping scrape — found existing game: {existing.title}")
-            return redirect("game_detail_page", pk=existing.id)
+        normalized_guess = re.sub(r'[^a-z0-9]', '', title_guess.lower())
 
-    # scrapowanie gry
+        existing_game = None
+        for g in Games.objects.all():
+            normalized_db = re.sub(r'[^a-z0-9]', '', g.title.lower())
+            if normalized_guess in normalized_db or normalized_db in normalized_guess:
+                existing_game = g
+                break
+
+        if existing_game:
+            print(f"[FAST REDIRECT] Matched existing title: {existing_game.title} ←→ {title_guess}")
+            return redirect("game_detail_page", pk=existing_game.id)
+
+    # ——— 3️⃣ Dopiero wtedy scrapujemy
     result = asyncio.run(scrape_game_info(url, settings.MEDIA_ROOT))
 
-    # jeśli to znowu kompilacja → przekieruj ponownie (na wszelki wypadek)
+    # ——— 4️⃣ Jeśli to kompilacja → przekieruj do wyboru
     if result.get("is_compilation"):
         return redirect(f"/ai/compilation/?url={url}")
 
-    # ——— sprawdź jeszcze raz po scrapowaniu (dla pewności że tytuł dokładny)
+    # ——— 5️⃣ Ostateczne sprawdzenie po dokładnym tytule
     existing = Games.objects.filter(title__iexact=result.get("title", "")).first()
     if existing:
         print(f"[INFO] Skipping save — already exists: {existing.title}")
         return redirect("game_detail_page", pk=existing.id)
 
-    # zapis nowej gry do bazy
+    # ——— 6️⃣ Zapis nowej gry
     from decimal import Decimal
     for k, v in list(result.items()):
         if isinstance(v, Decimal):
@@ -236,7 +249,10 @@ def scrape_details_view(request):
         summary=result.get("summary") or "",
     )
 
+    print(f"[SCRAPE COMPLETE] Saved new game: {game.title}")
     return redirect("game_detail_page", pk=game.id)
+
+
 
 
 
