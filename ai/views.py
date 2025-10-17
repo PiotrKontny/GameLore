@@ -89,27 +89,29 @@ def details_view(request):
     for r in request.session.get('ai_last_results', []):
         if r.get('url') == url:
             first_line = (r.get('description') or '').splitlines()[0].strip()
-            # usuń nawias z datą/platformami, jeśli jest
             m = re.match(r'(.+?)\s*\((?:[^)]*)\)\s*', first_line)
             title_guess = (m.group(1) if m else first_line).strip()
             break
 
-    # 2) Jeśli mamy kandydat tytułu — sprawdź w bazie
+    # 2) Jeśli gra już istnieje w bazie → przekierowanie
     if title_guess:
         existing = Games.objects.filter(title__iexact=title_guess).first()
         if existing:
             return redirect('game_detail_page', pk=existing.id)
 
-    # 3) Brak w bazie → dopiero teraz rób scrape + zapis ...
-
+    # 3) Scrapowanie danych
     data = asyncio.run(scrape_game_info(url, media_root=settings.MEDIA_ROOT, save_image=True))
 
+    # 🔹 jeśli to kompilacja, przekieruj do strony wyboru
+    if data.get("is_compilation"):
+        return redirect(f"/ai/compilation/?url={url}")
+
+    # --- reszta bez zmian ---
     from decimal import Decimal
     for key, val in list(data.items()):
         if isinstance(val, Decimal):
             data[key] = float(val)
 
-    # --- automatyczny zapis do bazy ---
     from .models import Games, GamePlot
 
     games = Games.objects.create(
@@ -125,6 +127,9 @@ def details_view(request):
         full_plot=data.get('full_plot') or '',
         summary=data.get('summary') or '',
     )
+
+    return redirect('game_detail_page', pk=games.id)
+
 
     # przekierowanie do JSON-a z API
     return redirect('game_detail_page', pk=games.id)
@@ -174,5 +179,79 @@ def save_view(request):
     request.session.pop('ai_pending_data', None)
 
     return HttpResponseRedirect(reverse('api_game_detail', args=[game.id]))
+
+
+def scrape_details_view(request):
+    """Scrapuje dane gry i zapisuje ją do bazy, o ile nie istnieje już taki tytuł."""
+    url = request.GET.get("url")
+    if not url:
+        return render(request, "ai/error.html", {"message": "Brak adresu URL"})
+
+    # najpierw spróbuj wyciągnąć nazwę gry z URL (ostatnia część po '/game/')
+    # tylko orientacyjnie, bo na Mobygames linki mają /game/xxxx/title
+    import re
+    title_guess = None
+    m = re.search(r'/game/\d+/(.+?)/?$', url)
+    if m:
+        title_guess = m.group(1).replace('-', ' ').title()
+
+    # jeśli udało się uzyskać tytuł, sprawdź w bazie
+    from .models import Games, GamePlot
+    if title_guess:
+        existing = Games.objects.filter(title__iexact=title_guess).first()
+        if existing:
+            print(f"[INFO] Skipping scrape — found existing game: {existing.title}")
+            return redirect("game_detail_page", pk=existing.id)
+
+    # scrapowanie gry
+    result = asyncio.run(scrape_game_info(url, settings.MEDIA_ROOT))
+
+    # jeśli to znowu kompilacja → przekieruj ponownie (na wszelki wypadek)
+    if result.get("is_compilation"):
+        return redirect(f"/ai/compilation/?url={url}")
+
+    # ——— sprawdź jeszcze raz po scrapowaniu (dla pewności że tytuł dokładny)
+    existing = Games.objects.filter(title__iexact=result.get("title", "")).first()
+    if existing:
+        print(f"[INFO] Skipping save — already exists: {existing.title}")
+        return redirect("game_detail_page", pk=existing.id)
+
+    # zapis nowej gry do bazy
+    from decimal import Decimal
+    for k, v in list(result.items()):
+        if isinstance(v, Decimal):
+            result[k] = float(v)
+
+    game = Games.objects.create(
+        title=result.get("title") or "Unknown",
+        release_date=result.get("release_date"),
+        genre=result.get("genre"),
+        studio=result.get("studio"),
+        score=result.get("score"),
+        cover_image=result.get("cover_image_relpath"),
+    )
+    GamePlot.objects.create(
+        game=game,
+        full_plot=result.get("full_plot") or "",
+        summary=result.get("summary") or "",
+    )
+
+    return redirect("game_detail_page", pk=game.id)
+
+
+
+
+def compilation_view(request):
+    """Wyświetla stronę z wyborem gier z bundla (kompilacji)."""
+    url = request.GET.get("url")
+    if not url:
+        return render(request, "ai/error.html", {"message": "Brak adresu URL"})
+
+    result = asyncio.run(scrape_game_info(url, settings.MEDIA_ROOT))
+
+    if not result.get("is_compilation"):
+        return render(request, "ai/error.html", {"message": "To nie jest kompilacja gier."})
+
+    return render(request, "ai/compilation.html", {"data": result})
 
 
