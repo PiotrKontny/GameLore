@@ -37,7 +37,7 @@ def extract_plot_structure(soup: BeautifulSoup) -> dict:
     plot_heading = None
     plot_h2_title = None
 
-    #  class is used for main headings on wikipedia and that's where one can find plot heading. This loop
+    # mw-heading2 class is used for main headings on wikipedia and that's where one can find plot heading. This loop
     # searches for such heading and when it does find it then the div it's contained in is saved into a variable
     for div in soup.find_all("div", class_="mw-heading mw-heading2"):
         h2 = div.find("h2")
@@ -252,7 +252,7 @@ async def search_mobygames(game_name: str):
         await page.goto(search_url, timeout=60000)
         await page.wait_for_load_state("networkidle")
 
-        # --- Nowy przypadek: brak wyników ---
+        # Case where there are no results
         try:
             html = await page.content()
             if "No results found for that query" in html:
@@ -592,6 +592,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "genre": ", ".join(genre) if genre else None,
             "score": moby_score,
             "cover_image": local_image_relpath,
+            #"cover_image_relpath": local_image_relpath,
             "full_plot": full_plot_md,
             "summary": summary_md,
             "is_compilation": False

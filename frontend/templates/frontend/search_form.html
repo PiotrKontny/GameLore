@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>GameLore – Szukaj</title></head>
+<body>
+  <h1>Wpisz nazwę gry</h1>
+  <form method="post" action="{% url 'ai_search' %}">
+    {% csrf_token %}
+    <input type="text" name="game" placeholder='np. "Cyberpunk 2077"' style="width:320px" />
+    <button type="submit">Szukaj</button>
+  </form>
+
+  <p>Lub wyślij JSON na <code>/ai/search/</code>:
+    <pre>POST {"game": "Cyberpunk 2077"}</pre>
+  </p>
+</body>
+</html>
