@@ -66,7 +66,7 @@ class Games(models.Model):
     title = models.CharField(max_length=255, null=False, db_column='title')
     # On MobyGames release dates are expressed like "October 1, 2025 on PlayStation 5" and there could be more release
     # dates for different platforms, thus the usage of Varchar2(255)
-    release_date = models.CharField(max_length=255, db_column='release_year')
+    release_date = models.CharField(max_length=255, db_column='release_date')
     genre = models.CharField(max_length=100, null=True, db_column='genre')
     studio = models.TextField(db_column='studio')
     score = models.DecimalField(max_digits=3, decimal_places=1, db_column='score')

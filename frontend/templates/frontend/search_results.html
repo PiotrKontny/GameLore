@@ -8,13 +8,13 @@
     {% for r in results %}
       <li>
         <pre style="white-space:pre-wrap">{{ r.description }}</pre>
-        <a href="{% url 'ai_details' %}?url={{ r.url|urlencode }}">Szczegóły →</a>
+        <a href="{% url 'details' %}?url={{ r.url|urlencode }}">Szczegóły →</a>
       </li>
     {% endfor %}
     </ol>
   {% else %}
     <p>Brak wyników.</p>
   {% endif %}
-  <p><a href="{% url 'ai_search' %}">← Wróć</a></p>
+  <p><a href="{% url 'search' %}">← Wróć</a></p>
 </body>
 </html>

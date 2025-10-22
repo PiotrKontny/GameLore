@@ -24,7 +24,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
 
 class GamePlotsSerializer(serializers.ModelSerializer):
-    game_id = GamesSerializer()
+    game_id = GamesSerializer(read_only=True)
 
     class Meta:
         model = GamePlots

@@ -22,11 +22,11 @@
     <pre style="white-space:pre-wrap">{{ data.summary }}</pre>
   {% endif %}
 
-  <form method="post" action="{% url 'ai_save' %}">
+  <form method="post" action="{% url 'save' %}">
   {% csrf_token %}
   <button type="submit">Zapisz do bazy</button>
 </form>
 
-  <p><a href="{% url 'ai_results' %}">← Wróć do wyników</a></p>
+  <p><a href="{% url 'results' %}">← Wróć do wyników</a></p>
 </body>
 </html>
