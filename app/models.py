@@ -66,11 +66,11 @@ class Games(models.Model):
     title = models.CharField(max_length=255, null=False, db_column='title')
     # On MobyGames release dates are expressed like "October 1, 2025 on PlayStation 5" and there could be more release
     # dates for different platforms, thus the usage of Varchar2(255)
-    release_date = models.CharField(max_length=255, db_column='release_year')
-    genre = models.CharField(max_length=100, db_column='genre')
+    release_date = models.CharField(max_length=255, db_column='release_date')
+    genre = models.CharField(max_length=100, null=True, db_column='genre')
     studio = models.TextField(db_column='studio')
     score = models.DecimalField(max_digits=3, decimal_places=1, db_column='score')
-    cover_image = models.ImageField(upload_to='covers/', db_column='cover_image')
+    cover_image = models.CharField(max_length=500, null=True, blank=True, db_column='cover_image')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:
@@ -80,7 +80,7 @@ class GamePlots(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
     game_id = models.ForeignKey(Games, on_delete=models.CASCADE, related_name="plots", db_column='game_id')
     full_plot = models.TextField(db_column='full_plot')
-    summary = models.TextField(db_column='summary')
+    summary = models.TextField(null=True, blank=True, db_column='summary')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:

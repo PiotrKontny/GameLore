@@ -1,0 +1,31 @@
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <h2 class="text-center mb-3">{{ data.title }}</h2>
+        <p class="text-center text-muted mb-4">
+            Ta pozycja jest <strong>kompilacją gier</strong>. Wybierz jedną z poniższych, aby zobaczyć jej fabułę.
+        </p>
+
+        <ul class="list-group mb-3">
+            {% for game in data.included_games %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ game.title }}</strong>
+                    {% if game.year %}
+                        <span class="text-muted">{{ game.year }}</span>
+                    {% endif %}
+                </div>
+                    <a href="{% url 'details' %}?url={{ game.url }}">
+                        Szczegóły →
+                    </a>
+
+
+
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="text-center">
+            <a href="javascript:history.back()" class="btn btn-link">&larr; Wróć</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Błąd – GameLore</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .error-box {
+            background-color: #161b22;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 {
+            color: #ff5555;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 18px;
+        }
+        a {
+            margin-top: 25px;
+            display: inline-block;
+            background-color: #238636;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+        a:hover {
+            background-color: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h1>Wystąpił błąd</h1>
+        <p>{{ message }}</p>
+        <a href="{% url 'search' %}">Powrót do wyszukiwania</a>
+    </div>
+</body>
+</html>

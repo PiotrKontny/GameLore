@@ -9,3 +9,9 @@ asgiref==3.9.1
 PyJWT~=2.10.1
 pip~=25.2
 pillow~=11.3.0
+playwright
+beautifulsoup4
+requests
+transformers
+torch
+markdown
