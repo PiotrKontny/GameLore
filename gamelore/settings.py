@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'app',
     'frontend.apps.FrontendConfig',
-    'ai',
 ]
 
 # Middleware
