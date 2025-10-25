@@ -3,7 +3,7 @@ import os
 from django.utils import timezone
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.models import AbstractUser, PermissionsMixin, AbstractBaseUser
 from django.core.validators import RegexValidator, FileExtensionValidator
 from django.contrib.auth.hashers import make_password, check_password
 
@@ -34,14 +34,27 @@ class UserModel(models.Model):
     password = models.CharField(max_length=128, db_column='user_password')
     date_joined = models.DateTimeField(default=timezone.now)
 
-    objects = UserManager()  # <<< DODANE
+    objects = UserManager()
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
 
     class Meta:
         db_table = "Users"
-        managed = False
+        managed = False  # <--- wracamy do tego, bo tabela już istnieje i Django ma jej nie ruszać
+
+    # [PL] To zostawiamy, bo JWT wymaga tylko tych 3 właściwości, żeby działać poprawnie:
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -49,17 +62,9 @@ class UserModel(models.Model):
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
 
-    @property
-    def is_active(self):
-        return True
-    @property
-    def is_authenticated(self):
-        return True
-    @property
-    def is_anonymous(self):
-        return False
+    def __str__(self):
+        return self.username
 
-    def __str__(self): return self.username
 
 class Games(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
@@ -94,6 +99,10 @@ class UserHistory(models.Model):
 
     class Meta:
         db_table = 'UserHistory'
+        managed = False
+
+    def __str__(self):
+        return f"{self.user_id} -> {self.game_id} ({self.viewed_at})"
 
 class ChatBot(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')

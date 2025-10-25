@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>My Library</title>
+</head>
+<body>
+<h1>My Library</h1>
+
+{% if page_obj.object_list %}
+<ul>
+    {% for item in page_obj %}
+        <a href="{% url 'game_detail_page' item.id %}">{{ item.title }}</a>
+        <p>Viewed at: {{ item.viewed_at }}</p>
+    {% endfor %}
+
+</ul>
+
+<div>
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next »</a>
+    {% endif %}
+</div>
+
+{% else %}
+  <p>No games yet in your library.</p>
+{% endif %}
+</body>
+</html>

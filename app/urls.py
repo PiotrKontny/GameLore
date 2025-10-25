@@ -21,4 +21,5 @@ urlpatterns = [
     path('details/', views.details_view, name='details'),
     path('games/<int:pk>/', views.game_detail_page, name='game_detail_page'),
     path('compilation/', views.compilation_view, name='compilation'),
+    path("my_library/", views.my_library_view, name="my_library"),
 ]

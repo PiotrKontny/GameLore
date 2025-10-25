@@ -1,27 +1,30 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseForbidden
+from django.core.paginator import Paginator
+from django.contrib.auth import get_user_model, user_logged_in
+from django.core.cache import cache
+from django.conf import settings
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.contrib.auth import get_user_model, user_logged_in
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.decorators import api_view, permission_classes
 from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
                           ChatBotSerializer)
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Games, GamePlots, UserModel, UserHistory, ChatBot
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.core.cache import cache
+from .utils import search_mobygames, scrape_game_info, record_user_history, jwt_required
+from decimal import Decimal, InvalidOperation
 import asyncio
 import json
-from django.conf import settings
-from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-from .utils import search_mobygames, scrape_game_info
 import re
 import markdown
-from decimal import Decimal, InvalidOperation
+
 
 # Create your views here.
 def main(request):
@@ -49,6 +52,19 @@ class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 class LoginView(TokenObtainPairView):
     serializer_class = LoginOrEmailTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        data = response.data
+
+        # zapis tokena do cookie
+        response.set_cookie(
+            key="access_token",
+            value=data["access"],
+            httponly=True,
+            samesite="Lax"
+        )
+        return response
+
 class RegisterUser(APIView):
     permission_classes = [AllowAny]
 
@@ -56,13 +72,25 @@ class RegisterUser(APIView):
         users = UserModel.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
-    def post(self,request):
+
+    def post(self, request):
         print(request.data)
         serializer = UserSerializer(data=request.data)
 
         if serializer.is_valid():
             user = serializer.save()
-            return Response({"message": "User created successfully!", "user_id": user.id}, status=status.HTTP_201_CREATED)
+
+            # [PL] Sprawdzamy, czy hasło nie jest zapisane w postaci czystego tekstu
+            from django.contrib.auth.hashers import make_password
+            if not user.password.startswith("pbkdf2_"):
+                user.password = make_password(user.password)
+                user.save(update_fields=["password"])
+
+            return Response(
+                {"message": "User created successfully!", "user_id": user.id},
+                status=status.HTTP_201_CREATED
+            )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -83,7 +111,6 @@ class GamePlotsViewSet(viewsets.ReadOnlyModelViewSet):
 
 # The @api_view decorator turns this regular Django view into a Django REST Framework API endpoint. It ensures that the
 # view only accepts GET requests and returns JSON responses instead of HTML.
-@api_view(['GET'])
 def game_detail(request, pk: int):
     # Tries to retrieve game object using the primary key (pk), in this case being game_id. On the website, when opening
     # the game details the page url has the same pk number as the game_id it's based on
@@ -94,6 +121,7 @@ def game_detail(request, pk: int):
 
 # The usage of csrf decorator is so that the API endpoints can retrieve requests from external clients such as
 # JavaScript that don’t include CSRF tokens. In the code below it's used to access MobyGames website for scraping
+@jwt_required
 @csrf_exempt
 def search_view(request):
     if request.method == 'GET':
@@ -169,9 +197,8 @@ def safe_json(obj):
 
 
 # This function is used for scraping the game plots and everything about the game from Mobygames
+@jwt_required
 def details_view(request):
-    from .models import Games
-
     # Url to the MobyGames page for the chosen game
     url = request.GET.get('url')
     if not url:
@@ -194,6 +221,8 @@ def details_view(request):
     if title_guess:
         existing = Games.objects.filter(title__iexact=title_guess).first()
         if existing:
+            # If the game is in the database already then it saves this record into the user history
+            record_user_history(request.user, existing)
             return redirect('game_detail_page', pk=existing.id)
 
     # Scraping the data using scrape_game_info function from utils.py
@@ -246,15 +275,25 @@ def details_view(request):
         summary=data.get('summary') or '',
     )
 
+    # The game is recorded into user history after being scraped
+    record_user_history(request.user, games)
+
     # Redirects the user to the game_detail_page after scraping all the necessary data, in which everything is displayed
     # in user-friendly format
     return redirect('game_detail_page', pk=games.id)
 
 
 
+
 # As explained couple lines before, this part of code handles displaying the scraped results for each game
+@jwt_required
 def game_detail_page(request, pk):
     game = get_object_or_404(Games, pk=pk)
+
+    # The game is recorded into the user history, so that the user can later view it from his library instead of
+    # searching fot it again in the search function of the app
+    record_user_history(request.user, game)
+
     plot = GamePlots.objects.filter(game_id=game).first()
 
     full_plot_html = ""
@@ -277,6 +316,7 @@ def game_detail_page(request, pk):
 
 
 
+
 # This function deals with that cursed game compilation situation I described multiple times in this project. But
 # essentially the only thing it does is redirecting the user to the corresponding urls
 def compilation_view(request):
@@ -290,3 +330,49 @@ def compilation_view(request):
         return render(request, "frontend/error.html", {"message": "To nie jest kompilacja gier."})
 
     return render(request, "frontend/compilation.html", {"data": result})
+
+@jwt_required
+def my_library_view(request):
+    from .models import UserModel, Games, UserHistory
+
+    user = None
+    # [PL] Upewniamy się, że mamy rzeczywisty obiekt z tabeli Users
+    if isinstance(request.user, UserModel):
+        user = request.user
+    else:
+        user = UserModel.objects.filter(username=request.user.username).first()
+
+    if not user:
+        print(f"[my_library] Brak dopasowania użytkownika: {request.user}")
+        return HttpResponseForbidden("Nie znaleziono użytkownika w bazie danych.")
+
+    # [PL] Pobieramy historię użytkownika bez użycia select_related (bo managed=False potrafi wywołać wyjątek)
+    try:
+        user_history = UserHistory.objects.filter(user_id=user.id).order_by('-viewed_at')
+        print(f"[my_library] Historia użytkownika {user.username}: {user_history.count()} rekordów")
+    except Exception as e:
+        print(f"[my_library] Błąd przy pobieraniu historii: {e}")
+        return HttpResponseForbidden("Błąd przy pobieraniu historii użytkownika.")
+
+    # [PL] Konwertujemy dane ręcznie, żeby nie wywoływać ORM-owych joinów
+    history_data = []
+    for entry in user_history:
+        game = Games.objects.filter(id=entry.game_id_id).first()  # <- bez .select_related
+        if game:
+            history_data.append({
+                "title": game.title,
+                "id": game.id,
+                "viewed_at": entry.viewed_at,
+            })
+
+    paginator = Paginator(history_data, 20)
+    page = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page)
+
+    # [PL] Renderujemy prostą strukturę danych, bez querysetów ORM
+    return render(request, "frontend/my_library.html", {"page_obj": page_obj})
+
+
+
+
+

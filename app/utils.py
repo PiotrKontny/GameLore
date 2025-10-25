@@ -8,8 +8,106 @@ import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 from playwright.async_api import async_playwright
-
 from transformers import pipeline
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+from .models import UserHistory
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.http import HttpResponseForbidden
+from .models import UserModel
+
+
+def record_user_history(user, game, refresh_timestamp=True):
+    """
+    Zapisuje w tabeli UserHistory parę (user, game) jeśli jeszcze nie istnieje.
+    Jeśli istnieje, opcjonalnie odświeża datę viewed_at.
+    """
+    from .models import UserModel, Games, UserHistory
+
+    if not user or not getattr(user, "is_authenticated", False):
+        return  # nie zapisujemy historii dla niezalogowanych
+
+    try:
+        # [PL] Upewniamy się, że user i game to poprawne obiekty z ORM
+        if not isinstance(user, UserModel):
+            user = UserModel.objects.filter(username=user.username).first()
+        if not isinstance(game, Games):
+            game = Games.objects.filter(id=game.id).first()
+
+        if not user or not game:
+            return
+
+        # [PL] Bez get_or_create, bo przy managed=False Django czasem ma problemy z atomicznością
+        existing = UserHistory.objects.filter(user_id=user, game_id=game).first()
+        if existing:
+            if refresh_timestamp:
+                existing.viewed_at = timezone.now()
+                existing.save(update_fields=["viewed_at"])
+        else:
+            UserHistory.objects.create(user_id=user, game_id=game)
+
+    except Exception as e:
+        print(f"[record_user_history] Error: {e}")
+
+
+def jwt_required(view_func):
+    """
+    Dekorator sprawdzający token JWT w cookie lub nagłówku.
+    Jeśli token poprawny — ustawia request.user jako UserModel (tabela Users).
+    Jeśli token niepoprawny — 403.
+    """
+    def _wrapped_view(request, *args, **kwargs):
+        from rest_framework_simplejwt.authentication import JWTAuthentication
+        from .models import UserModel
+
+        jwt_auth = JWTAuthentication()
+
+        # [PL] Jeśli w nagłówkach nie ma autoryzacji, spróbuj z ciasteczka
+        if "HTTP_AUTHORIZATION" not in request.META:
+            token = request.COOKIES.get("access_token")
+            if token:
+                request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
+
+        try:
+            # [PL] Próba uwierzytelnienia przez JWT
+            user_auth_tuple = jwt_auth.authenticate(request)
+            if user_auth_tuple is not None:
+                jwt_user, _ = user_auth_tuple
+
+                # [PL] Mapowanie JWT -> UserModel
+                mapped_user = (
+                    UserModel.objects.filter(username=jwt_user.username).first()
+                    or UserModel.objects.filter(email=jwt_user.email).first()
+                )
+
+                if mapped_user:
+                    request.user = mapped_user
+                    print(f"[JWT] Authenticated user: {mapped_user.username}")
+                    return view_func(request, *args, **kwargs)
+                else:
+                    print(f"[JWT] No UserModel found for JWT user={jwt_user.username}")
+                    return HttpResponseForbidden("Użytkownik nie istnieje w tabeli Users.")
+
+            else:
+                # [PL] Jeśli authenticate() zwróciło None, ale cookie istnieje — spróbuj wyciągnąć użytkownika ręcznie
+                token = request.COOKIES.get("access_token")
+                if token:
+                    user_id = request.session.get("user_id")
+                    if user_id:
+                        mapped_user = UserModel.objects.filter(id=user_id).first()
+                        if mapped_user:
+                            request.user = mapped_user
+                            print(f"[JWT] Fallback cookie user: {mapped_user.username}")
+                            return view_func(request, *args, **kwargs)
+                print("[JWT] No valid JWT found in request or cookie.")
+                return HttpResponseForbidden("Brak ważnego tokena JWT.")
+        except Exception as e:
+            print(f"[JWT] Authentication failed: {e}")
+            return HttpResponseForbidden("Błąd autoryzacji JWT.")
+
+    return _wrapped_view
+
+
 
 # Model for summarization is used a couple of times in this file therefore it's declared at the beginning. It's also in
 # case of future need to change the summarization model
