@@ -346,7 +346,7 @@ def my_library_view(request):
         print(f"[my_library] Brak dopasowania użytkownika: {request.user}")
         return HttpResponseForbidden("Nie znaleziono użytkownika w bazie danych.")
 
-    # [PL] Pobieramy historię użytkownika bez użycia select_related (bo managed=False potrafi wywołać wyjątek)
+    # [PL] Pobieramy historię użytkownika (ostatnio oglądane gry)
     try:
         user_history = UserHistory.objects.filter(user_id=user.id).order_by('-viewed_at')
         print(f"[my_library] Historia użytkownika {user.username}: {user_history.count()} rekordów")
@@ -354,14 +354,15 @@ def my_library_view(request):
         print(f"[my_library] Błąd przy pobieraniu historii: {e}")
         return HttpResponseForbidden("Błąd przy pobieraniu historii użytkownika.")
 
-    # [PL] Konwertujemy dane ręcznie, żeby nie wywoływać ORM-owych joinów
+    # [PL] Tworzymy dane do wyświetlenia (tytuł, id i cover)
     history_data = []
     for entry in user_history:
-        game = Games.objects.filter(id=entry.game_id_id).first()  # <- bez .select_related
+        game = Games.objects.filter(id=entry.game_id_id).first()
         if game:
             history_data.append({
-                "title": game.title,
                 "id": game.id,
+                "title": game.title,
+                "cover_image": game.cover_image,  # <-- dodane
                 "viewed_at": entry.viewed_at,
             })
 
@@ -369,9 +370,62 @@ def my_library_view(request):
     page = request.GET.get('page', 1)
     page_obj = paginator.get_page(page)
 
-    # [PL] Renderujemy prostą strukturę danych, bez querysetów ORM
     return render(request, "frontend/my_library.html", {"page_obj": page_obj})
 
+
+# View for the game explore page where the user can choose from any of the games already in the database. Of course once
+# they click one of the links to the game detail page, that game is then saved into their library. This view is not
+# require the user to log in, however when they want to view one of the games in detail, then they must log in
+def explore_view(request):
+    games = Games.objects.all().order_by("id")
+    return render(request, "frontend/explore.html", {"games": games})
+
+
+@jwt_required
+def profile_view(request):
+    from .models import UserModel
+    from django.contrib.auth.hashers import make_password
+
+    user = None
+    if isinstance(request.user, UserModel):
+        user = request.user
+    else:
+        user = UserModel.objects.filter(username=request.user.username).first()
+
+    if not user:
+        return HttpResponseForbidden("Could not find the user")
+
+    message = None
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # Zmiana nazwy użytkownika
+        if action == "change_username":
+            new_username = request.POST.get("new_username", "").strip()
+            if new_username and new_username != user.username:
+                if not UserModel.objects.filter(username=new_username).exists():
+                    user.username = new_username
+                    user.save()
+                    message = "Username has been changed!"
+                else:
+                    message = "This username already exists!"
+
+        # Zmiana hasła
+        elif action == "change_password":
+            new_password = request.POST.get("new_password", "").strip()
+            if new_password:
+                user.password = make_password(new_password)
+                user.save()
+                message = "The password has been changed!"
+
+        # Wylogowanie (czyli usunięcie JWT z sesji)
+        elif action == "logout":
+            response = redirect("/app/login/")  # lub inna Twoja strona logowania
+            response.delete_cookie("access_token")  # usunięcie JWT
+            return response
+
+    return render(request, "frontend/profile.html", {"user": user, "message": message})
 
 
 

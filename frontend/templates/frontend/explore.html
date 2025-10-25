@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Game Library</title>
+    <title>Explore Game Lores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -19,16 +19,12 @@
             margin-bottom: 30px;
         }
 
-        .row {
-            justify-content: center;
+        .btn-primary {
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-weight: 500;
         }
 
-        .col-md-4 {
-            display: flex;
-            justify-content: center;
-        }
-
-        /* Kafel gry — bez wymuszonej wysokości */
         .game-card {
             background-color: #fff;
             border-radius: 10px;
@@ -43,7 +39,6 @@
             transform: translateY(-5px);
         }
 
-        /* Obrazek w kaflu gry — zapewnia równą wysokość dla wszystkich okładek */
         .img-container {
             width: 100%;
             height: 260px;
@@ -77,54 +72,27 @@
             color: #007bff;
         }
 
-        /* Styl dla przycisku dodawania gry */
-        /* Styl przycisku dodawania gry — dokładnie taki sam rozmiar jak kafelki z grami */
-        .add-wrapper {
-            flex: 0 0 auto;
+        .row {
+            justify-content: center;
         }
 
-        .add-card {
+        .col-md-4 {
             display: flex;
             justify-content: center;
-            align-items: center;
-            width: 320px;      /* stała szerokość */
-            height: 320px;     /* dopasowana wysokość do kafelków */
-            border-radius: 10px;
-            border: 3px dashed #bbb;
-            color: #666;
-            font-size: 9rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin: 0 auto;    /* wyśrodkowanie w kolumnie */
-        }
-
-        .add-card:hover {
-            background-color: #f8f9fa;
-            color: #007bff;
-            border-color: #007bff;
-            transform: translateY(-3px);
         }
     </style>
 </head>
 <body>
 <div class="container text-center">
-    <h2>My Game Library</h2>
+    <h2>Explore Game Lores</h2>
 
-    <div class="row gy-5">
-        <!-- Kafelek dodawania nowej gry -->
-        <div class="col-md-4 add-wrapper">
-            <a href="/app/search/" class="text-decoration-none">
-                <div class="add-card">+</div>
-            </a>
-        </div>
+    <div class="mb-4">
+        <a href="/app/search/" class="btn btn-primary">Search for a new game</a>
+    </div>
 
-
-        <!-- Gry z historii użytkownika -->
-        {% if page_obj %}
-            {% for game in page_obj %}
+    {% if games %}
+        <div class="row gy-5">
+            {% for game in games %}
                 <div class="col-md-4">
                     <div class="game-card">
                         <div class="img-container">
@@ -135,15 +103,15 @@
                             {% endif %}
                         </div>
                         <div class="game-title">
-                            <a href="/app/games/{{ game.id }}/">{{ game.title }}</a>
+                            <a href="/app/games/{{ game.pk }}/">{{ game.title }}</a>
                         </div>
                     </div>
                 </div>
             {% endfor %}
-        {% else %}
-            <p>No games in your library yet.</p>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <p>No games in the database yet.</p>
+    {% endif %}
 </div>
 </body>
 </html>
