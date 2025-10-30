@@ -5,6 +5,8 @@ Django settings for Lost_Found_Pets project.
 from datetime import timedelta
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,6 +144,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/app/login/'
 AUTH_USER_MODEL = 'app.UserModel'
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

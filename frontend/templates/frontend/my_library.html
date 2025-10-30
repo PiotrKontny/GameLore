@@ -107,6 +107,28 @@
             border-color: #007bff;
             transform: translateY(-3px);
         }
+
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 24px;
+            transition: background-color 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(200, 0, 0, 1);
+        }
+
     </style>
 </head>
 <body>
@@ -126,24 +148,74 @@
         {% if page_obj %}
             {% for game in page_obj %}
                 <div class="col-md-4">
-                    <div class="game-card">
+                    <div class="game-card position-relative">
+                        <!-- Przycisk X -->
+                        <button class="delete-btn" data-game-id="{{ game.id }}">&times;</button>
+
                         <div class="img-container">
                             {% if game.cover_image %}
                                 <img src="/media/{{ game.cover_image }}" alt="{{ game.title }}">
                             {% else %}
                                 <img src="/media/placeholder.jpg" alt="No image">
                             {% endif %}
-                        </div>
-                        <div class="game-title">
-                            <a href="/app/games/{{ game.id }}/">{{ game.title }}</a>
-                        </div>
                     </div>
-                </div>
+                <div class="game-title">
+            <a href="/app/games/{{ game.id }}/">{{ game.title }}</a>
+        </div>
+    </div>
+</div>
+
             {% endfor %}
         {% else %}
             <p>No games in your library yet.</p>
         {% endif %}
     </div>
 </div>
+<script>
+document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+        const gameId = this.getAttribute("data-game-id");
+        if (!confirm("Czy na pewno chcesz usunąć tę grę z historii?")) return;
+
+        fetch("/app/delete_history/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({ game_id: gameId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message) {
+                // Usunięcie kafelka z DOM
+                this.closest(".col-md-4").remove();
+            } else {
+                alert(data.error || "Wystąpił błąd podczas usuwania.");
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Wystąpił błąd połączenia z serwerem.");
+        });
+    });
+});
+
+// [PL] Funkcja pobierająca CSRF token z ciasteczek (potrzebna do POST)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 </body>
 </html>

@@ -1,34 +1,34 @@
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.db import IntegrityError, transaction
+from django.http import HttpResponseForbidden
+from django.utils import timezone
+from .models import UserModel, Games, UserHistory
+from playwright.async_api import async_playwright
+from transformers import pipeline
+from bs4 import BeautifulSoup
+import urllib.parse
 import asyncio
 import os
 import re
-import urllib.parse
 from io import BytesIO
 from decimal import Decimal
 import requests
-from bs4 import BeautifulSoup
 from PIL import Image
-from playwright.async_api import async_playwright
-from transformers import pipeline
-from django.db import IntegrityError, transaction
-from django.utils import timezone
-from .models import UserHistory
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.http import HttpResponseForbidden
-from .models import UserModel
 
 
+# As the name suggests, this function records user history. But what does it mean exactly? Each user has his own user
+# history with the games he has visited. If the game which he visits when opening game detail page hasn't been recorded
+# already in the database, it saves this pair of user id and game id. However, if the user already has the viewed game in his
+# history then the "viewed_at" column is updated
 def record_user_history(user, game, refresh_timestamp=True):
-    """
-    Zapisuje w tabeli UserHistory parę (user, game) jeśli jeszcze nie istnieje.
-    Jeśli istnieje, opcjonalnie odświeża datę viewed_at.
-    """
-    from .models import UserModel, Games, UserHistory
-
+    # The user history is not being recorded if the user hasn't logged in
     if not user or not getattr(user, "is_authenticated", False):
-        return  # nie zapisujemy historii dla niezalogowanych
+        return
 
     try:
-        # [PL] Upewniamy się, że user i game to poprawne obiekty z ORM
+        # Just in case, this piece of code checks if the user and the game are the objects from the database. This was
+        # used to handle one instance which appeared while developing the code, and it stayed since it doesn't disrupt
+        # anything, however I'm not sure if its absence wouldn't
         if not isinstance(user, UserModel):
             user = UserModel.objects.filter(username=user.username).first()
         if not isinstance(game, Games):
@@ -37,7 +37,8 @@ def record_user_history(user, game, refresh_timestamp=True):
         if not user or not game:
             return
 
-        # [PL] Bez get_or_create, bo przy managed=False Django czasem ma problemy z atomicznością
+        # If the game exists in user's history then it just updates viewed_at attribute, if it doesn't, it creates a new
+        # record in the database
         existing = UserHistory.objects.filter(user_id=user, game_id=game).first()
         if existing:
             if refresh_timestamp:
@@ -50,31 +51,33 @@ def record_user_history(user, game, refresh_timestamp=True):
         print(f"[record_user_history] Error: {e}")
 
 
+# The function below serves as a decorator (thus view_func in it's arguments) for any pages which are restricted to the
+# not logged-in users.
 def jwt_required(view_func):
-    """
-    Dekorator sprawdzający token JWT w cookie lub nagłówku.
-    Jeśli token poprawny — ustawia request.user jako UserModel (tabela Users).
-    Jeśli token niepoprawny — 403.
-    """
     def _wrapped_view(request, *args, **kwargs):
-        from rest_framework_simplejwt.authentication import JWTAuthentication
-        from .models import UserModel
 
         jwt_auth = JWTAuthentication()
 
-        # [PL] Jeśli w nagłówkach nie ma autoryzacji, spróbuj z ciasteczka
+        # When handling requests there are several headers being sent to the backend such as the type of request
+        # (for example GET), the host, the user-agent (type of browser used), but there's also an authorization header.
+        # Normally in the authorization header, there is jwt token being sent (that long access token visible when
+        # logging into the website using the REST Framework). That's what usually happens tho, not always. Therefore,
+        # the following if statement handles the case where it doesn't go this way, and instead it tries to find that
+        # token in the cookies. To be honest this is not my solution, so I'm not an expert in how it works exactly
         if "HTTP_AUTHORIZATION" not in request.META:
             token = request.COOKIES.get("access_token")
             if token:
                 request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
 
         try:
-            # [PL] Próba uwierzytelnienia przez JWT
+            # Checks whether the token is expired or doesn't work and returns None in either of those two cases
             user_auth_tuple = jwt_auth.authenticate(request)
+
+            # In this example, jwt_user is the technical user the jwt got from the token, however the mapped_user is the
+            # user record from the database. Thus, the following code checking if they're the same. Again, that's just
+            # in case, but that's how authentication is handled normally, to my knowledge
             if user_auth_tuple is not None:
                 jwt_user, _ = user_auth_tuple
-
-                # [PL] Mapowanie JWT -> UserModel
                 mapped_user = (
                     UserModel.objects.filter(username=jwt_user.username).first()
                     or UserModel.objects.filter(email=jwt_user.email).first()
@@ -88,8 +91,9 @@ def jwt_required(view_func):
                     print(f"[JWT] No UserModel found for JWT user={jwt_user.username}")
                     return HttpResponseForbidden("Użytkownik nie istnieje w tabeli Users.")
 
+            # If the token is wrong or the user doesn't exist the code searches for the user by his user_id as the last
+            # resort and returns error 403 (no access) when this also fails
             else:
-                # [PL] Jeśli authenticate() zwróciło None, ale cookie istnieje — spróbuj wyciągnąć użytkownika ręcznie
                 token = request.COOKIES.get("access_token")
                 if token:
                     user_id = request.session.get("user_id")
@@ -106,7 +110,6 @@ def jwt_required(view_func):
             return HttpResponseForbidden("Błąd autoryzacji JWT.")
 
     return _wrapped_view
-
 
 
 # Model for summarization is used a couple of times in this file therefore it's declared at the beginning. It's also in

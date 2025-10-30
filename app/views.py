@@ -24,6 +24,8 @@ import asyncio
 import json
 import re
 import markdown
+import uuid
+import requests, os
 
 
 # Create your views here.
@@ -373,6 +375,48 @@ def my_library_view(request):
     return render(request, "frontend/my_library.html", {"page_obj": page_obj})
 
 
+@jwt_required
+@csrf_exempt
+def delete_history_entry(request):
+    # [PL] Funkcja do usuwania historii gry użytkownika
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        game_id = data.get("game_id")
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if not game_id:
+        return JsonResponse({"error": "Missing game_id"}, status=400)
+
+    from .models import UserHistory, ChatBot, Games, UserModel
+
+    # [PL] Upewniamy się, że użytkownik istnieje
+    user = None
+    if isinstance(request.user, UserModel):
+        user = request.user
+    else:
+        user = UserModel.objects.filter(username=request.user.username).first()
+
+    if not user:
+        return JsonResponse({"error": "User not found"}, status=403)
+
+    # [PL] Sprawdzenie, czy gra istnieje
+    game = Games.objects.filter(id=game_id).first()
+    if not game:
+        return JsonResponse({"error": "Game not found"}, status=404)
+
+    # [PL] Usuwamy historię użytkownika i powiązane wpisy chatu
+    deleted_history = UserHistory.objects.filter(user_id=user, game_id=game).delete()
+    deleted_chat = ChatBot.objects.filter(user_id=user, game_id=game).delete()
+
+    print(f"[delete_history_entry] Removed: {deleted_history[0]} from UserHistory, {deleted_chat[0]} from ChatBot.")
+
+    return JsonResponse({"message": "Record deleted successfully."})
+
+
 # View for the game explore page where the user can choose from any of the games already in the database. Of course once
 # they click one of the links to the game detail page, that game is then saved into their library. This view is not
 # require the user to log in, however when they want to view one of the games in detail, then they must log in
@@ -426,6 +470,105 @@ def profile_view(request):
             return response
 
     return render(request, "frontend/profile.html", {"user": user, "message": message})
+
+
+# The function for returning user's chatbot history for the corresponding game
+@jwt_required
+def chatbot_history(request):
+    game_id = request.GET.get("game_id")
+    if not game_id:
+        return JsonResponse({"error": "Missing game_id"}, status=400)
+
+    history = ChatBot.objects.filter(user_id=request.user, game_id=game_id).order_by("created_at")
+    # The history returned is in the format of question and answer so that it can be easily displayed for the user
+    data = [
+        {"question": h.question, "answer": h.answer, "created_at": h.created_at.isoformat()}
+        for h in history
+    ]
+    return JsonResponse(data, safe=False)
+
+
+# This function handles the user's questions to the chatbot, which is then being sent to OpenRouter, a website which
+# handles chatbot requests to an extensive library of different LLM models
+@jwt_required
+def chatbot_ask(request):
+    # Standard handling of such function - making sure the method is POST
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    # Making sure that the data is in the correct json format
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    question = data.get("question")
+    game_id = data.get("game_id")
+
+    # Making sure that the question and game_id exist
+    if not question or not game_id:
+        return JsonResponse({"error": "Missing question or game_id"}, status=400)
+
+    # Making sure the game itself exists
+    try:
+        game = Games.objects.get(id=game_id)
+    except Games.DoesNotExist:
+        return JsonResponse({"error": "Game not found"}, status=404)
+
+    # Standard request to OpenRouter
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            # The authorization of the request is passed through my own api key the website gave me
+            headers={
+                "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            # The model used is Mistral 7B Instruct and as it's first command, it's supposed to answer only the
+            # questions related to the game this chatbot belongs to
+            json={
+                "model": "mistralai/mistral-7b-instruct",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            f"You are a helpful assistant that only talks about the video game '{game.title}'. "
+                            "Always stay on-topic and answer concisely."
+                        ),
+                    },
+                    {"role": "user", "content": question},
+                ],
+            },
+            timeout=30
+        )
+        # Handling the errors from OpenRouter
+        response.raise_for_status()
+
+        answer = response.json()["choices"][0]["message"]["content"]
+
+        # The chatbot's answers often came with things like "[\s\]" or something at the beginning of the answer. All
+        # those below are here to make sure it doesn't happen
+        answer = re.sub(r'<\/?s>', '', answer)
+        answer = re.sub(r'\[\/?s\]', '', answer)
+        answer = re.sub(r'\[OUT\]|\[INST\]|\[\/?INSTR?\]', '', answer, flags=re.IGNORECASE)
+        answer = answer.strip()
+
+        # Sometimes the model returns a blank answer and therefore, to make sure the user doesn't get confused, the
+        # following message is displayed so that he can ask again
+        if not answer or len(answer.strip()) == 0:
+            answer = "I'm sorry, I couldn't generate an answer this time. Please try asking again."
+    except Exception as e:
+        return JsonResponse({"error": f"OpenRouter API error: {e}"}, status=500)
+
+    # The questions and answers are then passed to the database
+    ChatBot.objects.create(
+        user_id=request.user,
+        game_id=game,
+        question=question,
+        answer=answer,
+    )
+
+    return JsonResponse({"answer": answer})
 
 
 

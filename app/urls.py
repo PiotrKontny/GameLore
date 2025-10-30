@@ -24,4 +24,9 @@ urlpatterns = [
     path("my_library/", views.my_library_view, name="my_library"),
     path("explore/", views.explore_view, name="explore"),
     path("profile/", views.profile_view, name="profile"),
+
+    # Json Response urls
+    path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),
+    path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
+    path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
 ]
