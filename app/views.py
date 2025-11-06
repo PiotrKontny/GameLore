@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseForbidden
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model, user_logged_in
+from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.conf import settings
 from django.urls import reverse
@@ -33,14 +34,14 @@ def main(request):
     return HttpResponse("Hello")
 
 class UserView(generics.ListCreateAPIView):
-    queryset = UserModel.objects.all()  # Zapytanie do SQL o wszystkich użytkowników
-    serializer_class = UserSerializer  # Serializer do danych użytkownika
+    queryset = UserModel.objects.all()
+    serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
 class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         User = get_user_model()
-        uname_field = User.USERNAME_FIELD  # "username" albo "email"
+        uname_field = User.USERNAME_FIELD
         if uname_field not in attrs:
             login_val = (
                 self.initial_data.get("login")
@@ -58,7 +59,6 @@ class LoginView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         data = response.data
 
-        # zapis tokena do cookie
         response.set_cookie(
             key="access_token",
             value=data["access"],
@@ -82,8 +82,6 @@ class RegisterUser(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # [PL] Sprawdzamy, czy hasło nie jest zapisane w postaci czystego tekstu
-            from django.contrib.auth.hashers import make_password
             if not user.password.startswith("pbkdf2_"):
                 user.password = make_password(user.password)
                 user.save(update_fields=["password"])
@@ -181,7 +179,6 @@ def results_view(request):
 # may seem, however it was in the original version of the ai implementation and I don't remember exactly how useful it
 # is for the current needs of the code so it's been decided to let it stay just in case
 def safe_json(obj):
-    from decimal import Decimal
     # When the result is in decimal format then return it as a float
     if isinstance(obj, Decimal):
         return float(obj)
@@ -270,7 +267,10 @@ def details_view(request):
         studio=data.get('studio'),
         score=data.get('score'),
         cover_image=data.get('cover_image'),
+        mobygames_url=data.get('mobygames_url'),
+        wikipedia_url=data.get('wikipedia_url'),
     )
+
     GamePlots.objects.create(
         game_id=games,
         full_plot=data.get('full_plot') or '',
@@ -335,10 +335,7 @@ def compilation_view(request):
 
 @jwt_required
 def my_library_view(request):
-    from .models import UserModel, Games, UserHistory
-
     user = None
-    # [PL] Upewniamy się, że mamy rzeczywisty obiekt z tabeli Users
     if isinstance(request.user, UserModel):
         user = request.user
     else:
@@ -348,7 +345,6 @@ def my_library_view(request):
         print(f"[my_library] Brak dopasowania użytkownika: {request.user}")
         return HttpResponseForbidden("Nie znaleziono użytkownika w bazie danych.")
 
-    # [PL] Pobieramy historię użytkownika (ostatnio oglądane gry)
     try:
         user_history = UserHistory.objects.filter(user_id=user.id).order_by('-viewed_at')
         print(f"[my_library] Historia użytkownika {user.username}: {user_history.count()} rekordów")
@@ -356,7 +352,6 @@ def my_library_view(request):
         print(f"[my_library] Błąd przy pobieraniu historii: {e}")
         return HttpResponseForbidden("Błąd przy pobieraniu historii użytkownika.")
 
-    # [PL] Tworzymy dane do wyświetlenia (tytuł, id i cover)
     history_data = []
     for entry in user_history:
         game = Games.objects.filter(id=entry.game_id_id).first()
@@ -364,7 +359,7 @@ def my_library_view(request):
             history_data.append({
                 "id": game.id,
                 "title": game.title,
-                "cover_image": game.cover_image,  # <-- dodane
+                "cover_image": game.cover_image,
                 "viewed_at": entry.viewed_at,
             })
 
@@ -378,7 +373,6 @@ def my_library_view(request):
 @jwt_required
 @csrf_exempt
 def delete_history_entry(request):
-    # [PL] Funkcja do usuwania historii gry użytkownika
     if request.method != "POST":
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
@@ -391,9 +385,6 @@ def delete_history_entry(request):
     if not game_id:
         return JsonResponse({"error": "Missing game_id"}, status=400)
 
-    from .models import UserHistory, ChatBot, Games, UserModel
-
-    # [PL] Upewniamy się, że użytkownik istnieje
     user = None
     if isinstance(request.user, UserModel):
         user = request.user
@@ -403,12 +394,10 @@ def delete_history_entry(request):
     if not user:
         return JsonResponse({"error": "User not found"}, status=403)
 
-    # [PL] Sprawdzenie, czy gra istnieje
     game = Games.objects.filter(id=game_id).first()
     if not game:
         return JsonResponse({"error": "Game not found"}, status=404)
 
-    # [PL] Usuwamy historię użytkownika i powiązane wpisy chatu
     deleted_history = UserHistory.objects.filter(user_id=user, game_id=game).delete()
     deleted_chat = ChatBot.objects.filter(user_id=user, game_id=game).delete()
 
@@ -427,8 +416,6 @@ def explore_view(request):
 
 @jwt_required
 def profile_view(request):
-    from .models import UserModel
-    from django.contrib.auth.hashers import make_password
 
     user = None
     if isinstance(request.user, UserModel):

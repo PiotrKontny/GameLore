@@ -641,6 +641,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         await page.click(sel)
                         await page.wait_for_timeout(500)
                         break
+
                 html_desc = None
                 for selector in ["#description-text", "#description-text .text-content",
                                  "div#description", "div.description-content"]:
@@ -648,6 +649,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         html_desc = await page.inner_html(selector)
                         if html_desc:
                             break
+
                 if html_desc:
                     soup_desc = BeautifulSoup(html_desc, "html.parser")
                     paragraphs = [p.get_text(" ", strip=True) for p in soup_desc.find_all("p")]
@@ -656,32 +658,63 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         paragraphs = [raw_text] if raw_text else []
                     moby_description = "\n".join(paragraphs).strip()
                     if moby_description:
-                        full_plot_md = moby_description
+                        # --- Dodaj nagłówek markdown "## Description" ---
+                        full_plot_md = f"## Description\n\n{moby_description}"
+
+                        # --- Generuj krótkie podsumowanie ---
                         words = len(moby_description.split())
                         if words > 200:
                             summarizer = get_summarizer()
                             if words < 500:
                                 res = summarizer(moby_description, max_length=160, min_length=80, do_sample=False)
-                                summary_md = res[0]["summary_text"]
+                                summary_text = res[0]["summary_text"]
                             else:
                                 chunks = [moby_description[i:i + 3500] for i in range(0, len(moby_description), 3500)]
                                 partials = []
                                 for ch in chunks:
                                     res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
                                     partials.append(res[0]["summary_text"])
-                                summary_md = " ".join(partials)
+                                summary_text = " ".join(partials)
                         else:
-                            summary_md = moby_description
+                            summary_text = moby_description
+
+                        # --- Summary też w markdownie z nagłówkiem ---
+                        summary_md = (
+                            f"## Description\n\n{summary_text}\n\n"
+                            "*This summary is based on the game's description from MobyGames. "
+                            "For a detailed storyline, try asking the chatbot below.*"
+                        )
+
+                        # --- Dodaj komunikat, że to nie fabuła ---
+                        full_plot_md += (
+                            "\n\n*Note: This section is based on the game's description from MobyGames "
+                            "and may not represent the actual storyline. You can use the chatbot to learn more about the plot.*"
+                        )
+
+
             except Exception as e:
                 print(f"[!] Fallback Moby description error: {e}")
 
         # When the game has absolutely no plot available anywhere then the app returns this as a final measure instead
         # of just having None in the database
         if not full_plot_md:
-            full_plot_md = "No plot available"
-        if not summary_md:
-            summary_md = "No summary available"
+            full_plot_md = (
+                "## No Plot Found\n\n"
+                "No plot was found for this game. "
+                "It might be a gameplay-focused title without a defined storyline.\n\n"
+                "*Tip: You can ask the chatbot to learn more about the game's background or lore.*"
+            )
 
+        if not summary_md:
+            summary_md = (
+                "## No Summary Available\n\n"
+                "No summary was found for this game. "
+                "You can use the chatbot to learn more about its background, lore, or general storyline."
+            )
+
+        await browser.close()
+
+        # What this entire file returns at the end of the day
         await browser.close()
 
         # What this entire file returns at the end of the day
@@ -692,8 +725,10 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "genre": ", ".join(genre) if genre else None,
             "score": moby_score,
             "cover_image": local_image_relpath,
-            #"cover_image_relpath": local_image_relpath,
             "full_plot": full_plot_md,
             "summary": summary_md,
-            "is_compilation": False
+            "is_compilation": False,
+            "mobygames_url": url,  # <<< nowa linia
+            "wikipedia_url": wiki_url  # <<< nowa linia
         }
+

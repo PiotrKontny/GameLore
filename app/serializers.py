@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Games
-        fields = ['id', 'title', 'release_date', 'genre', 'studio', 'score', 'cover_image', 'created_at']
+        fields = ['id', 'title', 'release_date', 'genre', 'studio', 'score', 'cover_image', 'mobygames_url', 'wikipedia_url', 'created_at']
 
 
 class GamePlotsSerializer(serializers.ModelSerializer):
