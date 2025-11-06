@@ -54,6 +54,21 @@
         <p class="message">{{ message }}</p>
     {% endif %}
 
+    <div class="form-section text-center">
+    <h5>Profile Picture</h5>
+    <img src="/media/{{ user.profile_picture }}" alt="Profile Picture"
+         class="img-thumbnail mb-3" width="150" height="150">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_profile_picture">
+        <div class="mb-3">
+            <input type="file" class="form-control" name="profile_picture" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Change Picture</button>
+    </form>
+</div>
+
+
     <div class="form-section">
         <h5>Change Username</h5>
         <form method="post">

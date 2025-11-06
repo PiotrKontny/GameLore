@@ -33,6 +33,13 @@ class UserModel(models.Model):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128, db_column='user_password')
     date_joined = models.DateTimeField(default=timezone.now)
+    profile_picture = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        default='profile_pictures/default_user.png',
+        db_column='profile_picture'
+    )
 
     objects = UserManager()
 

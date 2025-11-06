@@ -416,7 +416,6 @@ def explore_view(request):
 
 @jwt_required
 def profile_view(request):
-
     user = None
     if isinstance(request.user, UserModel):
         user = request.user
@@ -450,13 +449,29 @@ def profile_view(request):
                 user.save()
                 message = "The password has been changed!"
 
-        # Wylogowanie (czyli usunięcie JWT z sesji)
+        # Zmiana zdjęcia profilowego
+        elif action == "change_profile_picture":
+            if "profile_picture" in request.FILES:
+                uploaded_file = request.FILES["profile_picture"]
+                from django.core.files.storage import default_storage
+                from django.core.files.base import ContentFile
+
+                filename = f"profile_pictures/{user.username}_{uploaded_file.name}"
+                file_path = default_storage.save(filename, ContentFile(uploaded_file.read()))
+                user.profile_picture = file_path
+                user.save()
+                message = "Profile picture updated successfully!"
+            else:
+                message = "No file uploaded!"
+
+        # Wylogowanie
         elif action == "logout":
-            response = redirect("/app/login/")  # lub inna Twoja strona logowania
-            response.delete_cookie("access_token")  # usunięcie JWT
+            response = redirect("/app/login/")
+            response.delete_cookie("access_token")
             return response
 
     return render(request, "frontend/profile.html", {"user": user, "message": message})
+
 
 
 # The function for returning user's chatbot history for the corresponding game
