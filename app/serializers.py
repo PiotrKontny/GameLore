@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserModel, Games, GamePlots, UserHistory, ChatBot
+from .models import UserModel, Games, GamePlots, UserHistory, ChatBot, UserRatings
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -47,3 +47,10 @@ class ChatBotSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatBot
         fields = ['id', 'user_id', 'game_id', 'question', 'answer', 'created_at']
+
+
+class UserRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRatings
+        fields = ['id', 'user_id', 'game_id', 'rating', 'created_at', 'updated_at']
+

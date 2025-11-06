@@ -29,4 +29,5 @@ urlpatterns = [
     path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),
     path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
     path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
+    path("games/<int:pk>/rating/", views.game_rating_view, name="game_rating"),
 ]

@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, Http
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model, user_logged_in
 from django.contrib.auth.hashers import make_password
+from django.db.models import Avg, Count
 from django.core.cache import cache
 from django.conf import settings
 from django.urls import reverse
@@ -17,8 +18,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
-                          ChatBotSerializer)
-from .models import Games, GamePlots, UserModel, UserHistory, ChatBot
+                          ChatBotSerializer, UserRatingSerializer)
+from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
+
 from .utils import search_mobygames, scrape_game_info, record_user_history, jwt_required
 from decimal import Decimal, InvalidOperation
 import asyncio
@@ -571,6 +573,53 @@ def chatbot_ask(request):
     )
 
     return JsonResponse({"answer": answer})
+
+
+
+@csrf_exempt
+@jwt_required
+def game_rating_view(request, pk):
+    """
+    GET – pobiera średnią ocenę, liczbę głosów i ocenę użytkownika
+    POST/PUT – zapisuje lub aktualizuje ocenę użytkownika
+    """
+    user = request.user
+    game = get_object_or_404(Games, pk=pk)
+
+    if request.method == "GET":
+        avg_votes = UserRatings.objects.filter(game_id=game).aggregate(
+            avg=Avg('rating'), votes=Count('id')
+        )
+        user_rating = UserRatings.objects.filter(user_id=user, game_id=game).first()
+        return JsonResponse({
+            "avg": round(avg_votes['avg'] or 0, 2),
+            "votes": avg_votes['votes'] or 0,
+            "user_rating": user_rating.rating if user_rating else None
+        })
+
+    elif request.method in ["POST", "PUT"]:
+        try:
+            data = json.loads(request.body)
+            rating_value = int(data.get("rating"))
+            if rating_value < 1 or rating_value > 10:
+                return JsonResponse({"error": "Rating must be between 1 and 10."}, status=400)
+        except Exception:
+            return JsonResponse({"error": "Invalid JSON or rating."}, status=400)
+
+        obj, created = UserRatings.objects.update_or_create(
+            user_id=user, game_id=game, defaults={"rating": rating_value}
+        )
+
+        avg_votes = UserRatings.objects.filter(game_id=game).aggregate(
+            avg=Avg('rating'), votes=Count('id')
+        )
+        return JsonResponse({
+            "avg": round(avg_votes['avg'] or 0, 2),
+            "votes": avg_votes['votes'] or 0,
+            "user_rating": rating_value
+        })
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 

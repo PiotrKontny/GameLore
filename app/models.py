@@ -122,3 +122,21 @@ class ChatBot(models.Model):
 
     class Meta:
         db_table = 'ChatBot'
+
+
+class UserRatings(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
+    user_id = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name="ratings", db_column='user_id')
+    game_id = models.ForeignKey(Games, on_delete=models.CASCADE, related_name="game_ratings", db_column='game_id')
+    rating = models.IntegerField(db_column='rating')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
+    updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')
+
+    class Meta:
+        db_table = 'UserRatings'
+        managed = False
+        unique_together = ('user_id', 'game_id')
+
+    def __str__(self):
+        return f"{self.user_id} rated {self.game_id} = {self.rating}"
+
