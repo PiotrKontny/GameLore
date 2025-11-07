@@ -412,8 +412,57 @@ def delete_history_entry(request):
 # they click one of the links to the game detail page, that game is then saved into their library. This view is not
 # require the user to log in, however when they want to view one of the games in detail, then they must log in
 def explore_view(request):
-    games = Games.objects.all().order_by("id")
-    return render(request, "frontend/explore.html", {"games": games})
+    from django.db.models import Avg
+    from django.db.models.functions import Trim
+
+    sort_option = request.GET.get('sort', 'oldest')
+    query = (request.GET.get('q') or '').strip()
+    selected_genre = (request.GET.get('genre') or '').strip()
+
+    # bazowe zapytanie + filtr tytułu i gatunku
+    base_qs = Games.objects.all()
+    if query:
+        base_qs = base_qs.filter(title__icontains=query)
+    if selected_genre:
+        base_qs = base_qs.filter(genre__iexact=selected_genre)
+
+    # sortowanie
+    qs = base_qs
+    if sort_option == 'newest':
+        qs = qs.order_by('-id')
+    elif sort_option == 'score':
+        qs = qs.order_by('-score')
+    elif sort_option == 'rating':
+        qs = qs.annotate(avg_rating=Avg('game_ratings__rating')).order_by('-avg_rating')
+    else:
+        qs = qs.order_by('id')  # oldest
+
+    # unikalne gatunki do panelu (posortowane alfabetycznie)
+    genres = (
+        Games.objects.exclude(genre__isnull=True).exclude(genre='')
+        .annotate(genre_clean=Trim('genre'))
+        .values_list('genre_clean', flat=True).distinct().order_by('genre_clean')
+    )
+
+    # dane do widoku
+    games_with_ratings = []
+    for game in qs:
+        avg_rating = UserRatings.objects.filter(game_id=game).aggregate(Avg('rating'))['rating__avg']
+        games_with_ratings.append({
+            "id": game.id,
+            "title": game.title,
+            "cover_image": game.cover_image,
+            "score": game.score,
+            "rating": round(avg_rating, 2) if avg_rating else None,
+        })
+
+    return render(request, "frontend/explore.html", {
+        "games": games_with_ratings,
+        "sort_option": sort_option,
+        "query": query,
+        "genres": genres,
+        "selected_genre": selected_genre,
+    })
 
 
 @jwt_required
