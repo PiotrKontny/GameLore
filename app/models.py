@@ -40,6 +40,7 @@ class UserModel(models.Model):
         default='profile_pictures/default_user.png',
         db_column='profile_picture'
     )
+    is_admin = models.BooleanField(default=False, db_column='is_admin')  # zostaw to
 
     objects = UserManager()
 
@@ -48,9 +49,8 @@ class UserModel(models.Model):
 
     class Meta:
         db_table = "Users"
-        managed = False  # <--- wracamy do tego, bo tabela już istnieje i Django ma jej nie ruszać
+        managed = False
 
-    # [PL] To zostawiamy, bo JWT wymaga tylko tych 3 właściwości, żeby działać poprawnie:
     @property
     def is_active(self):
         return True

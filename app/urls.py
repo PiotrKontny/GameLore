@@ -1,33 +1,39 @@
-from operator import index
 from django.urls import path, include
 from . import views
-from rest_framework.routers import DefaultRouter
-
-
-"""
-router = DefaultRouter()
-router.register(r'games', views.GamesViewSet)
-router.register(r'gameplots', views.GamePlotsViewSet)
-"""
 
 urlpatterns = [
-    path('', views.home),
-    #path("login/", views.LoginOrEmailTokenObtainPairSerializer.as_view(), name="login"),
+    # --- Strony główne ---
+    #path('', views.home, name="home"),
+    path("explore/", views.explore_view, name="explore"),
+    path("my_library/", views.my_library_view, name="my_library"),
+    path("profile/", views.profile_view, name="profile"),
+
+    # --- Logowanie / Rejestracja ---
     path('register/', views.RegisterUser.as_view(), name='register'),
     path('login/', views.LoginView.as_view(), name='login'),
-    # path('', include(router.urls)),
+
+    # --- Wyszukiwanie i gry ---
     path('search/', views.search_view, name='search'),
     path('results/', views.results_view, name='results'),
     path('details/', views.details_view, name='details'),
     path('games/<int:pk>/', views.game_detail_page, name='game_detail_page'),
+    path('games/<int:pk>/rating/', views.game_rating_view, name="game_rating"),
     path('compilation/', views.compilation_view, name='compilation'),
-    path("my_library/", views.my_library_view, name="my_library"),
-    path("explore/", views.explore_view, name="explore"),
-    path("profile/", views.profile_view, name="profile"),
 
-    # Json Response urls
+    # --- Admin panel główny ---
+    path("admin-panel/", views.admin_panel, name="admin_panel"),
+
+    # --- Nowe podstrony admina ---
+    path("admin-panel/users/", views.admin_users_view, name="admin_users"),
+    path("admin-panel/games/", views.admin_games_view, name="admin_games"),
+
+    # --- Akcje admina (AJAX) ---
+    path("admin-panel/delete-user/<int:user_id>/", views.admin_delete_user, name="admin_delete_user"),
+    path("admin-panel/delete-game/<int:game_id>/", views.admin_delete_game, name="admin_delete_game"),
+    path("admin-panel/edit-game-score/<int:game_id>/", views.admin_edit_game_score, name="admin_edit_game_score"),
+
+    # --- Chatbot i historia ---
     path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),
     path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
     path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
-    path("games/<int:pk>/rating/", views.game_rating_view, name="game_rating"),
 ]

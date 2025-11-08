@@ -9,7 +9,9 @@ from django.core.cache import cache
 from django.conf import settings
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, status, viewsets
+from django.views.decorators.http import require_http_methods
+from django.contrib.admin.views.decorators import staff_member_required
+from rest_framework import generics, status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -22,7 +24,8 @@ from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySeria
                           ChatBotSerializer, UserRatingSerializer)
 from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
 
-from .utils import search_mobygames, scrape_game_info, record_user_history, jwt_required
+from .utils import (search_mobygames, scrape_game_info, record_user_history, jwt_required, get_jwt_user,
+                    CookieJWTAuthentication)
 from decimal import Decimal, InvalidOperation
 import asyncio
 import json
@@ -32,83 +35,114 @@ import uuid
 import requests, os
 
 
-# Create your views here.
-def home(request):
-    """
-    Główna strona – rozdziela widok na zalogowanego i niezalogowanego użytkownika.
-    """
-    user = None
-    try:
-        result = JWTAuthentication().authenticate(request)
-        if result:
-            user, _ = result  # (user, token)
-    except Exception:
-        pass
-
-    if user and user.is_authenticated:
-        return render(request, "frontend/home_logged_in.html", {"user": user})
-    else:
-        return render(request, "frontend/home_logged_out.html")
-
-class UserView(generics.ListCreateAPIView):
-    queryset = UserModel.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
 class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        # Pozwala logować się przez username lub email
         User = get_user_model()
-        uname_field = User.USERNAME_FIELD
-        if uname_field not in attrs:
-            login_val = (
-                self.initial_data.get("login")
-                or self.initial_data.get("username")
-                or self.initial_data.get("email")
+        login_val = (
+            self.initial_data.get("login")
+            or self.initial_data.get("username")
+            or self.initial_data.get("email")
+        )
+
+        if login_val:
+            # znajdź użytkownika po username lub email
+            user = (
+                User.objects.filter(username__iexact=login_val).first()
+                or User.objects.filter(email__iexact=login_val).first()
             )
-            if login_val:
-                attrs[uname_field] = login_val
+            if not user:
+                raise serializers.ValidationError("Nie znaleziono użytkownika.")
+
+            if not user.check_password(attrs.get("password")):
+                raise serializers.ValidationError("Nieprawidłowe hasło.")
+
+            # ✅ tutaj generujemy parę tokenów ręcznie
+            refresh = RefreshToken.for_user(user)
+            data = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+            return data
+
+        # fallback
         return super().validate(attrs)
 
-class LoginView(TokenObtainPairView):
-    serializer_class = LoginOrEmailTokenObtainPairSerializer
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        """Renderuje stronę logowania HTML."""
+        return render(request, "frontend/login.html")
 
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        data = response.data
+        """Obsługuje logowanie użytkownika i zapisuje tokeny w cookies."""
+        serializer = LoginOrEmailTokenObtainPairSerializer(data=request.data)
 
-        response.set_cookie(
-            key="access_token",
-            value=data["access"],
-            httponly=True,
-            samesite="Lax"
-        )
+        if not serializer.is_valid():
+            print("[Login] Błąd logowania:", serializer.errors)
+            return render(request, "frontend/login.html", {"error": "Invalid username or password."}, status=401)
+
+        data = serializer.validated_data
+        access_token = data.get("access")
+        refresh_token = data.get("refresh")
+
+        print("ACCESS TOKEN:", str(access_token)[:50], "...")
+        print("REFRESH TOKEN:", str(refresh_token)[:50], "...")
+
+        # Utwórz nową odpowiedź Django
+        response = HttpResponseRedirect("/")
+
+        # Zapisz tokeny jako cookies
+        if access_token:
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                samesite=None,  # ważne dla Chrome
+                secure=False,
+                max_age=60 * 60,  # 1 godzina
+            )
+
+        if refresh_token:
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                samesite=None,
+                secure=False,
+                max_age=7 * 24 * 60 * 60,  # 7 dni
+            )
+
         return response
+
 
 class RegisterUser(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        users = UserModel.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+        """Renderuje stronę rejestracji HTML."""
+        return render(request, "frontend/register.html")
 
     def post(self, request):
-        print(request.data)
+        """Obsługuje rejestrację użytkownika."""
         serializer = UserSerializer(data=request.data)
 
         if serializer.is_valid():
             user = serializer.save()
 
+            # szyfrowanie hasła (na wszelki wypadek)
             if not user.password.startswith("pbkdf2_"):
                 user.password = make_password(user.password)
                 user.save(update_fields=["password"])
 
-            return Response(
-                {"message": "User created successfully!", "user_id": user.id},
-                status=status.HTTP_201_CREATED
-            )
+            # po poprawnej rejestracji przekierowanie na stronę logowania
+            return HttpResponseRedirect("/app/login/")
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # w przypadku błędów renderuj formularz ponownie z komunikatem
+        errors = serializer.errors
+        error_message = "Please correct the errors below."
+        return render(request, "frontend/register.html", {"errors": errors, "error_message": error_message})
 
 
 # As the name suggests, it's a class for viewing games (GET operator)
@@ -686,5 +720,88 @@ def game_rating_view(request, pk):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
+@jwt_required
+def admin_panel(request):
+    """
+    Główny panel administratora – wyświetla listę użytkowników i gier
+    """
+    # tylko admin (np. username == 'admin')
+    if not getattr(request.user, "is_admin", False):
+        return HttpResponseForbidden("Brak uprawnień do panelu administratora")
+
+    users = UserModel.objects.all().order_by("id")
+    games = Games.objects.all().order_by("id")
+
+    return render(request, "frontend/admin_panel.html", {
+        "users": users,
+        "games": games
+    })
 
 
+@csrf_exempt
+@jwt_required
+@require_http_methods(["POST"])
+def admin_delete_user(request, user_id):
+    print("[ADMIN] admin_delete_user wywołany")
+    if not getattr(request.user, "is_admin", False):
+        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+    user = UserModel.objects.filter(id=user_id).first()
+    if not user:
+        return JsonResponse({"error": "Użytkownik nie istnieje"}, status=404)
+    user.delete()
+    return JsonResponse({"message": "Użytkownik został usunięty"})
+
+
+@csrf_exempt
+@jwt_required
+@require_http_methods(["POST"])
+def admin_delete_game(request, game_id):
+    print("[ADMIN] admin_delete_game wywołany")
+    if not getattr(request.user, "is_admin", False):
+        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+    game = Games.objects.filter(id=game_id).first()
+    if not game:
+        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+    game.delete()
+    return JsonResponse({"message": "Gra została usunięta"})
+
+
+@csrf_exempt
+@jwt_required
+@require_http_methods(["POST"])
+def admin_edit_game_score(request, game_id):
+    print("[ADMIN] admin_edit_game_score wywołany")
+    if not getattr(request.user, "is_admin", False):
+        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        new_score = Decimal(str(data.get("score")))
+    except Exception as e:
+        return JsonResponse({"error": f"Błąd danych: {e}"}, status=400)
+
+    game = Games.objects.filter(id=game_id).first()
+    if not game:
+        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+
+    game.score = new_score
+    game.save(update_fields=["score"])
+    return JsonResponse({"message": f"Score gry '{game.title}' zmieniono na {new_score}"})
+
+
+@jwt_required
+def admin_users_view(request):
+    if not request.user.is_admin:
+        return JsonResponse({"error": "Access denied"}, status=403)
+
+    users = UserModel.objects.all().order_by("id")
+    return render(request, "frontend/admin_users.html", {"users": users})
+
+
+@jwt_required
+def admin_games_view(request):
+    if not request.user.is_admin:
+        return JsonResponse({"error": "Access denied"}, status=403)
+
+    games = Games.objects.all().order_by("id")
+    return render(request, "frontend/admin_games.html", {"games": games})

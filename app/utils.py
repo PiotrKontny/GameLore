@@ -1,6 +1,7 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 from django.db import IntegrityError, transaction
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.utils import timezone
 from .models import UserModel, Games, UserHistory
 from playwright.async_api import async_playwright
@@ -14,6 +15,7 @@ from io import BytesIO
 from decimal import Decimal
 import requests
 from PIL import Image
+from functools import wraps
 
 
 # As the name suggests, this function records user history. But what does it mean exactly? Each user has his own user
@@ -54,60 +56,49 @@ def record_user_history(user, game, refresh_timestamp=True):
 # The function below serves as a decorator (thus view_func in it's arguments) for any pages which are restricted to the
 # not logged-in users.
 def jwt_required(view_func):
+    @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-
         jwt_auth = JWTAuthentication()
 
-        # When handling requests there are several headers being sent to the backend such as the type of request
-        # (for example GET), the host, the user-agent (type of browser used), but there's also an authorization header.
-        # Normally in the authorization header, there is jwt token being sent (that long access token visible when
-        # logging into the website using the REST Framework). That's what usually happens tho, not always. Therefore,
-        # the following if statement handles the case where it doesn't go this way, and instead it tries to find that
-        # token in the cookies. To be honest this is not my solution, so I'm not an expert in how it works exactly
-        if "HTTP_AUTHORIZATION" not in request.META:
+        token = None
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            candidate = auth_header.split(" ")[1].strip()
+            # ⬇️ ignoruj puste/null/undefined z frontu
+            if candidate and candidate.lower() not in ("null", "undefined"):
+                token = candidate
+
+        if not token:
             token = request.COOKIES.get("access_token")
-            if token:
-                request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
+
+        if not token:
+            print("[JWT] Brak tokena JWT")
+            return JsonResponse({"error": "Brak tokena JWT"}, status=401)
+
+        request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
 
         try:
-            # Checks whether the token is expired or doesn't work and returns None in either of those two cases
             user_auth_tuple = jwt_auth.authenticate(request)
+            if not user_auth_tuple:
+                print("[JWT] Token nieprawidłowy lub wygasł.")
+                return JsonResponse({"error": "Nieprawidłowy token JWT"}, status=403)
 
-            # In this example, jwt_user is the technical user the jwt got from the token, however the mapped_user is the
-            # user record from the database. Thus, the following code checking if they're the same. Again, that's just
-            # in case, but that's how authentication is handled normally, to my knowledge
-            if user_auth_tuple is not None:
-                jwt_user, _ = user_auth_tuple
-                mapped_user = (
-                    UserModel.objects.filter(username=jwt_user.username).first()
-                    or UserModel.objects.filter(email=jwt_user.email).first()
-                )
+            jwt_user, _ = user_auth_tuple
+            mapped_user = (
+                UserModel.objects.filter(username=jwt_user.username).first()
+                or UserModel.objects.filter(email=jwt_user.email).first()
+            )
+            if not mapped_user:
+                print("[JWT] Nie znaleziono użytkownika w bazie.")
+                return JsonResponse({"error": "Użytkownik nie istnieje"}, status=403)
 
-                if mapped_user:
-                    request.user = mapped_user
-                    print(f"[JWT] Authenticated user: {mapped_user.username}")
-                    return view_func(request, *args, **kwargs)
-                else:
-                    print(f"[JWT] No UserModel found for JWT user={jwt_user.username}")
-                    return HttpResponseForbidden("Użytkownik nie istnieje w tabeli Users.")
+            request.user = mapped_user
+            print(f"[JWT] Authenticated user: {mapped_user.username}")
+            return view_func(request, *args, **kwargs)
 
-            # If the token is wrong or the user doesn't exist the code searches for the user by his user_id as the last
-            # resort and returns error 403 (no access) when this also fails
-            else:
-                token = request.COOKIES.get("access_token")
-                if token:
-                    user_id = request.session.get("user_id")
-                    if user_id:
-                        mapped_user = UserModel.objects.filter(id=user_id).first()
-                        if mapped_user:
-                            request.user = mapped_user
-                            print(f"[JWT] Fallback cookie user: {mapped_user.username}")
-                            return view_func(request, *args, **kwargs)
-                print("[JWT] No valid JWT found in request or cookie.")
-                return HttpResponseForbidden("Brak ważnego tokena JWT.")
         except Exception as e:
             print(f"[JWT] Authentication failed: {e}")
-            return HttpResponseForbidden("Błąd autoryzacji JWT.")
+            return JsonResponse({"error": "Token JWT nieprawidłowy lub wygasł."}, status=403)
 
     return _wrapped_view
 
@@ -139,6 +130,30 @@ def get_jwt_user(request):
     except Exception as e:
         print(f"[get_jwt_user] Auth error: {e}")
     return None
+
+
+class CookieJWTAuthentication(JWTAuthentication):
+    """
+    Pozwala odczytywać token JWT z ciasteczka `access_token` zamiast tylko z nagłówka Authorization.
+    """
+    def authenticate(self, request):
+        # Najpierw próbuj jak zwykle (Authorization)
+        header = self.get_header(request)
+        if header:
+            return super().authenticate(request)
+
+        # Jeśli brak nagłówka, spróbuj z ciasteczka
+        raw_token = request.COOKIES.get("access_token")
+        if raw_token is None:
+            return None
+
+        validated_token = self.get_validated_token(raw_token)
+        try:
+            user = self.get_user(validated_token)
+        except Exception:
+            raise AuthenticationFailed("Invalid token in cookie", code="authentication_failed")
+
+        return (user, validated_token)
 
 
 
