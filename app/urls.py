@@ -11,7 +11,7 @@ router.register(r'gameplots', views.GamePlotsViewSet)
 """
 
 urlpatterns = [
-    path('', views.main),
+    path('', views.home),
     #path("login/", views.LoginOrEmailTokenObtainPairSerializer.as_view(), name="login"),
     path('register/', views.RegisterUser.as_view(), name='register'),
     path('login/', views.LoginView.as_view(), name='login'),

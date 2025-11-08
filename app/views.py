@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
                           ChatBotSerializer, UserRatingSerializer)
@@ -32,8 +33,22 @@ import requests, os
 
 
 # Create your views here.
-def main(request):
-    return HttpResponse("Hello")
+def home(request):
+    """
+    Główna strona – rozdziela widok na zalogowanego i niezalogowanego użytkownika.
+    """
+    user = None
+    try:
+        result = JWTAuthentication().authenticate(request)
+        if result:
+            user, _ = result  # (user, token)
+    except Exception:
+        pass
+
+    if user and user.is_authenticated:
+        return render(request, "frontend/home_logged_in.html", {"user": user})
+    else:
+        return render(request, "frontend/home_logged_out.html")
 
 class UserView(generics.ListCreateAPIView):
     queryset = UserModel.objects.all()

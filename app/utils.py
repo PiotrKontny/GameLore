@@ -112,6 +112,36 @@ def jwt_required(view_func):
     return _wrapped_view
 
 
+def get_jwt_user(request):
+    """
+    Próbuje uwierzytelnić użytkownika na podstawie JWT z ciasteczka 'access_token'.
+    Nie zwraca błędów 403 — tylko obiekt użytkownika lub None.
+    """
+    jwt_auth = JWTAuthentication()
+
+    # Jeśli brak nagłówka Authorization — spróbuj wyciągnąć token z ciasteczka
+    if "HTTP_AUTHORIZATION" not in request.META:
+        token = request.COOKIES.get("access_token")
+        if token:
+            request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
+
+    try:
+        user_auth_tuple = jwt_auth.authenticate(request)
+        if user_auth_tuple is not None:
+            jwt_user, _ = user_auth_tuple
+            from .models import UserModel
+            mapped_user = (
+                UserModel.objects.filter(username=jwt_user.username).first()
+                or UserModel.objects.filter(email=jwt_user.email).first()
+            )
+            if mapped_user:
+                return mapped_user
+    except Exception as e:
+        print(f"[get_jwt_user] Auth error: {e}")
+    return None
+
+
+
 # Model for summarization is used a couple of times in this file therefore it's declared at the beginning. It's also in
 # case of future need to change the summarization model
 summarizer = None
