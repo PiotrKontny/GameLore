@@ -380,13 +380,23 @@ async def search_mobygames(game_name: str):
     encoded_name = urllib.parse.quote(game_name)
     search_url = f"https://www.mobygames.com/search/?q={encoded_name}"
 
+    # 🧹 --- Wyczyść stare miniatury na samym początku ---
+    try:
+        media_root = "media/results"
+        os.makedirs(media_root, exist_ok=True)
+        for old in os.listdir(media_root):
+            if old.startswith("result_") and old.endswith(".png"):
+                os.remove(os.path.join(media_root, old))
+        print("[CLEANUP] Folder 'media/results' wyczyszczony przed nowym wyszukiwaniem.")
+    except Exception as e:
+        print(f"[!] Błąd przy czyszczeniu folderu results: {e}")
+
     async with async_playwright() as p:
         # Playwright opens chromium browser to scrap info but # doesn't show browser window (because of headless=True)
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        # User agent needed, so it doesn't consider Playwright as a bot. My understanding of this part might be
-        # insufficient however, because this part of code is a solution I found on the internet
+        # User agent needed, so it doesn't consider Playwright as a bot.
         await page.set_extra_http_headers({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -396,6 +406,10 @@ async def search_mobygames(game_name: str):
         # Go to the website
         await page.goto(search_url, timeout=60000)
         await page.wait_for_load_state("networkidle")
+
+        # Czasem miniatury ładują się chwilę po wczytaniu treści strony,
+        # więc czekamy dodatkową sekundę, żeby były pewne źródła obrazków
+        await page.wait_for_timeout(1500)
 
         # Case where there are no results
         try:
@@ -408,12 +422,8 @@ async def search_mobygames(game_name: str):
             print(f"[!] Error while checking for 'No results found': {e}")
 
         # When searching a game on MobyGames there is a field of text at the top of the page which informs you that this
-        # page either excludes or includes games marked as Adult. In my experiments sometimes it was includes and
-        # sometimes excludes therefore I made an if case for both of them. Either way if the website includes adult
-        # games then it's not supposed to anything, however if it excludes adult games then it's supposed to click the
-        # button to show those adult games
+        # page either excludes or includes games marked as Adult.
         adult_toggle = page.locator("p:has-text('This search excludes games marked as Adult')")
-        # Basically if this adult_toggle doesn't perfectly match the text above then do this
         if await adult_toggle.count() > 0:
             click_here = adult_toggle.locator("a:has-text('Click here')")
             if await click_here.count() > 0:
@@ -424,10 +434,11 @@ async def search_mobygames(game_name: str):
         await page.wait_for_selector("table.table.mb tbody tr", timeout=20000)
         rows = await page.query_selector_all("table.table.mb tbody tr")
 
-        # Playwright scrapes first 10 results the search result shows, however on MobyGames the search result doesn't
-        # contain only games but also groups (series of games) and people, but the only thing needed are the games so in
-        # the end the only ones saved are the ones marked either game or adult game.
+        # 📂 --- Folder już wyczyszczony powyżej, więc tutaj tylko definicja ---
+        media_root = "media/results"
         results = []
+        index = 0  # licznik do numerowania plików result_1.png itd.
+
         for row in rows[:10]:
             td = await row.query_selector("td:nth-child(2)")
             if not td:
@@ -438,27 +449,52 @@ async def search_mobygames(game_name: str):
 
             clean_text = re.sub(r'^(ADULT\s+)?GAME:\s*', '', text, flags=re.IGNORECASE).strip()
             lines = [ln.strip() for ln in clean_text.splitlines() if ln.strip()]
-
-            # In some cases like Cyberpunk 2077, the games are hidden behind so called age-gate, which prevents the user
-            # from viewing mature content. To get over that restriction one needs to click "View Content" button and
-            # choose his age from the slider. However, this is not the case for web scraping as it moves in UI as well
-            # as in html and is able to scrap the needed material from tags like class="text-muted" or
-            # class="blurred-content" and thanks to that it avoids the age restriction entirely. But at the same time
-            # what stays is the annoying "mature content" and "view content" tags which are not taken into results list
             filtered = [ln for ln in lines if "mature content" not in ln.lower() and ln != "View Content"]
             clean_text = "\n".join(filtered)
 
-            # Playwright scrapes the games description which is under the game's name on MobyGames but also the links to
-            # those results
+            # Pobiera link do gry
             link_el = await td.query_selector("b a") or await td.query_selector("a")
             href = await link_el.get_attribute("href") if link_el else None
             full_url = f"https://www.mobygames.com{href}" if href and not href.startswith("http") else href
 
+            # 📸 --- Zapis okładki wyniku ---
+            try:
+                img_td = await row.query_selector("td:nth-child(1) img")
+                index += 1
+                if img_td:
+                    src = await img_td.get_attribute("src")
+                    if src and src.startswith("http"):
+                        resp = requests.get(src, timeout=10)
+                        if resp.status_code == 200:
+                            out_path = os.path.join(media_root, f"result_{index}.png")
+                            with open(out_path, "wb") as f:
+                                f.write(resp.content)
+                        else:
+                            default_icon = os.path.join(media_root, "default_icon.png")
+                            out_path = os.path.join(media_root, f"result_{index}.png")
+                            if os.path.exists(default_icon):
+                                from shutil import copyfile
+                                copyfile(default_icon, out_path)
+                    else:
+                        default_icon = os.path.join(media_root, "default_icon.png")
+                        out_path = os.path.join(media_root, f"result_{index}.png")
+                        if os.path.exists(default_icon):
+                            from shutil import copyfile
+                            copyfile(default_icon, out_path)
+                else:
+                    default_icon = os.path.join(media_root, "default_icon.png")
+                    out_path = os.path.join(media_root, f"result_{index}.png")
+                    if os.path.exists(default_icon):
+                        from shutil import copyfile
+                        copyfile(default_icon, out_path)
+            except Exception as e:
+                print(f"[!] Błąd przy zapisie miniatury result_{index}: {e}")
+
             results.append({"url": full_url, "description": clean_text})
+
             if len(results) >= 5:
                 break
 
-        # A case when the result search shows no results or less than 5 "GAME: " results
         if len(results) == 0:
             print("[INFO] No valid game results found in search results.")
             await browser.close()

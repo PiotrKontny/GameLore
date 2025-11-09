@@ -1,16 +1,145 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>GameLore – Szukaj</title></head>
-<body>
-  <h1>Wpisz nazwę gry</h1>
-  <form method="post" action="{% url 'search' %}">
-    {% csrf_token %}
-    <input type="text" name="game" placeholder='np. "Cyberpunk 2077"' style="width:320px" />
-    <button type="submit">Szukaj</button>
-  </form>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Games - GameLore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <p>Lub wyślij JSON na <code>/ai/search/</code>:
-    <pre>POST {"game": "Cyberpunk 2077"}</pre>
-  </p>
+  <style>
+    :root{
+      --nav:#0f1836;
+      --tile:#0f1836;
+      --gold:#d6b679;
+      --shadow:0 12px 28px rgba(0,0,0,.25);
+      --radius:18px;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:#f4f6fa;
+      font-family:"Segoe UI", Roboto, sans-serif;
+      color:#333;
+    }
+
+    /* NAVBAR */
+    .navbar{
+      background:var(--nav);
+      padding:8px 20px;
+      display:flex; align-items:center; justify-content:space-between;
+      box-shadow:0 3px 10px rgba(0,0,0,.18);
+    }
+    .brand img{height:72px}
+    .profile-chip{
+      display:inline-flex; align-items:center; gap:12px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.30);
+      padding:8px 14px;
+      border-radius:14px; color:#fff; text-decoration:none;
+    }
+    .profile-chip span{
+      font-weight:700; font-size:1.25rem;
+    }
+    .profile-chip img{
+      width:56px; height:56px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid rgba(255,255,255,.6);
+      background:#fff;
+    }
+
+    /* CENTRALNY BLOK WYSZUKIWANIA */
+    .search-container{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;   /* zostaje */
+      height:calc(100vh - 220px);   /* było 120px, teraz mniej miejsca na dole */
+      text-align:center;
+      padding-top:40px;             /* mniejszy margines u góry */
+    }
+
+    .search-logo{
+      height:180px;                 /* trochę mniejsze logo, żeby wyglądało proporcjonalnie */
+      margin-bottom:24px;           /* bliżej paska wyszukiwania */
+      margin-top:10px;              /* praktycznie pod paskiem nawigacyjnym */
+    }
+
+    .search-box{
+      width:100%;
+      max-width:600px;
+      display:flex;
+      background:white;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .search-box input{
+      flex:1;
+      border:none;
+      padding:16px 20px;
+      font-size:1.2rem;
+      outline:none;
+      border-radius:var(--radius) 0 0 var(--radius);
+    }
+
+    .search-box button{
+      background:var(--nav);
+      color:var(--gold);
+      border:none;
+      padding:0 24px;
+      font-size:1.2rem;
+      font-weight:600;
+      cursor:pointer;
+      transition:background 0.2s;
+    }
+
+    .search-box button:hover{
+      background:#16265a;
+    }
+
+    .hint{
+      margin-top:18px;
+      color:#555;
+      font-size:1rem;
+    }
+
+    @media(max-width:640px){
+      .brand img{height:54px}
+      .search-logo{height:160px}
+      .search-box input{font-size:1rem}
+      .search-box button{font-size:1rem}
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">
+      <a href="/" style="text-decoration:none;">
+        <img src="/media/icons/Logo.png" alt="Logo">
+      </a>
+    </div>
+    <a href="/app/profile/" class="profile-chip">
+      <span>{{ user.username }}</span>
+      {% if user.profile_picture %}
+        <img src="/media/{{ user.profile_picture }}" alt="{{ user.username }}">
+      {% endif %}
+    </a>
+  </nav>
+
+  <div class="search-container">
+    <img src="/media/icons/Logo.png" alt="GameLore" class="search-logo">
+
+    <form method="POST" action="/app/search/" class="search-box">
+      {% csrf_token %}
+      <input type="text" name="game" placeholder="Enter game title..." required>
+      <button type="submit">Search</button>
+    </form>
+
+    <p class="hint">Search for any game and GameLore will fetch information from MobyGames and Wikipedia.</p>
+  </div>
+
 </body>
 </html>

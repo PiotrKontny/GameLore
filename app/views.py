@@ -176,7 +176,10 @@ def game_detail(request, pk: int):
 @csrf_exempt
 def search_view(request):
     if request.method == 'GET':
+        # Dodano: renderowanie estetycznej strony wyszukiwania
+        # (korzysta z pliku templates/frontend/search_form.html)
         return render(request, 'frontend/search_form.html')
+
     game = None
 
     # Checks if the request content type is json
@@ -219,10 +222,20 @@ def results_view(request):
     # cause any errors. Pretty much same happens with query variable
     results = request.session.get('ai_last_results') or []
     query = request.session.get('ai_last_query') or ''
+
+    # 🔑 Spróbuj odczytać użytkownika z JWT (ciasteczko access_token)
+    jwt_user = get_jwt_user(request)
+
+    # Dodane: przekazanie obiektu użytkownika do szablonu
+    context = {
+        'results': results,
+        'query': query,
+        'user': jwt_user if jwt_user else (request.user if request.user.is_authenticated else None),
+    }
+
     # Self-explanatory but it renders the site using the correct html file and uses results and query variables as the
     # needed results of the query (pleonasm or "masło maślane", as one would call it but that's just how it works)
-    return render(request, 'frontend/search_results.html', {'results': results, 'query': query})
-
+    return render(request, 'frontend/search_results.html', context)
 
 
 # When the json is being passed to the database, the database cannot accept the results in decimal, dictionary or a list
