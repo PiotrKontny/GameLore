@@ -371,6 +371,85 @@ def summarize_plot_sections(plot_tree: dict, total_threshold: int = 200) -> str 
     return "\n".join(out_lines).strip()
 
 
+
+# === 🔽 NOWA FUNKCJA DODANA NA KOŃCU PLIKU ===
+# Działa podobnie jak summarize_plot_sections(), ale opiera się na gotowym markdownie z bazy (full_plot)
+# Nie wymaga ponownego scrapowania Wikipedii. Zachowuje nagłówki i streszcza sekcje osobno.
+def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) -> str | None:
+    """
+    Streszcza fabułę na podstawie istniejącego markdownu z bazy (###, ####, ##).
+    Zachowuje strukturę nagłówków i streszcza każdą sekcję osobno.
+    """
+
+    def word_count(t: str) -> int:
+        return len((t or "").split())
+
+    if not full_plot_md or "No Plot Found" in full_plot_md:
+        return None
+
+    summarizer = get_summarizer()
+    lines = full_plot_md.splitlines()
+    sections = []
+    current_heading = None
+    buffer = []
+
+    # 🔍 --- Parsowanie markdownu ---
+    for line in lines:
+        if re.match(r'^(#+)\s', line.strip()):
+            if current_heading and buffer:
+                sections.append((current_heading, "\n".join(buffer).strip()))
+                buffer = []
+            current_heading = line.strip()
+        else:
+            buffer.append(line.strip())
+
+    if current_heading and buffer:
+        sections.append((current_heading, "\n".join(buffer).strip()))
+
+    if not sections:
+        return None
+
+    # --- Licz całkowitą długość fabuły ---
+    total_words = sum(word_count(content) for _, content in sections)
+    if total_words <= total_threshold:
+        return None
+
+    out_lines = []
+
+    print(f"[SUMMARY] Rozpoczynam streszczanie fabuły ({len(sections)} sekcji, ~{total_words} słów).")
+
+    # --- Generowanie streszczeń ---
+    for heading, text in sections:
+        wc = word_count(text)
+        clean_heading = heading.strip()
+        print(f"[SUMMARY] Sekcja: {clean_heading} ({wc} słów)")
+
+        if wc < 80:
+            summary = text.strip()
+        elif wc < 200:
+            res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+            summary = res[0]["summary_text"]
+        elif wc < 500:
+            res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+            summary = res[0]["summary_text"]
+        else:
+            chunks = [text[i:i+3500] for i in range(0, len(text), 3500)]
+            partials = []
+            for i, ch in enumerate(chunks, 1):
+                print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
+                res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                partials.append(res[0]["summary_text"])
+            summary = " ".join(partials)
+
+        out_lines.append(clean_heading)
+        out_lines.append(summary.strip())
+        out_lines.append("")
+
+    result = "\n".join(out_lines).strip()
+    print("[SUMMARY] Generowanie streszczenia zakończone.")
+    return result
+
+
 # When the user searches a game on the website, the scraper is activated, and it scrapes whatever MobyGames shows as a
 # result of searching the same game. This is the fist instance of using PlayWright in this code. Async function needed
 # for Playwright's asynchronous nature of "await" which, as the name implies, waits for the attributes to be scrapped

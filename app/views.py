@@ -668,11 +668,11 @@ def chatbot_ask(request):
 def generate_summary_view(request, pk):
     """
     Generuje streszczenie fabuły gry po kliknięciu przycisku "Generate Summary".
-    Działa identycznie jak proces scrapowania, używając extract_plot_structure, build_markdown_with_headings i summarize_plot_sections.
+    Działa na podstawie istniejącego full_plot z bazy (markdown).
+    Nie scrapuje Wikipedii — działa lokalnie.
     """
     import markdown
-    from bs4 import BeautifulSoup
-    from .utils import summarize_plot_sections, build_markdown_with_headings, extract_plot_structure
+    from .utils import summarize_plot_from_markdown
 
     game = get_object_or_404(Games, pk=pk)
     plot = GamePlots.objects.filter(game_id=game).first()
@@ -680,63 +680,34 @@ def generate_summary_view(request, pk):
     if not plot:
         return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
 
-    # Jeśli już istnieje streszczenie, nie generujemy ponownie
+    # ✅ Jeśli streszczenie już istnieje — zwróć je bez generowania
     if plot.summary and "No Summary Available" not in plot.summary:
         return JsonResponse({"summary": markdown.markdown(plot.summary)})
 
-    # Jeśli nie ma pełnej fabuły lub zawiera komunikat "No Plot Found"
+    # ❌ Brak fabuły lub placeholder
     if not plot.full_plot or "No Plot Found" in plot.full_plot:
         return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
 
     try:
-        # --- Zdekoduj markdown fabuły i odtwórz strukturę z nagłówkami ---
-        soup = BeautifulSoup(plot.full_plot, "html.parser")
-        text_content = soup.get_text()
-        if not text_content.strip():
-            return JsonResponse({"error": "Nie można odczytać treści fabuły."}, status=400)
+        print(f"[SUMMARY] Uruchamiam streszczenie z markdownu dla gry '{game.title}'")
+        summary_md = summarize_plot_from_markdown(plot.full_plot)
 
-        # --- Próba ponownego wydobycia struktury sekcji ---
-        plot_tree = extract_plot_structure(soup)
-        if not plot_tree:
-            # Jeśli nie uda się odtworzyć struktury — streść cały tekst, ale z chunkami
-            from .utils import get_summarizer
-            summarizer = get_summarizer()
-            text = text_content.strip()
-            words = len(text.split())
-            if words < 80:
-                summary_text = text
-            elif words < 200:
-                res = summarizer(text, max_length=120, min_length=50, do_sample=False)
-                summary_text = res[0]["summary_text"]
-            elif words < 500:
-                res = summarizer(text, max_length=160, min_length=80, do_sample=False)
-                summary_text = res[0]["summary_text"]
-            else:
-                chunks = [text[i:i+3500] for i in range(0, len(text), 3500)]
-                partials = []
-                for ch in chunks:
-                    res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
-                    partials.append(res[0]["summary_text"])
-                summary_text = " ".join(partials)
-            summary_md = summary_text
-        else:
-            # --- Użyj Twojej funkcji do streszczania sekcji ---
-            summary_md = summarize_plot_sections(plot_tree)
-            if not summary_md:
-                return JsonResponse({"summary": "<p>Fabuła jest zbyt krótka, by wymagała streszczenia.</p>"})
+        if not summary_md:
+            return JsonResponse({
+                "summary": "<p>Fabuła jest zbyt krótka, by wymagała streszczenia.</p>"
+            })
 
-        # Zbuduj markdown z nagłówkami (żeby zachować format)
-        final_md = build_markdown_with_headings(plot_tree)
+        # 📝 Zapis do bazy
         plot.summary = summary_md
         plot.save(update_fields=["summary"])
 
-        return JsonResponse({"summary": markdown.markdown(summary_md)})
+        summary_html = markdown.markdown(summary_md)
+        print(f"[SUMMARY] Zakończono streszczenie gry '{game.title}'")
+        return JsonResponse({"summary": summary_html})
 
     except Exception as e:
         print(f"[SUMMARY ERROR] {e}")
         return JsonResponse({"error": f"Błąd podczas generowania streszczenia: {e}"}, status=500)
-
-
 
 
 
