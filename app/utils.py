@@ -11,6 +11,7 @@ import urllib.parse
 import asyncio
 import os
 import re
+import time
 from io import BytesIO
 from decimal import Decimal
 import requests
@@ -378,7 +379,7 @@ def summarize_plot_sections(plot_tree: dict, total_threshold: int = 200) -> str 
 def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) -> str | None:
     """
     Streszcza fabułę na podstawie istniejącego markdownu z bazy (###, ####, ##).
-    Zachowuje strukturę nagłówków i streszcza każdą sekcję osobno.
+    Zachowuje strukturę nagłówków i streszcza każdą sekcję osobno, z obsługą hierarchii.
     """
 
     def word_count(t: str) -> int:
@@ -387,67 +388,133 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
     if not full_plot_md or "No Plot Found" in full_plot_md:
         return None
 
+    start_time = time.time()
     summarizer = get_summarizer()
     lines = full_plot_md.splitlines()
-    sections = []
-    current_heading = None
+
+    sections = {}
+    current_h3 = None
+    current_h4 = None
     buffer = []
 
-    # 🔍 --- Parsowanie markdownu ---
+    # --- Parsowanie markdownu ---
     for line in lines:
-        if re.match(r'^(#+)\s', line.strip()):
-            if current_heading and buffer:
-                sections.append((current_heading, "\n".join(buffer).strip()))
+        heading_match = re.match(r'^(#+)\s+(.*)', line.strip())
+        if heading_match:
+            hashes, title = heading_match.groups()
+            level = len(hashes)
+
+            # Zapisz poprzedni bufor zanim przejdziesz dalej
+            if buffer:
+                if current_h3:
+                    if current_h4:
+                        sections[current_h3][current_h4] = "\n".join(buffer).strip()
+                    else:
+                        # Jeśli h4 się skończyło, zapisujemy tekst bezpośrednio pod h3
+                        if isinstance(sections[current_h3], str):
+                            sections[current_h3] += "\n" + "\n".join(buffer).strip()
+                        else:
+                            sections[current_h3]["__main__"] = "\n".join(buffer).strip()
                 buffer = []
-            current_heading = line.strip()
+
+            # Rozpoznaj poziom nagłówka
+            if level == 3:  # ### — poziom główny
+                current_h3 = title.strip()
+                current_h4 = None
+                sections[current_h3] = {}
+            elif level == 4 and current_h3:  # #### — podrzędny do aktualnego ###
+                current_h4 = title.strip()
+                sections[current_h3][current_h4] = ""
+            else:
+                # Inne poziomy (np. ##) ignorujemy lub traktujemy jak główny
+                current_h3 = title.strip()
+                current_h4 = None
+                sections[current_h3] = {}
+
         else:
             buffer.append(line.strip())
 
-    if current_heading and buffer:
-        sections.append((current_heading, "\n".join(buffer).strip()))
+    # Zapisz końcowy bufor
+    if buffer and current_h3:
+        if current_h4:
+            sections[current_h3][current_h4] = "\n".join(buffer).strip()
+        else:
+            sections[current_h3]["__main__"] = "\n".join(buffer).strip()
 
     if not sections:
         return None
 
-    # --- Licz całkowitą długość fabuły ---
-    total_words = sum(word_count(content) for _, content in sections)
+    # --- Oblicz łączną liczbę słów ---
+    total_words = 0
+    for v in sections.values():
+        if isinstance(v, dict):
+            total_words += sum(word_count(x) for x in v.values())
+        else:
+            total_words += word_count(v)
+
     if total_words <= total_threshold:
         return None
 
     out_lines = []
-
     print(f"[SUMMARY] Rozpoczynam streszczanie fabuły ({len(sections)} sekcji, ~{total_words} słów).")
 
     # --- Generowanie streszczeń ---
-    for heading, text in sections:
-        wc = word_count(text)
-        clean_heading = heading.strip()
-        print(f"[SUMMARY] Sekcja: {clean_heading} ({wc} słów)")
+    for h3, content in sections.items():
+        out_lines.append(f"### {h3}")
 
-        if wc < 80:
-            summary = text.strip()
-        elif wc < 200:
-            res = summarizer(text, max_length=120, min_length=50, do_sample=False)
-            summary = res[0]["summary_text"]
-        elif wc < 500:
-            res = summarizer(text, max_length=160, min_length=80, do_sample=False)
-            summary = res[0]["summary_text"]
+        if isinstance(content, dict):
+            for h4, text in content.items():
+                if not text.strip():
+                    continue
+                out_lines.append(f"#### {h4}" if h4 != "__main__" else "")
+                wc = word_count(text)
+                print(f"[SUMMARY] Sekcja: {h3} -> {h4} ({wc} słów)" if h4 != "__main__" else f"[SUMMARY] Sekcja: {h3} ({wc} słów)")
+
+                if wc < 80:
+                    summary = text.strip()
+                elif wc < 200:
+                    res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+                    summary = res[0]["summary_text"]
+                elif wc < 500:
+                    res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+                    summary = res[0]["summary_text"]
+                else:
+                    chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
+                    partials = []
+                    for i, ch in enumerate(chunks, 1):
+                        print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
+                        res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                        partials.append(res[0]["summary_text"])
+                    summary = " ".join(partials)
+
+                out_lines.append(summary.strip())
+                out_lines.append("")
+
         else:
-            chunks = [text[i:i+3500] for i in range(0, len(text), 3500)]
-            partials = []
-            for i, ch in enumerate(chunks, 1):
-                print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
-                res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
-                partials.append(res[0]["summary_text"])
-            summary = " ".join(partials)
+            text = content.strip()
+            wc = word_count(text)
+            if wc < 80:
+                summary = text
+            elif wc < 200:
+                res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+                summary = res[0]["summary_text"]
+            elif wc < 500:
+                res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+                summary = res[0]["summary_text"]
+            else:
+                chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
+                partials = []
+                for i, ch in enumerate(chunks, 1):
+                    print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
+                    res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                    partials.append(res[0]["summary_text"])
+                summary = " ".join(partials)
+            out_lines.append(summary.strip())
+            out_lines.append("")
 
-        out_lines.append(clean_heading)
-        out_lines.append(summary.strip())
-        out_lines.append("")
-
-    result = "\n".join(out_lines).strip()
-    print("[SUMMARY] Generowanie streszczenia zakończone.")
-    return result
+    elapsed = time.time() - start_time
+    print(f"[SUMMARY] Generowanie streszczenia zakończone w {elapsed:.1f}s.")
+    return "\n".join(out_lines).strip()
 
 
 # When the user searches a game on the website, the scraper is activated, and it scrapes whatever MobyGames shows as a
@@ -785,7 +852,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 if structured_plot:
                     # Made solely for markdown library which differentiates different headings
                     full_plot_md = build_markdown_with_headings(structured_plot)
-                    summary_md = summarize_plot_sections(structured_plot)
+                    #summary_md = summarize_plot_sections(structured_plot)
             except Exception as e:
                 print(f"[!] Wikipedia scrape failed: {e}")
 
@@ -890,5 +957,79 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "is_compilation": False,
             "mobygames_url": url,  # <<< nowa linia
             "wikipedia_url": wiki_url  # <<< nowa linia
+        }
+
+
+
+
+# === 🔁 SCRAPE_GAME_INFO_ADMIN ===
+# Wersja scrape_game_info() używana w panelu administratora.
+# Różni się tym, że automatycznie generuje streszczenie (summary_md)
+# przy użyciu summarize_plot_sections() oraz nadpisuje stare dane gry.
+async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = True):
+    """
+    Scraper używany w panelu admina — generuje pełną fabułę i streszczenie.
+    """
+    from .models import Games, GamePlots
+
+    print(f"[ADMIN RELOAD] Rozpoczynam pełne przeładowanie gry z URL: {url}")
+    start_time = time.time()
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.set_extra_http_headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/140.0.0.0 Safari/537.36"
+        })
+
+        await page.goto(url, timeout=30000)
+        await page.wait_for_load_state("networkidle")
+
+        # --- SCRAPE PODSTAWOWYCH INFORMACJI ---
+        title = None
+        if await page.query_selector("h1.mb-0"):
+            title = (await page.inner_text("h1.mb-0")).strip()
+
+        # --- WIKI SCRAPE ---
+        full_plot_md = None
+        summary_md = None
+        wiki_url = None
+
+        if title:
+            wiki_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
+            print(f"[ADMIN RELOAD] Wikipedia lookup: {wiki_url}")
+
+            try:
+                await page.goto(wiki_url, timeout=30000)
+                html = await page.content()
+                soup = BeautifulSoup(html, "html.parser")
+                for e in soup.select("span.mw-editsection, div.hatnote, sup.reference"):
+                    e.decompose()
+
+                structured_plot = extract_plot_structure(soup)
+                if structured_plot:
+                    full_plot_md = build_markdown_with_headings(structured_plot)
+                    summary_md = summarize_plot_sections(structured_plot)
+                    print("[ADMIN RELOAD] Streszczenie wygenerowane pomyślnie.")
+            except Exception as e:
+                print(f"[ADMIN RELOAD] Wikipedia scrape failed: {e}")
+
+        # --- WERYFIKACJA ---
+        if not full_plot_md:
+            full_plot_md = "## No Plot Found\n\nNo plot could be scraped for this game."
+        if not summary_md:
+            summary_md = "## No Summary Available\n\nNo summary could be generated."
+
+        await browser.close()
+        elapsed = time.time() - start_time
+        print(f"[ADMIN RELOAD] Zakończono w {elapsed:.1f}s")
+
+        return {
+            "title": title or "Unknown",
+            "full_plot": full_plot_md,
+            "summary": summary_md,
+            "wikipedia_url": wiki_url,
         }
 

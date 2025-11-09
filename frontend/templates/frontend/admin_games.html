@@ -98,6 +98,21 @@
     .btn-warning:hover {
       background:#c5a566;
     }
+
+    .btn-info {
+      background:#0f1836;
+      border:none;
+      color:#d6b679;
+      font-weight:600;
+    }
+    .btn-info:hover {
+      background:#1a285a;
+    }
+    .table td:last-child {
+      white-space: nowrap;
+      width: 1%;
+    }
+
   </style>
 </head>
 <body>
@@ -129,18 +144,26 @@
         </tr>
       </thead>
       <tbody>
-        {% for game in games %}
-        <tr>
-          <td>{{ game.id }}</td>
-          <td>{{ game.title }}</td>
-          <td id="score-{{ game.id }}">{{ game.score }}</td>
-          <td>
-            <button class="btn btn-warning btn-sm me-2" onclick="editScore({{ game.id }})">Edit Score</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteGame({{ game.id }})">Delete</button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+      {% for game in games %}
+          <tr>
+            <td>{{ game.id }}</td>
+            <td>
+              <a href="/app/games/{{ game.id }}/" style="text-decoration:none; font-weight:600; color:#0f1836;">
+                {{ game.title }}
+              </a>
+            </td>
+            <td>
+              <input type="number" id="score-{{ game.id }}" value="{{ game.score }}" min="0" max="10" step="0.1"
+                     onchange="updateScore({{ game.id }})"
+                     style="width:70px; text-align:center; border:1px solid #ccc; border-radius:6px; padding:4px;">
+            </td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="deleteGame({{ game.id }})">Delete</button>
+              <button class="btn btn-dark btn-sm" onclick="reloadGame({{ game.id }})">Reload Game</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
     </table>
   </div>
 
@@ -171,6 +194,40 @@
         document.getElementById(`score-${id}`).textContent = newScore;
       }
     }
+
+    async function reloadGame(id){
+      if(!confirm("Are you sure you want to reload this game (re-scrape + regenerate summary)?")) return;
+      const res = await fetch(`/app/admin-panel/reload-game/${id}/`, {
+        method:"POST",
+        credentials:"include"
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+    }
+    async function updateScore(id) {
+      const input = document.getElementById(`score-${id}`);
+      const newScore = input.value;
+      if (!newScore) return;
+
+      const res = await fetch(`/app/admin-panel/edit-game-score/${id}/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ score: newScore })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        console.log(`[ADMIN] Zmieniono score gry ${id} na ${newScore}`);
+        input.style.border = "2px solid #28a745"; // zielony border po udanym zapisie
+        setTimeout(() => input.style.border = "1px solid #ccc", 1500);
+      } else {
+        alert(data.error || "Błąd zapisu oceny");
+        input.style.border = "2px solid red";
+      }
+}
+
+
   </script>
 
 </body>

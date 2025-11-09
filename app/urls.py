@@ -32,6 +32,7 @@ urlpatterns = [
     path("admin-panel/delete-user/<int:user_id>/", views.admin_delete_user, name="admin_delete_user"),
     path("admin-panel/delete-game/<int:game_id>/", views.admin_delete_game, name="admin_delete_game"),
     path("admin-panel/edit-game-score/<int:game_id>/", views.admin_edit_game_score, name="admin_edit_game_score"),
+    path("admin-panel/reload-game/<int:game_id>/", views.admin_reload_game, name="admin_reload_game"),
 
     # --- Chatbot i historia ---
     path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),

@@ -9,7 +9,6 @@
   <style>
     :root{
       --nav:#0f1836;
-      --tile:#0f1836;
       --gold:#d6b679;
       --shadow:0 12px 28px rgba(0,0,0,.25);
       --radius:18px;
@@ -53,16 +52,16 @@
       display:flex;
       flex-direction:column;
       align-items:center;
-      justify-content:flex-start;   /* zostaje */
-      height:calc(100vh - 220px);   /* było 120px, teraz mniej miejsca na dole */
+      justify-content:flex-start;
+      height:calc(100vh - 220px);
       text-align:center;
-      padding-top:40px;             /* mniejszy margines u góry */
+      padding-top:40px;
     }
 
     .search-logo{
-      height:180px;                 /* trochę mniejsze logo, żeby wyglądało proporcjonalnie */
-      margin-bottom:24px;           /* bliżej paska wyszukiwania */
-      margin-top:10px;              /* praktycznie pod paskiem nawigacyjnym */
+      height:180px;
+      margin-bottom:24px;
+      margin-top:10px;
     }
 
     .search-box{
@@ -105,6 +104,31 @@
       font-size:1rem;
     }
 
+    /* === MAŁY LOADER === */
+    #loader {
+      display:none;               /* tylko jedno display */
+      margin-top:18px;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      font-weight:600;
+      color:var(--nav);
+      font-size:1.1rem;
+    }
+
+
+    .spinner {
+      width:26px; height:26px;
+      border:4px solid rgba(15,24,54,0.15);
+      border-top-color:var(--gold);
+      border-radius:50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @media(max-width:640px){
       .brand img{height:54px}
       .search-logo{height:160px}
@@ -132,14 +156,60 @@
   <div class="search-container">
     <img src="/media/icons/Logo.png" alt="GameLore" class="search-logo">
 
-    <form method="POST" action="/app/search/" class="search-box">
+    <form id="searchForm" class="search-box">
       {% csrf_token %}
-      <input type="text" name="game" placeholder="Enter game title..." required>
+      <input type="text" id="gameInput" name="game" placeholder="Enter game title..." required>
       <button type="submit">Search</button>
     </form>
 
+    <div id="loader">
+      <div class="spinner"></div>
+      <span>Searching for games...</span>
+    </div>
+
     <p class="hint">Search for any game and GameLore will fetch information from MobyGames and Wikipedia.</p>
   </div>
+
+  <script>
+    const form = document.getElementById("searchForm");
+    const loader = document.getElementById("loader");
+    const input = document.getElementById("gameInput");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const game = input.value.trim();
+
+      // 🔸 Loader pokaże się tylko, jeśli coś wpisano
+      if (!game) {
+        alert("Please enter a game title before searching.");
+        return;
+      }
+
+      loader.style.display = "flex";
+
+      try {
+        const response = await fetch("/app/search/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          credentials: "include",
+          body: JSON.stringify({ game })
+        });
+
+        if (response.ok) {
+          window.location.href = "/app/results/";
+        } else {
+          loader.style.display = "none";
+          alert("Failed to fetch results. Please try again.");
+        }
+      } catch (err) {
+        loader.style.display = "none";
+        alert("Error connecting to server.");
+      }
+    });
+  </script>
 
 </body>
 </html>

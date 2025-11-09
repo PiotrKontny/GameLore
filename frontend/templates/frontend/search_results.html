@@ -9,7 +9,6 @@
   <style>
     :root{
       --nav:#0f1836;
-      --tile:#0f1836;
       --gold:#d6b679;
       --shadow:0 12px 28px rgba(0,0,0,.25);
       --radius:18px;
@@ -22,7 +21,7 @@
       color:#333;
     }
 
-    /* === NAVBAR identyczny jak w home === */
+    /* NAVBAR */
     .navbar{
       background:var(--nav);
       padding:8px 20px;
@@ -49,15 +48,14 @@
       font-size:1.25rem;
     }
     .profile-chip img{
-      width:56px;
-      height:56px;
+      width:56px; height:56px;
       border-radius:50%;
       object-fit:cover;
       border:2px solid rgba(255,255,255,.6);
       background:#fff;
     }
 
-    /* === Nagłówek i przycisk powrotu === */
+    /* HEADER */
     .header-section{
       text-align:center;
       margin-top:60px;
@@ -74,7 +72,7 @@
 
     .back-btn{
       display:inline-block;
-      margin:0 auto 30px;
+      margin:0 auto 20px;
       padding:10px 22px;
       border-radius:12px;
       background:var(--nav);
@@ -89,7 +87,7 @@
       color:#f5dca1;
     }
 
-    /* === LISTA WYNIKÓW === */
+    /* RESULTS LIST */
     .results-list{
       max-width:1000px;
       margin:0 auto 80px;
@@ -112,8 +110,7 @@
       box-shadow:0 8px 20px rgba(0,0,0,.2);
     }
     .result-item img{
-      width:56px;
-      height:56px;
+      width:56px; height:56px;
       object-fit:cover;
       border-radius:8px;
       flex-shrink:0;
@@ -126,16 +123,12 @@
       font-weight:700;
       margin-bottom:6px;
       color:var(--nav);
-      white-space:normal;
       word-break:break-word;
-      overflow-wrap:break-word;
     }
     .result-info p{
       font-size:0.95rem;
       color:#555;
       margin:0;
-      white-space:normal;
-      word-break:break-word;
     }
     .result-info small{
       color:#777;
@@ -150,7 +143,31 @@
       margin-top:120px;
     }
 
-    /* === Responsywność === */
+    /* MAŁY LOADER (jak w search_form.html) */
+    #loader {
+      display:none;
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      font-weight:600;
+      color:var(--nav);
+      font-size:1.1rem;
+    }
+
+    .spinner {
+      width:26px; height:26px;
+      border:4px solid rgba(15,24,54,0.15);
+      border-top-color:var(--gold);
+      border-radius:50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @media(max-width:640px){
       .brand img{height:54px}
       .profile-chip img{width:42px;height:42px;}
@@ -161,32 +178,36 @@
 </head>
 <body>
 
-    <nav class="navbar">
-      <div class="brand">
-        <a href="/" style="text-decoration:none;">
-          <img src="/media/icons/Logo.png" alt="Logo">
-        </a>
-      </div>
-
-      <a href="/app/profile/" class="profile-chip">
-        {% if user %}
-          <span>{{ user.username }}</span>
-          {% if user.profile_picture %}
-            <img src="/media/{{ user.profile_picture }}" alt="{{ user.username }}">
-          {% endif %}
-        {% else %}
-          <!-- Fallback dla niezalogowanego (żeby chip nie był "pustą pigułką") -->
-          <span>Profile</span>
-        {% endif %}
+  <nav class="navbar">
+    <div class="brand">
+      <a href="/" style="text-decoration:none;">
+        <img src="/media/icons/Logo.png" alt="Logo">
       </a>
-    </nav>
+    </div>
 
+    <a href="/app/profile/" class="profile-chip">
+      {% if user %}
+        <span>{{ user.username }}</span>
+        {% if user.profile_picture %}
+          <img src="/media/{{ user.profile_picture }}" alt="{{ user.username }}">
+        {% endif %}
+      {% else %}
+        <span>Profile</span>
+      {% endif %}
+    </a>
+  </nav>
 
   <main>
     <section class="header-section">
       <h1>Search Results for "{{ query }}"</h1>
       <p>Click any result to explore its story.</p>
       <a href="{% url 'search' %}" class="back-btn">← Back to Search</a>
+
+      <!-- MAŁY LOADER POD PRZYCISKIEM -->
+      <div id="loader">
+        <div class="spinner"></div>
+        <span>Loading game details...</span>
+      </div>
     </section>
 
     {% if results %}
@@ -207,6 +228,20 @@
       <p class="no-results">No results found for your search.</p>
     {% endif %}
   </main>
+
+  <script>
+    const loader = document.getElementById("loader");
+
+    window.addEventListener("load", () => {
+      loader.style.display = "none";
+    });
+
+    document.querySelectorAll(".result-item").forEach(item => {
+      item.addEventListener("click", (e) => {
+        loader.style.display = "flex";
+      });
+    });
+  </script>
 
 </body>
 </html>

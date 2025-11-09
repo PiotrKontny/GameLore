@@ -842,3 +842,47 @@ def admin_games_view(request):
 
     games = Games.objects.all().order_by("id")
     return render(request, "frontend/admin_games.html", {"games": games})
+
+
+
+@csrf_exempt
+@jwt_required
+@require_http_methods(["POST"])
+def admin_reload_game(request, game_id):
+    """
+    Przeładowuje (scrapuje ponownie) wybraną grę i aktualizuje jej fabułę + streszczenie.
+    """
+    if not getattr(request.user, "is_admin", False):
+        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+
+    from .models import Games, GamePlots
+    from .utils import scrape_game_info_admin
+
+    game = Games.objects.filter(id=game_id).first()
+    if not game:
+        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+
+    if not game.mobygames_url:
+        return JsonResponse({"error": "Brak adresu URL MobyGames dla tej gry."}, status=400)
+
+    try:
+        print(f"[ADMIN RELOAD] Uruchamiam ponowne scrapowanie dla gry: {game.title}")
+        data = asyncio.run(scrape_game_info_admin(game.mobygames_url, settings.MEDIA_ROOT))
+
+        plot = GamePlots.objects.filter(game_id=game).first()
+        if not plot:
+            plot = GamePlots.objects.create(game_id=game)
+
+        plot.full_plot = data.get("full_plot") or "## No Plot Found"
+        plot.summary = data.get("summary") or "## No Summary Available"
+        plot.save(update_fields=["full_plot", "summary"])
+
+        game.wikipedia_url = data.get("wikipedia_url")
+        game.save(update_fields=["wikipedia_url"])
+
+        print(f"[ADMIN RELOAD] Gra '{game.title}' została przeładowana.")
+        return JsonResponse({"message": f"Gra '{game.title}' została ponownie załadowana i zaktualizowana."})
+    except Exception as e:
+        print(f"[ADMIN RELOAD ERROR] {e}")
+        return JsonResponse({"error": f"Błąd podczas ponownego ładowania gry: {e}"}, status=500)
+
