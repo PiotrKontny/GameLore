@@ -19,6 +19,7 @@ urlpatterns = [
     path('games/<int:pk>/', views.game_detail_page, name='game_detail_page'),
     path('games/<int:pk>/rating/', views.game_rating_view, name="game_rating"),
     path('compilation/', views.compilation_view, name='compilation'),
+    path("games/<int:pk>/generate-summary/", views.generate_summary_view, name="generate_summary"),
 
     # --- Admin panel główny ---
     path("admin-panel/", views.admin_panel, name="admin_panel"),

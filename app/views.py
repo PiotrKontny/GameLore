@@ -262,59 +262,40 @@ def safe_json(obj):
 # This function is used for scraping the game plots and everything about the game from Mobygames
 @jwt_required
 def details_view(request):
-    # Url to the MobyGames page for the chosen game
     url = request.GET.get('url')
     if not url:
         return HttpResponseBadRequest('Missing url')
 
-    # This tries to extract the title from the previously saved search results in the session
     title_guess = None
     for r in request.session.get('ai_last_results', []):
-        # If one of the stored search results matches the current URL
         if r.get('url') == url:
-            # Generally the way it works is that it extracts the first line from the game description shown in search
-            # results. After it finds it, it uses regex to try to extract the game's title so it can later check if that
-            # record is already stored in the database so that it doesn't have to scrape everything again
             first_line = (r.get('description') or '').splitlines()[0].strip()
             m = re.match(r'(.+?)\s*\((?:[^)]*)\)\s*', first_line)
             title_guess = (m.group(1) if m else first_line).strip()
             break
 
-    # If the game is indeed found in the database, then this piece of code redirects the user to that page
     if title_guess:
         existing = Games.objects.filter(title__iexact=title_guess).first()
         if existing:
-            # If the game is in the database already then it saves this record into the user history
             record_user_history(request.user, existing)
             return redirect('game_detail_page', pk=existing.id)
 
-    # Scraping the data using scrape_game_info function from utils.py
+    # --- Tu nie zmieniamy scrapowania fabuły, ale usuwamy generowanie streszczenia ---
     data = asyncio.run(scrape_game_info(url, media_root=settings.MEDIA_ROOT, save_image=True))
 
-    # If something generally goes wrong the site redirects to error.html so that it doesn't display the confusing django
-    # error message to the user
     if not data:
         print(f"[ERROR] Scraper returned None for URL: {url}")
         return render(request, "frontend/error.html", {
             "message": "Nie udało się pobrać danych o grze. Spróbuj ponownie."
         })
 
-    # Previously I explained in utils.py about game results that are compilations of games rather than single games
-    # themselves and this if statement handles that case by redirecting the user to the corresponding site
     if data.get("is_compilation"):
         return redirect(f"/app/compilation/?url={url}")
 
-    # Once again this piece of code converts the decimal values into float ones so that the data passed is database
-    # friendly. One might argue that this is already handled by safe_json function, and it might as well be, however at
-    # this point I have no idea if that's true and in case it isn't, both of those stay in this code. Some would call it
-    # laziness, but I call it insurance
     for key, val in list(data.items()):
         if isinstance(val, Decimal):
             data[key] = float(val)
 
-    # Some games on MobyGames do not have their score, which is done by the MobyGames moderators (for example the niche
-    # games like R.E.P.O). To ensure that the app doesn't collapse on itself cause of that one value, this try statement
-    # handles score attribute to set it to None once such score is not present
     try:
         if data.get('score'):
             data['score'] = Decimal(str(data['score']))
@@ -323,7 +304,6 @@ def details_view(request):
     except (InvalidOperation, TypeError, ValueError):
         data['score'] = None
 
-    # Creates a new record in the database with the following values
     games = Games.objects.create(
         title=data.get('title') or 'Unknown',
         release_date=data.get('release_date'),
@@ -335,17 +315,14 @@ def details_view(request):
         wikipedia_url=data.get('wikipedia_url'),
     )
 
+    # --- tutaj zapisujemy zawsze tylko pełny plot, bez summary ---
     GamePlots.objects.create(
         game_id=games,
         full_plot=data.get('full_plot') or '',
-        summary=data.get('summary') or '',
+        summary=data.get('summary') if "No Summary Available" in (data.get('summary') or "") else ''
     )
 
-    # The game is recorded into user history after being scraped
     record_user_history(request.user, games)
-
-    # Redirects the user to the game_detail_page after scraping all the necessary data, in which everything is displayed
-    # in user-friendly format
     return redirect('game_detail_page', pk=games.id)
 
 
@@ -684,6 +661,82 @@ def chatbot_ask(request):
     )
 
     return JsonResponse({"answer": answer})
+
+
+@csrf_exempt
+@jwt_required
+def generate_summary_view(request, pk):
+    """
+    Generuje streszczenie fabuły gry po kliknięciu przycisku "Generate Summary".
+    Działa identycznie jak proces scrapowania, używając extract_plot_structure, build_markdown_with_headings i summarize_plot_sections.
+    """
+    import markdown
+    from bs4 import BeautifulSoup
+    from .utils import summarize_plot_sections, build_markdown_with_headings, extract_plot_structure
+
+    game = get_object_or_404(Games, pk=pk)
+    plot = GamePlots.objects.filter(game_id=game).first()
+
+    if not plot:
+        return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
+
+    # Jeśli już istnieje streszczenie, nie generujemy ponownie
+    if plot.summary and "No Summary Available" not in plot.summary:
+        return JsonResponse({"summary": markdown.markdown(plot.summary)})
+
+    # Jeśli nie ma pełnej fabuły lub zawiera komunikat "No Plot Found"
+    if not plot.full_plot or "No Plot Found" in plot.full_plot:
+        return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
+
+    try:
+        # --- Zdekoduj markdown fabuły i odtwórz strukturę z nagłówkami ---
+        soup = BeautifulSoup(plot.full_plot, "html.parser")
+        text_content = soup.get_text()
+        if not text_content.strip():
+            return JsonResponse({"error": "Nie można odczytać treści fabuły."}, status=400)
+
+        # --- Próba ponownego wydobycia struktury sekcji ---
+        plot_tree = extract_plot_structure(soup)
+        if not plot_tree:
+            # Jeśli nie uda się odtworzyć struktury — streść cały tekst, ale z chunkami
+            from .utils import get_summarizer
+            summarizer = get_summarizer()
+            text = text_content.strip()
+            words = len(text.split())
+            if words < 80:
+                summary_text = text
+            elif words < 200:
+                res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+                summary_text = res[0]["summary_text"]
+            elif words < 500:
+                res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+                summary_text = res[0]["summary_text"]
+            else:
+                chunks = [text[i:i+3500] for i in range(0, len(text), 3500)]
+                partials = []
+                for ch in chunks:
+                    res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                    partials.append(res[0]["summary_text"])
+                summary_text = " ".join(partials)
+            summary_md = summary_text
+        else:
+            # --- Użyj Twojej funkcji do streszczania sekcji ---
+            summary_md = summarize_plot_sections(plot_tree)
+            if not summary_md:
+                return JsonResponse({"summary": "<p>Fabuła jest zbyt krótka, by wymagała streszczenia.</p>"})
+
+        # Zbuduj markdown z nagłówkami (żeby zachować format)
+        final_md = build_markdown_with_headings(plot_tree)
+        plot.summary = summary_md
+        plot.save(update_fields=["summary"])
+
+        return JsonResponse({"summary": markdown.markdown(summary_md)})
+
+    except Exception as e:
+        print(f"[SUMMARY ERROR] {e}")
+        return JsonResponse({"error": f"Błąd podczas generowania streszczenia: {e}"}, status=500)
+
+
 
 
 

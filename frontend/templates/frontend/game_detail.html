@@ -378,20 +378,30 @@
 
     <!-- Summary -->
     <div class="tab-pane fade" id="summary" role="tabpanel">
-      {% if summary_html %}
-        <div class="markdown-content mt-3">
+      {% if plot and "No Plot Found" in plot.full_plot %}
+        <p class="muted text-center mt-4">
+          This game has no plot available, so a summary cannot be generated.
+        </p>
+      {% elif summary_html and "No Summary Available" not in summary_html %}
+        <div id="summary-content" class="markdown-content mt-3">
           {{ summary_html|safe }}
         </div>
       {% else %}
-        <div class="markdown-content mt-3">
-          <h3>No Summary Found</h3>
-          <p>
-            It seems there’s no summary available for this game.
-            You can try asking the chatbot to provide a short overview or explanation of its lore.
-          </p>
+        <div id="summary-content" class="markdown-content mt-3" style="display:none;"></div>
+
+        <div id="summary-loader" class="text-center mt-4" style="display:none;">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2">Generating summary, please wait...</p>
+        </div>
+
+        <div id="summary-placeholder" class="text-center mt-4">
+          <p class="muted">Summary not yet generated.</p>
+          <button id="generate-summary-btn" class="btn btn-primary">Generate Summary</button>
         </div>
       {% endif %}
     </div>
+
+
 
     <!-- Chatbot -->
     <div class="tab-pane fade" id="chatbot" role="tabpanel">
@@ -539,6 +549,46 @@ starsContainer.addEventListener("click", async (e) => {
 });
 
 loadRating();
+
+// === SUMMARY SECTION ===
+const genBtn = document.getElementById("generate-summary-btn");
+if (genBtn) {
+  genBtn.addEventListener("click", async () => {
+    const loader = document.getElementById("summary-loader");
+    const placeholder = document.getElementById("summary-placeholder");
+    const contentDiv = document.getElementById("summary-content");
+
+    genBtn.disabled = true;
+    loader.style.display = "block";
+    placeholder.style.display = "none";
+
+    try {
+      const res = await fetch(`/app/games/{{ game.id }}/generate-summary/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        }
+      });
+      const data = await res.json();
+      loader.style.display = "none";
+
+      if (data.summary) {
+        contentDiv.innerHTML = data.summary;
+        contentDiv.style.display = "block";
+      } else {
+        contentDiv.innerHTML = `<p class="text-danger">${data.error || "Unexpected error."}</p>`;
+        contentDiv.style.display = "block";
+      }
+    } catch (err) {
+      loader.style.display = "none";
+      contentDiv.innerHTML = `<p class="text-danger">Request failed: ${err}</p>`;
+      contentDiv.style.display = "block";
+    }
+  });
+}
+
+
 
 
 </script>
