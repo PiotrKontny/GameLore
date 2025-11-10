@@ -1,596 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{{ game.title }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>{{ game.title }} - GameLore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <style>
-    body {
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background-color: #f6f8fa;
-      margin: 0;
-      padding: 30px;
-      color: #222;
+    :root{
+      --nav:#0f1836;
+      --gold:#d6b679;
+      --shadow:0 12px 28px rgba(0,0,0,.25);
+      --radius:18px;
+    }
+    body{
+      margin:0;
+      background:#f4f6fa;
+      font-family:"Segoe UI", Roboto, sans-serif;
+      color:#222;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+    /* NAVBAR (kompakt) */
+    .navbar{
+      background:var(--nav);
+      padding:6px 16px;
+      display:flex; align-items:center; justify-content:space-between;
+      box-shadow:0 3px 10px rgba(0,0,0,.18);
+    }
+    .brand img{height:54px;}
+    .profile-chip{
+      display:inline-flex; align-items:center; gap:10px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.30);
+      padding:6px 12px;
+      border-radius:14px; color:#fff; text-decoration:none;
+      white-space:nowrap;
+    }
+    .profile-chip span{font-weight:700; font-size:1.05rem;}
+    .profile-chip img{
+      width:42px; height:42px;
+      border-radius:50%; object-fit:cover;
+      border:2px solid rgba(255,255,255,.6); background:#fff;
     }
 
-    h2 {
-      font-size: 2.2em;
-      margin-bottom: 0.6em;
-      text-align: center;
-      color: #1a252f;
+    /* KARTA GRY */
+    .game-container{
+      max-width:900px; margin:40px auto;
+      background:#fff; border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:40px 50px;
+    }
+    h2{ font-size:2.1rem; text-align:center; color:var(--nav); font-weight:800; margin-bottom:16px; }
+    img.cover{
+      display:block; margin:0 auto 20px; border-radius:10px; max-width:260px;
+      box-shadow:0 4px 15px rgba(0,0,0,.15);
+    }
+    .game-info{ text-align:center; margin-bottom:10px; font-size:1.02rem; }
+    .game-info span{ display:inline-block; margin:5px 12px; }
+    .game-info strong{ color:var(--nav); }
+
+    /* Score pill */
+    .score-line{ display:inline-flex; align-items:center; gap:6px; }
+    .score-box{
+      display:inline-block; padding:3px 8px; border-radius:6px;
+      font-weight:700; min-width:30px; text-align:center;
+    }
+    .gold { background-color: #d4af37; }
+    .green{background:#00e676;}
+    .yellow{background:#ffee58;} .purple{background:#b39ddb;}
+    .red{background:#ef5350;color:#fff;} .blue{background:#42a5f5;color:#fff;}
+
+    /* Sources – bliżej Score */
+    .sources { text-align:center; margin:16px 0 14px; }
+    .sources h5{ margin-bottom:8px; }
+    .sources a{
+      background:var(--nav); color:var(--gold);
+      border:none; border-radius:10px; padding:8px 16px; margin:5px;
+      text-decoration:none; font-weight:600; transition:background .2s;
+    }
+    .sources a:hover{ background:#182b5c; color:#f5dca1; }
+
+    /* Rating */
+    #rating-section{ text-align:center; margin:10px 0 28px; }
+    #stars .star{ color:#ccc; font-size:30px; cursor:pointer; transition:color .15s; }
+
+    /* Segmented slider */
+    .tab-wrapper{
+      position:relative; display:flex; justify-content:center;
+      margin:22px 0 18px;
+    }
+    .tab-control{
+      position:relative; display:flex; width:680px; /* szerszy */
+      background:#fff; border:2px solid var(--gold);
+      border-radius:40px; overflow:hidden; box-shadow:var(--shadow);
+    }
+    .tab-btn{
+      position:relative; flex:1; padding:12px 34px;
+      font-weight:700; font-size:1.15rem;
+      color:var(--gold); background:transparent;
+      border:none; cursor:pointer; z-index:2; transition:color .25s ease;
+    }
+    .tab-btn.active{ color:#fff; }
+    .tab-highlight{
+      position:absolute; top:0; left:0; width:33.333%; height:100%;
+      background:var(--nav); border-radius:40px;
+      transition:transform .30s ease; z-index:1;
     }
 
-    img {
-      display: block;
-      margin: 0 auto 30px auto;
-      border-radius: 8px;
-      max-width: 250px;
+    /* Treść */
+    .markdown-content{ font-size:1.05rem; line-height:1.7; }
+    .markdown-content h2,.markdown-content h3{
+      text-align:center; color:var(--nav); border-bottom:3px solid #ddd;
+      padding-bottom:.25em; margin-top:.8em; margin-bottom:.6em;
     }
+    .muted{ color:#6b7280; font-style:italic; }
 
-    .game-info {
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 1.05em;
-      color: #333;
-    }
+    /* Chatbot */
+    #chat-window{ border:1px solid #ddd; border-radius:10px; background:#fafafa; height:400px; overflow-y:auto; padding:15px; margin-bottom:10px; }
+    .message{ display:flex; margin-bottom:12px; }
+    .message.user{ justify-content:flex-end; } .message.bot{ justify-content:flex-start; }
+    .bubble{ max-width:70%; padding:10px 14px; border-radius:15px; line-height:1.4; word-wrap:break-word; }
+    .user .bubble{ background:var(--nav); color:#fff; border-bottom-right-radius:0; }
+    .bot .bubble{ background:#e9ecef; color:#222; border-bottom-left-radius:0; }
+    .typing{ font-style:italic; color:#888; text-align:center; margin-bottom:10px; }
 
-    .game-info span {
-      display: inline-block;
-      margin: 5px 12px;
-      color: #444;
+    .btn-primary{
+      background:var(--nav); color:var(--gold);
+      border:none; border-radius:10px; padding:8px 20px; font-weight:600; box-shadow:var(--shadow);
     }
+    .btn-primary:hover{ background:#182b5c; color:#f5dca1; }
 
-    .game-info strong {
-      color: #111;
+    @media (max-width:640px){
+      .brand img{height:48px;}
+      .profile-chip img{width:38px;height:38px;}
+      .profile-chip span{font-size:1rem;}
+      .game-container{ padding:26px; margin:26px auto; }
+      .tab-control{ width:100%; }
+      .tab-btn{ font-size:1rem; padding:10px 22px; }
     }
-
-    /* --- Poprawka odstępu między zakładkami a treścią --- */
-    .nav-tabs {
-      display: flex;
-      justify-content: center; /* wyrównanie do środka */
-      margin-bottom: 0;
-      border-bottom: none;
+    /* === złoty spinner === */
+    /* === spinner: tylko obracający się łuk złoty === */
+    .spinner-border.text-primary {
+      color: transparent !important;          /* usuwa pełne wypełnienie */
+      border-color: rgba(214,182,121,0.3);    /* półprzezroczysty pierścień */
+      border-top-color: var(--gold) !important; /* złoty obracający się fragment */
     }
-
-    /* Styl pojedynczych zakładek */
-    .nav-tabs .nav-link {
-      border-radius: 20px 20px 0 0;
-      padding: 8px 18px;
-      font-weight: 600;
-      transition: background-color 0.2s, color 0.2s;
-      margin: 0 5px; /* lekki odstęp między nimi */
-    }
-
-    /* Aktywna zakładka */
-    .nav-tabs .nav-link.active {
-      background-color: #0d6efd;
-      color: white !important;
-      border: none;
-    }
-
-    /* Hover efekt */
-    .nav-tabs .nav-link:hover {
-      background-color: #e9ecef;
-      color: #0d6efd;
-    }
-
-    /* Odstęp między zakładkami a treścią */
-    .tab-content {
-      margin-top: 10px;
-    }
-
-    .markdown-content {
-      margin-top: 25px;
-      font-size: 1.05em;
-      line-height: 1.7;
-      color: #222;
-    }
-    .markdown-content h4 {
-      border-bottom: 2px solid #eee;
-      padding-bottom: 0.2em;
-    }
-
-    /* Duże, czytelne nagłówki sekcji (np. Setting, Characters, Plot) */
-    .markdown-content h3 {
-      text-align: center;
-      color: #0d2538;
-      font-size: 1.7em;
-      font-weight: 700;
-      margin-top: 0.4em;
-      margin-bottom: 0.6em;
-      border-bottom: 3px solid #ddd;   /* <<< dodana linia pod nagłówkiem */
-      padding-bottom: 0.25em;          /* <<< odstęp między tekstem a linią */
-    }
-
-
-    .markdown-content h2 {
-      font-size: 1.8em;
-      font-weight: 700;
-      margin-top: 0.4em;       /* było 1.6em — mniejszy odstęp od góry */
-      margin-bottom: 0.6em;
-      color: #0d2538;
-      border-bottom: 3px solid #ddd;
-      padding-bottom: 0.25em;
-    }
-
-
-    /* Podnagłówki niższego rzędu */
-    .markdown-content h4,
-    .markdown-content h5 {
-      font-size: 1.3em;
-      font-weight: 600;
-      margin-top: 1em;
-      margin-bottom: 0.5em;
-      color: #2c3e50;
-    }
-
-    /* Odstępy między akapitami */
-    .markdown-content p {
-      margin-bottom: 1.1em;
-    }
-
-    /* Zachowanie szerokości i czytelnych marginesów */
-    .tab-pane {
-      padding: 25px 10px;
-      min-height: 200px; /* wszystkie zakładki będą miały podobną wysokość */
-    }
-
-    /* Wyrównanie i węższe kolumny jak w pierwotnym designie */
-    .container {
-      max-width: 900px;
-    }
-
-    /* Kolorystyka nagłówków sekcji głównych */
-    .section-title {
-      font-size: 2.0em;
-      font-weight: 800;
-      margin-top: 2em;
-      margin-bottom: 0.6em;
-      color: #0d2538;
-      border-bottom: 3px solid #ddd;
-      padding-bottom: 0.2em;
-    }
-
-    .muted {
-      color: #6b7280;
-      font-style: italic;
-    }
-
-    /* Chatbot styling */
-    #chat-history {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 10px;
-      background: #fafafa;
-      height: 350px;
-      overflow-y: auto;
-      font-size: 0.95em;
-    }
-
-    .chat-user {
-      font-weight: bold;
-      color: #0d6efd;
-    }
-
-    .chat-bot {
-      font-weight: bold;
-      color: #198754;
-    }
-
-    .chat-message {
-      margin-bottom: 10px;
-    }
-
-    .input-group {
-      margin-top: 15px;
-    }
-    /* Chat window */
-    #chat-window {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #fafafa;
-      height: 400px;
-      overflow-y: auto;
-      padding: 15px;
-    }
-
-    /* Dymki */
-    .message {
-      display: flex;
-      margin-bottom: 12px;
-    }
-
-    .message.user {
-      justify-content: flex-end;
-    }
-
-    .message.bot {
-      justify-content: flex-start;
-    }
-
-    .bubble {
-      max-width: 70%;
-      padding: 10px 14px;
-      border-radius: 15px;
-      line-height: 1.4;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-    }
-
-    /* Dymek użytkownika */
-    .user .bubble {
-      background-color: #0d6efd;
-      color: white;
-      border-bottom-right-radius: 0;
-    }
-
-    /* Dymek bota */
-    .bot .bubble {
-      background-color: #e9ecef;
-      color: #222;
-      border-bottom-left-radius: 0;
-    }
-
-    /* Wskaźnik ładowania */
-    .typing {
-      font-style: italic;
-      color: #888;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    /* Usunięcie przekreśleń */
-    #chat-window s {
-      text-decoration: none;
-    }
-
-    .sources {
-      margin-top: 10px;
-      margin-bottom: 25px;
-    }
-
-    .sources a {
-      font-weight: 600;
-      border-radius: 10px;
-      padding: 6px 16px;
-      transition: all 0.2s ease;
-    }
-
-    .sources a:hover {
-      background-color: #0d6efd;
-      color: white;
-    }
-    .star {
-      transition: color 0.2s ease;
-    }
-    /* --- Score pill, identyczne kolory jak w explore --- */
-    .score-line { display: inline-flex; align-items: center; gap: 6px; }
-    .score-box {
-      display: inline-block; padding: 3px 8px; border-radius: 5px;
-      font-weight: 700; color: #000; border: 1.5px solid #000;
-      min-width: 30px; text-align: center;
-    }
-    .gold { background-color: #f6c700; }
-    .green { background-color: #00e676; }
-    .yellow { background-color: #ffee58; }
-    .purple { background-color: #b39ddb; }
-    .red { background-color: #ef5350; color: #fff; }
-    .blue { background-color: #42a5f5; color: #fff; }
-
-
 
 
   </style>
 </head>
 <body>
-<div class="container">
-  <h2>{{ game.title }}</h2>
 
-  {% if game.cover_image %}
-    <img src="/media/{{ game.cover_image }}" alt="{{ game.title }}">
-  {% endif %}
-
-  <div class="game-info">
-    {% if game.release_date %}
-      <span><strong>Released on:</strong> {{ game.release_date }}</span>
-    {% endif %}
-    {% if game.genre %}
-      <span><strong>Genre:</strong> {{ game.genre }}</span>
-    {% endif %}
-    {% if game.studio %}
-      <span><strong>Studio:</strong> {{ game.studio }}</span>
-    {% endif %}
-        <span class="score-line">
-      <strong>Score:</strong>
-      {% if game.score %}
-        <span class="score-box
-          {% if game.score >= 9.0 %}gold
-          {% elif game.score >= 8.0 %}green
-          {% elif game.score >= 6.0 %}yellow
-          {% elif game.score >= 4.0 %}purple
-          {% elif game.score >= 0 %}red
-          {% endif %}
-        ">{{ game.score|floatformat:1 }}</span>
-      {% else %}
-        <span class="score-box blue">?</span>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="brand">
+      <a href="/" style="text-decoration:none;">
+        <img src="/media/icons/Logo.png" alt="Logo">
+      </a>
+    </div>
+    <a href="/app/profile/" class="profile-chip">
+      <span>{{ user.username }}</span>
+      {% if user.profile_picture %}
+        <img src="/media/{{ user.profile_picture }}" alt="{{ user.username }}">
       {% endif %}
-    </span>
+    </a>
+  </nav>
 
-  </div>
+  <!-- CONTENT -->
+  <div class="game-container">
+    <h2>{{ game.title }}</h2>
 
-  {% if game.mobygames_url or game.wikipedia_url %}
-  <div class="sources text-center mb-4">
-    <h5><strong>Sources:</strong></h5>
-
-    {% if game.mobygames_url %}
-      <a href="{{ game.mobygames_url }}" target="_blank" class="btn btn-outline-dark mx-2">MobyGames</a>
+    {% if game.cover_image %}
+      <img class="cover" src="/media/{{ game.cover_image }}" alt="{{ game.title }}">
     {% endif %}
-    {% if game.wikipedia_url %}
-      <a href="{{ game.wikipedia_url }}" target="_blank" class="btn btn-outline-dark mx-2">Wikipedia</a>
-    {% endif %}
-  </div>
-{% endif %}
 
-<div id="rating-section" class="text-center my-4">
-  <h5><strong>Rating:</strong></h5>
-  <div id="stars" style="font-size: 30px; cursor: pointer;"></div>
-  <p id="rating-stats" class="mt-2 text-muted"></p>
-</div>
-
-
-
- <!-- Zakładki -->
-  <ul class="nav nav-tabs" id="gameTabs" role="tablist">
-    <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fullplot" type="button">Full Lore</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#summary" type="button">Summary</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chatbot" type="button">Chatbot</button>
-    </li>
-  </ul>
-
-  <!-- ZAWARTOŚĆ ZAKŁADEK -->
-  <div class="tab-content mt-3">
-
-    <!-- Full Lore -->
-    <div class="tab-pane fade show active" id="fullplot" role="tabpanel">
-      {% if full_plot_html %}
-        <div class="markdown-content mt-3">
-          {{ full_plot_html|safe }}
-        </div>
-      {% else %}
-        <p class="muted mt-3">No full lore available.</p>
-      {% endif %}
+    <div class="game-info">
+      {% if game.release_date %}<span><strong>Released on:</strong> {{ game.release_date }}</span>{% endif %}
+      {% if game.genre %}<span><strong>Genre:</strong> {{ game.genre }}</span>{% endif %}
+      {% if game.studio %}<span><strong>Studio:</strong> {{ game.studio }}</span>{% endif %}
+      <span class="score-line"><strong>Score:</strong>
+        {% if game.score %}
+          <span class="score-box
+            {% if game.score >= 9.0 %}gold{% elif game.score >= 8.0 %}green{% elif game.score >= 6.0 %}yellow{% elif game.score >= 4.0 %}purple{% else %}red{% endif %}
+          ">{{ game.score|floatformat:1 }}</span>
+        {% else %}
+          <span class="score-box blue">?</span>
+        {% endif %}
+      </span>
     </div>
 
-    <!-- Summary -->
-    <div class="tab-pane fade" id="summary" role="tabpanel">
-      {% if plot and "No Plot Found" in plot.full_plot %}
-        <p class="muted text-center mt-4">
-          This game has no plot available, so a summary cannot be generated.
-        </p>
-      {% elif summary_html and "No Summary Available" not in summary_html %}
-        <div id="summary-content" class="markdown-content mt-3">
-          {{ summary_html|safe }}
-        </div>
-      {% else %}
-        <div id="summary-content" class="markdown-content mt-3" style="display:none;"></div>
+    {% if game.mobygames_url or game.wikipedia_url %}
+      <div class="sources">
+        <h5><strong>Sources:</strong></h5>
+        {% if game.mobygames_url %}<a href="{{ game.mobygames_url }}" target="_blank">MobyGames</a>{% endif %}
+        {% if game.wikipedia_url %}<a href="{{ game.wikipedia_url }}" target="_blank">Wikipedia</a>{% endif %}
+      </div>
+    {% endif %}
 
-        <div id="summary-loader" class="text-center mt-4" style="display:none;">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-2">Generating summary, please wait...</p>
-        </div>
-
-        <div id="summary-placeholder" class="text-center mt-4">
-          <p class="muted">Summary not yet generated.</p>
-          <button id="generate-summary-btn" class="btn btn-primary">Generate Summary</button>
-        </div>
-      {% endif %}
+    <div id="rating-section">
+      <h5 class="mb-2"><strong>Rating:</strong></h5>
+      <div id="stars"></div>
+      <p id="rating-stats" class="mt-2 text-muted"></p>
     </div>
 
+    <!-- Segmented tabs -->
+    <div class="tab-wrapper">
+      <div class="tab-control" id="tabControl" role="tablist">
+        <div class="tab-highlight" id="tabHighlight"></div>
+        <button class="tab-btn active"  data-bs-toggle="tab" data-bs-target="#fullplot" type="button" role="tab">Full Lore</button>
+        <button class="tab-btn"         data-bs-toggle="tab" data-bs-target="#summary"  type="button" role="tab">Summary</button>
+        <button class="tab-btn"         data-bs-toggle="tab" data-bs-target="#chatbot"  type="button" role="tab">Chatbot</button>
+      </div>
+    </div>
 
-
-    <!-- Chatbot -->
-    <div class="tab-pane fade" id="chatbot" role="tabpanel">
-      <div id="chat-window" class="mt-3">
-          <div id="chat-history"></div>
+    <!-- Tab content -->
+    <div class="tab-content mt-2">
+      <div class="tab-pane fade show active" id="fullplot" role="tabpanel">
+        {% if full_plot_html %}
+          <div class="markdown-content">{{ full_plot_html|safe }}</div>
+        {% else %}
+          <p class="muted text-center">No full lore available.</p>
+        {% endif %}
       </div>
 
-      <div class="input-group mt-3">
-          <input type="text" id="chat-input" class="form-control" placeholder="Ask about {{ game.title }}...">
+      <div class="tab-pane fade" id="summary" role="tabpanel">
+        {% if plot and "No Plot Found" in plot.full_plot %}
+          <p class="muted text-center mt-4">This game has no plot available.</p>
+        {% elif summary_html and "No Summary Available" not in summary_html %}
+          <div id="summary-content" class="markdown-content">{{ summary_html|safe }}</div>
+        {% else %}
+          <div id="summary-content" class="markdown-content" style="display:none;"></div>
+          <div id="summary-loader" class="text-center mt-4" style="display:none;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">Generating summary, please wait...</p>
+          </div>
+          <div id="summary-placeholder" class="text-center mt-4">
+            <p class="muted">Summary not yet generated.</p>
+            <button id="generate-summary-btn" class="btn btn-primary">Generate Summary</button>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade" id="chatbot" role="tabpanel">
+        <div id="chat-window"><div id="chat-history"></div></div>
+        <div class="input-group">
+          <input type="text" id="chat-input" class="form-control">
           <button class="btn btn-primary" id="send-btn">Send</button>
+        </div>
       </div>
     </div>
-</div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-const chatHistory = document.getElementById("chat-history");
-const chatInput = document.getElementById("chat-input");
-const sendBtn = document.getElementById("send-btn");
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /* ===== Helper: CSRF z ciasteczka ===== */
+    function getCookie(name){
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? decodeURIComponent(m.pop()) : '';
+    }
+    const csrftoken = getCookie('csrftoken');
 
-// funkcja renderująca dymek
-function appendMessage(role, text) {
-  const msgDiv = document.createElement("div");
-  msgDiv.classList.add("message", role);
-  const bubble = document.createElement("div");
-  bubble.classList.add("bubble");
-  bubble.textContent = text;
-  msgDiv.appendChild(bubble);
-  chatHistory.appendChild(msgDiv);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
-}
+    /* ===== RATING ===== */
+    const starsContainer = document.getElementById("stars");
+    const ratingStats   = document.getElementById("rating-stats");
+    const gameId        = "{{ game.id }}";
 
-// ładowanie historii
-document.querySelector('button[data-bs-target="#chatbot"]').addEventListener('shown.bs.tab', async () => {
-  chatHistory.innerHTML = "<p class='typing'>Loading chat history...</p>";
-  const res = await fetch(`/app/chatbot/history/?game_id={{ game.id }}`);
-  const messages = await res.json();
-  chatHistory.innerHTML = "";
-  messages.forEach(m => {
-    appendMessage("user", m.question);
-    appendMessage("bot", m.answer);
-  });
-});
+    // 10 gwiazdek
+    for (let i = 1; i <= 10; i++) {
+      const s = document.createElement("span");
+      s.className = "star";
+      s.dataset.value = i;
+      s.innerHTML = "&#9733;";
+      starsContainer.appendChild(s);
+    }
 
-// obsługa wysyłania
-sendBtn.addEventListener("click", async () => {
-  const question = chatInput.value.trim();
-  if (!question) return;
-  appendMessage("user", question);
-  chatInput.value = "";
+    let currentAvg = 0;
 
-  // wskaźnik "bot myśli..."
-  const thinking = document.createElement("p");
-  thinking.classList.add("typing");
-  thinking.textContent = "Bot is thinking...";
-  chatHistory.appendChild(thinking);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
+    async function loadRating(){
+      try{
+        const res  = await fetch(`/app/games/${gameId}/rating/`, { credentials:"include" });
+        const data = await res.json();
+        currentAvg = Number(data.avg || 0);
+        paintStars(currentAvg, "#f6c700");
+        ratingStats.textContent = `${(data.avg || 0).toFixed(2)}/10 - ${data.votes || 0} votes`;
+      }catch(e){
+        ratingStats.textContent = "Rating unavailable.";
+      }
+    }
+    function paintStars(value, color){
+      const stars = starsContainer.querySelectorAll(".star");
+      const whole = Math.round(value);
+      stars.forEach((el, idx) => { el.style.color = (idx < whole) ? color : "#ccc"; });
+    }
+    starsContainer.addEventListener("mouseover", e=>{
+      if(!e.target.classList.contains("star")) return;
+      paintStars(Number(e.target.dataset.value), "limegreen");
+    });
+    starsContainer.addEventListener("mouseleave", ()=>paintStars(currentAvg, "#f6c700"));
+    starsContainer.addEventListener("click", async e=>{
+      if(!e.target.classList.contains("star")) return;
+      const v = Number(e.target.dataset.value);
+      try{
+        const res  = await fetch(`/app/games/${gameId}/rating/`, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json", "X-CSRFToken": csrftoken },
+          credentials:"include",
+          body: JSON.stringify({ rating: v })
+        });
+        const data = await res.json();
+        currentAvg = Number(data.avg || 0);
+        paintStars(currentAvg, "#f6c700");
+        ratingStats.textContent = `${(data.avg || 0).toFixed(2)}/10 - ${data.votes || 0} votes`;
+      }catch(_){}
+    });
+    loadRating();
 
-  const res = await fetch("/app/chatbot/ask/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": "{{ csrf_token }}"
-    },
-    body: JSON.stringify({ question, game_id: "{{ game.id }}" })
-  });
+    /* ===== SEGMENTED SLIDER + przełączanie zakładek ===== */
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const highlight  = document.getElementById("tabHighlight");
+    const bsTab      = bootstrap.Tab; // API
 
-  const data = await res.json();
-  thinking.remove();
+    tabButtons.forEach((btn, index) => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        highlight.style.transform = `translateX(${index * 100}%)`;
 
-  if (data.error) {
-    appendMessage("bot", `Error: ${data.error}`);
-  } else {
-    // usuwamy artefakty modeli (np. <s>, </s>, [OUT], [INST]) oraz przekreślenia
-    let cleanText = data.answer
-      .replace(/~~(.*?)~~/g, "$1")
-      .replace(/<\/?s>/g, "")        // usuwa <s> i </s>
-      .replace(/\[OUT\]/gi, "")      // usuwa [OUT]
-      .replace(/\[INST\]/gi, "")     // usuwa [INST]
-      .replace(/\[\/?INSTR?\]/gi, ""); // dodatkowa asekuracja
-    appendMessage("bot", cleanText.trim());
-  }
-});
+        // Pokaż odpowiadającą zakładkę
+        const target = btn.getAttribute("data-bs-target");
+        const tab    = new bsTab(document.querySelector(`.tab-btn[data-bs-target="${target}"]`));
+        tab.show();
+      });
+    });
 
-const starsContainer = document.getElementById("stars");
-const ratingStats = document.getElementById("rating-stats");
-const gameId = "{{ game.id }}";
-let userRating = null;
+    // Załadowanie historii po pokazaniu Chatbota
+    document.querySelector('button[data-bs-target="#chatbot"]')
+      .addEventListener('shown.bs.tab', async ()=>{
+        const chatHistory = document.getElementById("chat-history");
+        chatHistory.innerHTML = "<p class='typing'>Loading chat history...</p>";
+        const res = await fetch(`/app/chatbot/history/?game_id={{ game.id }}`, { credentials:"include" });
+        const messages = await res.json();
+        chatHistory.innerHTML = "";
+        messages.forEach(m=>{ appendMessage("user", m.question); appendMessage("bot", m.answer); });
+      });
 
-// Tworzymy 10 gwiazdek
-for (let i = 1; i <= 10; i++) {
-  const star = document.createElement("span");
-  star.innerHTML = "&#9733;";
-  star.classList.add("star");
-  star.dataset.value = i;
-  star.style.color = "#ccc";
-  starsContainer.appendChild(star);
-}
+    /* ===== CHATBOT ===== */
+    const chatHistory = document.getElementById("chat-history");
+    const chatInput   = document.getElementById("chat-input");
+    const sendBtn     = document.getElementById("send-btn");
 
-// Pobierz aktualne dane o ocenach
-async function loadRating() {
-  const res = await fetch(`/app/games/${gameId}/rating/`);
-  const data = await res.json();
-  updateStars(data.avg);
-  ratingStats.textContent = `${data.avg}/10 - ${data.votes} votes`;
-  userRating = data.user_rating;
-}
+    function appendMessage(role, text){
+      const msg = document.createElement("div");
+      msg.className = `message ${role}`;
+      const b = document.createElement("div");
+      b.className = "bubble";
+      b.textContent = text;
+      msg.appendChild(b);
+      chatHistory.appendChild(msg);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
 
-// Aktualizuj kolor gwiazdek (dla średniej)
-function updateStars(avg) {
-  const stars = document.querySelectorAll("#stars .star");
-  stars.forEach((star, i) => {
-    if (i < Math.floor(avg)) star.style.color = "gold";
-    else star.style.color = "#ccc";
-  });
-}
+    sendBtn?.addEventListener("click", async ()=>{
+      const q = (chatInput.value || "").trim();
+      if(!q) return;
+      appendMessage("user", q); chatInput.value = "";
 
-// Hover efekt na zielono
-starsContainer.addEventListener("mouseover", (e) => {
-  if (!e.target.classList.contains("star")) return;
-  const val = parseInt(e.target.dataset.value);
-  document.querySelectorAll("#stars .star").forEach((s, i) => {
-    s.style.color = i < val ? "limegreen" : "#ccc";
-  });
-});
+      const thinking = document.createElement("p");
+      thinking.className="typing"; thinking.textContent="Bot is thinking...";
+      chatHistory.appendChild(thinking); chatHistory.scrollTop = chatHistory.scrollHeight;
 
-starsContainer.addEventListener("mouseleave", () => {
-  updateStars(userRating ?? 0);
-});
+      try{
+        const res  = await fetch("/app/chatbot/ask/", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json", "X-CSRFToken": csrftoken },
+          credentials:"include",
+          body: JSON.stringify({ question:q, game_id:"{{ game.id }}" })
+        });
+        const data = await res.json(); thinking.remove();
+        const txt = (data.answer || data.error || "No answer")
+          .replace(/~~(.*?)~~/g,"$1")
+          .replace(/<\/?s>/g,"")
+          .replace(/\[OUT\]/gi,"")
+          .replace(/\[INST\]/gi,"")
+          .replace(/\[\/?INSTR?\]/gi,"")
+          .trim();
+        appendMessage("bot", txt);
+      }catch(e){
+        thinking.remove();
+        appendMessage("bot", "Request failed.");
+      }
+    });
 
-// Kliknięcie gwiazdki
-starsContainer.addEventListener("click", async (e) => {
-  if (!e.target.classList.contains("star")) return;
-  const val = parseInt(e.target.dataset.value);
-  const res = await fetch(`/app/games/${gameId}/rating/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rating: val })
-  });
-  const data = await res.json();
-  console.log("Rating response:", res.status, data);
-  ratingStats.textContent = `${data.avg}/10 - ${data.votes} votes`;
-  updateStars(data.avg);
-});
+    /* ===== SUMMARY – przycisk ===== */
+    const genBtn = document.getElementById("generate-summary-btn");
+    if(genBtn){
+      genBtn.addEventListener("click", async ()=>{
+        const loader = document.getElementById("summary-loader");
+        const placeholder = document.getElementById("summary-placeholder");
+        const contentDiv = document.getElementById("summary-content");
 
-loadRating();
-
-// === SUMMARY SECTION ===
-const genBtn = document.getElementById("generate-summary-btn");
-if (genBtn) {
-  genBtn.addEventListener("click", async () => {
-    const loader = document.getElementById("summary-loader");
-    const placeholder = document.getElementById("summary-placeholder");
-    const contentDiv = document.getElementById("summary-content");
-
-    genBtn.disabled = true;
-    loader.style.display = "block";
-    placeholder.style.display = "none";
-
-    try {
-      const res = await fetch(`/app/games/{{ game.id }}/generate-summary/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token }}"
+        genBtn.disabled = true; loader.style.display="block"; placeholder.style.display="none";
+        try{
+          const res = await fetch(`/app/games/{{ game.id }}/generate-summary/`, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json", "X-CSRFToken": csrftoken },
+            credentials:"include"
+          });
+          const data = await res.json();
+          loader.style.display="none";
+          if(data.summary){
+            contentDiv.innerHTML = data.summary;
+            contentDiv.style.display = "block";
+          }else{
+            contentDiv.innerHTML = `<p class="text-danger">${data.error || "Unexpected error."}</p>`;
+            contentDiv.style.display = "block";
+          }
+        }catch(err){
+          loader.style.display="none";
+          contentDiv.innerHTML = `<p class="text-danger">Request failed: ${err}</p>`;
+          contentDiv.style.display = "block";
         }
       });
-      const data = await res.json();
-      loader.style.display = "none";
-
-      if (data.summary) {
-        contentDiv.innerHTML = data.summary;
-        contentDiv.style.display = "block";
-      } else {
-        contentDiv.innerHTML = `<p class="text-danger">${data.error || "Unexpected error."}</p>`;
-        contentDiv.style.display = "block";
-      }
-    } catch (err) {
-      loader.style.display = "none";
-      contentDiv.innerHTML = `<p class="text-danger">Request failed: ${err}</p>`;
-      contentDiv.style.display = "block";
     }
-  });
-}
-
-
-
-
-</script>
+  </script>
 </body>
 </html>

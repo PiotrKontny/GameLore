@@ -35,7 +35,9 @@ urlpatterns = [
     path("admin-panel/reload-game/<int:game_id>/", views.admin_reload_game, name="admin_reload_game"),
 
     # --- Chatbot i historia ---
+    path("chatbot/", views.chatbot_page, name="chatbot_page"),
     path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),
     path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
     path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
+    path("chatbot/delete/", views.delete_chat_history, name="delete_chat_history"),
 ]

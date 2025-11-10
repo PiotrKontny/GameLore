@@ -386,29 +386,64 @@ def my_library_view(request):
         print(f"[my_library] Brak dopasowania użytkownika: {request.user}")
         return HttpResponseForbidden("Nie znaleziono użytkownika w bazie danych.")
 
+    # 🔍 Wyszukiwanie
+    query = (request.GET.get("q") or "").strip()
+
+    sort_option = request.GET.get("sort", "newest")
+
     try:
-        user_history = UserHistory.objects.filter(user_id=user.id).order_by('-viewed_at')
+        user_history = UserHistory.objects.filter(user_id=user.id)
         print(f"[my_library] Historia użytkownika {user.username}: {user_history.count()} rekordów")
     except Exception as e:
         print(f"[my_library] Błąd przy pobieraniu historii: {e}")
         return HttpResponseForbidden("Błąd przy pobieraniu historii użytkownika.")
 
+    # Filtrowanie po nazwie gry
+    if query:
+        user_history = user_history.filter(game_id__title__icontains=query)
+
+    # Sortowanie wg opcji
+    if sort_option == "oldest":
+        user_history = user_history.order_by("viewed_at")
+    elif sort_option == "rating":
+        rated_games = (
+            UserRatings.objects.filter(user_id=user)
+            .values("game_id")
+            .annotate(avg_rating=Avg("rating"))
+        )
+        rating_map = {r["game_id"]: r["avg_rating"] for r in rated_games}
+
+        user_history = sorted(
+            user_history,
+            key=lambda uh: rating_map.get(uh.game_id_id, 0) or 0,
+            reverse=True
+        )
+    else:  # newest
+        user_history = user_history.order_by("-viewed_at")
+
     history_data = []
     for entry in user_history:
         game = Games.objects.filter(id=entry.game_id_id).first()
         if game:
+            avg_rating = UserRatings.objects.filter(game_id=game).aggregate(Avg("rating"))["rating__avg"]
+            user_rating = UserRatings.objects.filter(user_id=user, game_id=game).first()
             history_data.append({
                 "id": game.id,
                 "title": game.title,
                 "cover_image": game.cover_image,
                 "viewed_at": entry.viewed_at,
+                "user_rating": user_rating.rating if user_rating else None,
             })
 
     paginator = Paginator(history_data, 20)
     page = request.GET.get('page', 1)
     page_obj = paginator.get_page(page)
 
-    return render(request, "frontend/my_library.html", {"page_obj": page_obj})
+    return render(request, "frontend/my_library.html", {
+        "page_obj": page_obj,
+        "sort_option": sort_option,
+        "query": query,
+    })
 
 
 @jwt_required
@@ -516,6 +551,7 @@ def profile_view(request):
         return HttpResponseForbidden("Could not find the user")
 
     message = None
+    is_error = False
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -533,11 +569,21 @@ def profile_view(request):
 
         # Zmiana hasła
         elif action == "change_password":
+            old_password = request.POST.get("old_password", "").strip()
             new_password = request.POST.get("new_password", "").strip()
-            if new_password:
-                user.password = make_password(new_password)
+
+            if not user.check_password(old_password):
+                message = "Incorrect old password!"
+                is_error = True
+            elif not new_password:
+                message = "New password cannot be empty!"
+                is_error = True
+            else:
+                user.set_password(new_password)
                 user.save()
                 message = "The password has been changed!"
+
+
 
         # Zmiana zdjęcia profilowego
         elif action == "change_profile_picture":
@@ -560,7 +606,10 @@ def profile_view(request):
             response.delete_cookie("access_token")
             return response
 
-    return render(request, "frontend/profile.html", {"user": user, "message": message})
+    return render(request, "frontend/profile.html", {"user": user, "message": message,
+                                                     "is_error": is_error})
+
+
 
 
 
@@ -661,6 +710,73 @@ def chatbot_ask(request):
     )
 
     return JsonResponse({"answer": answer})
+
+
+@jwt_required
+def chatbot_page(request):
+    """
+    Strona z chatbotem – po lewej historia gier, po prawej chat.
+    Domyślnie ładuje ostatnią grę, z którą użytkownik rozmawiał z chatbotem.
+    Jeśli brak, wtedy ostatnio oglądana gra.
+    """
+    user = request.user
+
+    # Wszystkie gry z historii użytkownika
+    history = (
+        UserHistory.objects.filter(user_id=user)
+        .select_related("game_id")
+        .order_by("-viewed_at")
+    )
+
+    games = [
+        {
+            "id": h.game_id.id,
+            "title": h.game_id.title,
+            "cover_image": h.game_id.cover_image,
+        }
+        for h in history
+    ]
+
+    # 🔧 Poprawka tutaj — było ChatMessage
+    last_chat = ChatBot.objects.filter(user_id=user).order_by("-created_at").first()
+    default_game_id = last_chat.game_id.id if last_chat else None
+
+    # Jeśli brak czatu, domyślnie ostatnio przeglądana gra
+    if not default_game_id and games:
+        default_game_id = games[0]["id"]
+
+    return render(request, "frontend/chatbot.html", {
+        "games": games,
+        "default_game_id": default_game_id,
+        "user": user,
+    })
+
+
+@jwt_required
+@csrf_exempt
+def delete_chat_history(request):
+    """
+    Usuwa całą historię chatu użytkownika dla konkretnej gry.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        game_id = data.get("game_id")
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if not game_id:
+        return JsonResponse({"error": "Missing game_id"}, status=400)
+
+    user = request.user
+
+    deleted_count, _ = ChatBot.objects.filter(user_id=user, game_id=game_id).delete()
+    print(f"[delete_chat_history] User {user.username} deleted {deleted_count} chat messages for game_id={game_id}")
+
+    return JsonResponse({"message": "Chat history deleted successfully.", "deleted": deleted_count})
+
 
 
 @csrf_exempt
@@ -831,8 +947,27 @@ def admin_users_view(request):
     if not request.user.is_admin:
         return JsonResponse({"error": "Access denied"}, status=403)
 
-    users = UserModel.objects.all().order_by("id")
-    return render(request, "frontend/admin_users.html", {"users": users})
+    sort_option = request.GET.get("sort", "oldest")
+    query = (request.GET.get("q") or "").strip()
+
+    users = UserModel.objects.all()
+
+    # 🔍 Filtrowanie po nazwie użytkownika
+    if query:
+        users = users.filter(username__icontains=query)
+
+    # 🔽 Sortowanie
+    if sort_option == "newest":
+        users = users.order_by("-date_joined")
+    else:
+        users = users.order_by("date_joined")
+
+    return render(request, "frontend/admin_users.html", {
+        "users": users,
+        "sort_option": sort_option,
+        "query": query,
+    })
+
 
 
 @jwt_required
@@ -840,8 +975,29 @@ def admin_games_view(request):
     if not request.user.is_admin:
         return JsonResponse({"error": "Access denied"}, status=403)
 
-    games = Games.objects.all().order_by("id")
-    return render(request, "frontend/admin_games.html", {"games": games})
+    sort_option = request.GET.get("sort", "oldest")
+    query = (request.GET.get("q") or "").strip()
+
+    games = Games.objects.all()
+
+    # 🔍 Wyszukiwanie po tytule gry
+    if query:
+        games = games.filter(title__icontains=query)
+
+    # 🔽 Sortowanie
+    if sort_option == "newest":
+        games = games.order_by("-id")
+    elif sort_option == "score":
+        games = games.order_by("-score")
+    else:  # oldest domyślnie
+        games = games.order_by("id")
+
+    return render(request, "frontend/admin_games.html", {
+        "games": games,
+        "sort_option": sort_option,
+        "query": query,
+    })
+
 
 
 
