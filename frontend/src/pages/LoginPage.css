@@ -1,0 +1,84 @@
+:root {
+  --nav: #0f1836;
+  --tile: #0f1836;
+  --gold: #d6b679;
+  --shadow: 0 12px 28px rgba(0,0,0,.25);
+  --radius: 18px;
+}
+
+body {
+  background: #f4f6fa;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  color: #222;
+  margin: 0;
+}
+
+.login-container {
+  max-width: 460px;
+  background: white;
+  margin: 120px auto 40px;
+  padding: 40px 36px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+h2 {
+  text-align: center;
+  color: var(--nav);
+  margin-bottom: 28px;
+}
+
+label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+input.form-control {
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  padding: 10px 14px;
+}
+
+.btn-login {
+  background: var(--tile);
+  color: var(--gold);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 0;
+  width: 100%;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all .18s ease;
+}
+
+.btn-login:hover {
+  background: #15204a;
+  transform: translateY(-2px);
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 18px;
+  font-size: .95rem;
+}
+
+.register-link a {
+  color: var(--tile);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  background: #ffd8d8;
+  border: 1px solid #e55;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #700;
+  margin-bottom: 14px;
+  text-align: center;
+}

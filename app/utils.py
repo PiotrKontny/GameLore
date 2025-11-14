@@ -59,13 +59,20 @@ def record_user_history(user, game, refresh_timestamp=True):
 def jwt_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+
+        # --- ADMIN ALWAYS PASSES WITHOUT JWT ---
+        if request.user.is_authenticated and request.user.is_superuser:
+            print("[JWT] SKIPPING JWT CHECK FOR ADMIN")
+            return view_func(request, *args, **kwargs)
+
         jwt_auth = JWTAuthentication()
 
+        # --- 1. Pobierz token z nagłówka lub ciasteczka ---
         token = None
+
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             candidate = auth_header.split(" ")[1].strip()
-            # ⬇️ ignoruj puste/null/undefined z frontu
             if candidate and candidate.lower() not in ("null", "undefined"):
                 token = candidate
 
@@ -84,21 +91,25 @@ def jwt_required(view_func):
                 print("[JWT] Token nieprawidłowy lub wygasł.")
                 return JsonResponse({"error": "Nieprawidłowy token JWT"}, status=403)
 
-            jwt_user, _ = user_auth_tuple
+            jwt_user, validated_token = user_auth_tuple
+
             mapped_user = (
-                UserModel.objects.filter(username=jwt_user.username).first()
+                UserModel.objects.filter(pk=jwt_user.pk).first()
+                or UserModel.objects.filter(username=jwt_user.username).first()
                 or UserModel.objects.filter(email=jwt_user.email).first()
             )
+
             if not mapped_user:
                 print("[JWT] Nie znaleziono użytkownika w bazie.")
                 return JsonResponse({"error": "Użytkownik nie istnieje"}, status=403)
 
             request.user = mapped_user
             print(f"[JWT] Authenticated user: {mapped_user.username}")
+
             return view_func(request, *args, **kwargs)
 
         except Exception as e:
-            print(f"[JWT] Authentication failed: {e}")
+            print(f"[JWT] Authentication failed (internal error): {e!r}")
             return JsonResponse({"error": "Token JWT nieprawidłowy lub wygasł."}, status=403)
 
     return _wrapped_view

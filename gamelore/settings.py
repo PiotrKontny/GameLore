@@ -50,7 +50,7 @@ ROOT_URLCONF = 'gamelore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend' / 'templates'],
+        'DIRS': [BASE_DIR / 'frontend' / 'build'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -145,6 +145,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/app/login/'
 AUTH_USER_MODEL = 'app.UserModel'
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'frontend', 'build')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend', 'build', 'static')]
+
+handler404 = "frontend.views.react_index"
+handler500 = "frontend.views.react_index"
+handler403 = "frontend.views.react_index"
+handler400 = "frontend.views.react_index"
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

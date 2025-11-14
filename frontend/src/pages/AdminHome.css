@@ -1,0 +1,49 @@
+.admin-home {
+  background: #f4f6fa;
+  min-height: 100vh;
+  padding-bottom: 120px;
+}
+
+/* LOGO */
+.admin-home .main-logo {
+  display: block;
+  margin: 48px auto 28px;
+  height: 220px;
+}
+
+/* GRID 4 kolumny */
+.admin-home .tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 280px);
+  justify-content: center;
+  gap: 32px;
+  margin: 10px auto 80px;
+  max-width: 1600px;
+  padding: 0;
+}
+
+/* KAFELKI */
+.admin-home .tile {
+  width: 280px;
+  height: 280px;
+  background: var(--tile);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+  transition: 0.18s ease;
+}
+
+.admin-home .tile img {
+  width: 90%;
+  height: 90%;
+  object-fit: cover;
+}
+
+/* Rząd admina – jeden kafelek na środku */
+.admin-home .tiles--admin {
+  grid-template-columns: 280px;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 200px;
+}

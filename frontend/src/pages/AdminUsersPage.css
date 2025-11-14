@@ -1,0 +1,92 @@
+:root {
+  --nav: #0f1836;
+  --gold: #d6b679;
+}
+
+body {
+  background: #f4f6fa;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  color: #222;
+}
+
+.navbar {
+  background: var(--nav);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gold);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  position: relative;
+}
+
+.brand img {
+  height: 72px;
+}
+
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+.profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 14px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.profile-chip img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: white;
+  object-fit: cover;
+}
+
+.table-container {
+  max-width: 900px;
+  margin: 60px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.explore-heading {
+  font-weight: 700;
+  color: var(--nav);
+  margin-bottom: 20px;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.search-input {
+  height: 44px;
+  padding: 10px 16px;
+  border-right: 1px solid #ccc !important;
+  font-size: 1rem;
+  border-radius: 999px 0 0 999px !important;
+}
+
+.sort-select {
+  width: 240px;
+}
+
+.table thead {
+  background: var(--nav);
+  color: var(--gold);
+}

@@ -1,0 +1,48 @@
+:root {
+  --nav: #0f1836;
+  --gold: #d6b679;
+  --radius: 18px;
+  --shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.info-page {
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+/* kontener */
+.info-container {
+    width: 70%;
+    max-width: 1100px;
+    margin: 40px auto;
+    padding-bottom: 60px;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #1a1a1a;
+}
+
+/* WSZYSTKIE nagłówki h2 mają IDENTYCZNY wygląd */
+.info-container h2 {
+    font-size: 36px;       /* tak samo jak Introduction */
+    font-weight: 700;
+    text-align: center;    /* wyśrodkowane */
+    margin-top: 60px;
+    margin-bottom: 25px;
+    color: #0f1836;        /* ciemnoniebieski jak navbar */
+}
+
+/* listy */
+.info-container ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.info-container li {
+    margin-bottom: 8px;
+}
+
+/* paragrafy */
+.info-container p {
+    margin-bottom: 18px;
+}
+

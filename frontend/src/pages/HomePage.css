@@ -1,0 +1,63 @@
+:root {
+  --nav:#0f1836;
+  --tile:#0f1836;
+  --gold:#d6b679;
+  --shadow:0 12px 28px rgba(0,0,0,.25);
+  --radius:18px;
+}
+
+.home-page {
+  min-height: 100vh;
+  background: #f4f6fa;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  color: #333;
+}
+
+/* LOGO */
+.home-page .main-logo {
+  display: block;
+  margin: 48px auto 28px;
+  height: 220px;
+}
+
+/* GRID 4 kolumny */
+.home-page .tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 280px);
+  justify-content: center;
+  gap: 32px;
+  margin: 10px auto 80px;
+  padding: 0 20px;
+  max-width: 1400px;
+}
+
+/* TILE */
+.home-page .tile {
+  width: 280px;
+  height: 280px;
+  background: var(--tile);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease;
+  text-decoration: none;
+}
+
+.home-page .tile:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 36px rgba(0,0,0,.28);
+}
+
+.home-page .tile img {
+  width: 90%;
+  height: 90%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* disabled tiles */
+.home-page .tile.disabled {
+  filter: grayscale(100%) brightness(.75);
+  cursor: not-allowed;
+}
