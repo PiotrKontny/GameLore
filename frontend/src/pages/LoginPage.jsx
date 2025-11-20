@@ -26,9 +26,9 @@ function LoginPage() {
 
   return (
     <div className="login-container">
-      <h2>Login to GameLore</h2>
+      <h2 className="login-title">Login to GameLore</h2>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-text">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">

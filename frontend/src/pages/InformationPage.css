@@ -2,47 +2,64 @@
   --nav: #0f1836;
   --gold: #d6b679;
   --radius: 18px;
-  --shadow: 0 12px 28px rgba(0,0,0,0.15);
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
+/* tło strony jak w GameDetailPage */
 .info-page {
-    background-color: #ffffff;
-    min-height: 100vh;
+  background: #f4f6fa;
+  min-height: 100vh;
+  padding: 40px 0 60px;
 }
 
-/* kontener */
+/* „karta” w środku – inspirowana .game-container */
 .info-container {
-    width: 70%;
-    max-width: 1100px;
-    margin: 40px auto;
-    padding-bottom: 60px;
-    font-size: 17px;
-    line-height: 1.7;
-    color: #1a1a1a;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px 50px 50px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #1a1a1a;
 }
 
-/* WSZYSTKIE nagłówki h2 mają IDENTYCZNY wygląd */
+/* Nagłówki sekcji */
 .info-container h2 {
-    font-size: 36px;       /* tak samo jak Introduction */
-    font-weight: 700;
-    text-align: center;    /* wyśrodkowane */
-    margin-top: 60px;
-    margin-bottom: 25px;
-    color: #0f1836;        /* ciemnoniebieski jak navbar */
+  font-size: 34px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--nav);
+  margin-top: 40px;
+  margin-bottom: 22px;
+}
+
+/* delikatna linia nad i pod pierwszym nagłówkiem */
+.info-container h2:first-of-type {
+  margin-top: 10px;
+}
+
+.info-container h2::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 12px auto 0;
+  max-width: 80%;
 }
 
 /* listy */
 .info-container ul {
-    margin-left: 20px;
-    margin-bottom: 20px;
+  margin-left: 22px;
+  margin-bottom: 20px;
 }
 
 .info-container li {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 /* paragrafy */
 .info-container p {
-    margin-bottom: 18px;
+  margin-bottom: 18px;
 }
-

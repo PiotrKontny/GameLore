@@ -22,10 +22,21 @@ body {
   box-shadow: var(--shadow);
 }
 
-h2 {
+/* MNIEJSZA GRUBOŚĆ Tytułu */
+.login-title {
   text-align: center;
   color: var(--nav);
   margin-bottom: 28px;
+  font-weight: 600;          /* ← było 700, teraz wygląda normalnie */
+}
+
+/* CZERWONY NAPIS ZAMIAST BLOKU */
+.error-text {
+  color: #c00;
+  text-align: center;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  font-weight: 600;
 }
 
 label {
@@ -71,14 +82,4 @@ input.form-control {
 
 .register-link a:hover {
   text-decoration: underline;
-}
-
-.error-message {
-  background: #ffd8d8;
-  border: 1px solid #e55;
-  padding: 8px 10px;
-  border-radius: 10px;
-  color: #700;
-  margin-bottom: 14px;
-  text-align: center;
 }

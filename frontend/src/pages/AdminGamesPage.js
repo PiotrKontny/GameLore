@@ -8,6 +8,8 @@ function AdminGamesPage() {
   const [query, setQuery] = useState("");
   const [sortOption, setSortOption] = useState("oldest");
 
+  const [loadingId, setLoadingId] = useState(null);
+
   const fetchGames = async () => {
     try {
       const params = new URLSearchParams({
@@ -48,13 +50,20 @@ function AdminGamesPage() {
     if (!window.confirm("Re-scrape and regenerate summary for this game?"))
       return;
 
+    setLoadingId(id);
+
     const res = await fetch(`/app/admin-panel/reload-game/${id}/`, {
       method: "POST",
       credentials: "include",
     });
 
     const data = await res.json();
+
+    setLoadingId(null);
+
     alert(data.message || data.error);
+
+    fetchGames();
   };
 
   const updateScore = async (id, newScore) => {
@@ -136,6 +145,7 @@ function AdminGamesPage() {
               games.map((game) => (
                 <tr key={game.id}>
                   <td>{game.id}</td>
+
                   <td>
                     <a
                       href={`/app/games/${game.id}/`}
@@ -148,23 +158,26 @@ function AdminGamesPage() {
                       {game.title}
                     </a>
                   </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={game.score}
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      onChange={(e) => updateScore(game.id, e.target.value)}
-                      style={{
-                        width: "70px",
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: "6px",
-                        padding: "4px",
-                      }}
-                    />
+
+                  {/* SCORE + SPINNER */}
+                  <td className="score-cell">
+                    <div className="score-layout">
+                      <input
+                        type="number"
+                        value={game.score}
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        onChange={(e) => updateScore(game.id, e.target.value)}
+                        className="score-input"
+                      />
+
+                      {loadingId === game.id && (
+                        <div className="spinner-small"></div>
+                      )}
+                    </div>
                   </td>
+
                   <td>
                     <button
                       className="btn btn-danger btn-sm"

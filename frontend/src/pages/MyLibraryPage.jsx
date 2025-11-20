@@ -98,7 +98,7 @@ function MyLibraryPage() {
           {/* ADD CARD */}
           <div className="col-md-4 d-flex justify-content-center">
             <a
-              href="/app/search/"
+              href="/app/explore/"
               className="text-decoration-none"
               style={{ width: "100%", display: "flex", justifyContent: "center" }}
             >

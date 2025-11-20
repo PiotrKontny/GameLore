@@ -1458,6 +1458,45 @@ body {
   display: inline-block;
   vertical-align: middle;
 }
+
+/* ⭐ FINALNY, STABILNY SCORE + SPINNER LAYOUT ⭐ */
+.score-cell {
+  position: relative;
+}
+
+.score-layout {
+  display: grid;
+  grid-template-columns: 70px 36px; /* więcej miejsca dla spinnera */
+  align-items: center;
+  gap: 20px; /* odstęp centralny */
+  height: 40px;
+}
+
+.score-input {
+  width: 70px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px;
+  height: 32px;
+}
+
+/* Spinner — perfekcyjnie wycentrowany */
+.spinner-small {
+  width: 20px;
+  height: 20px;
+
+  margin-left: 4px;
+
+  border: 3px solid rgba(15,24,54,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 `, ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
@@ -32319,50 +32358,67 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   --nav: #0f1836;
   --gold: #d6b679;
   --radius: 18px;
-  --shadow: 0 12px 28px rgba(0,0,0,0.15);
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
+/* tło strony jak w GameDetailPage */
 .info-page {
-    background-color: #ffffff;
-    min-height: 100vh;
+  background: #f4f6fa;
+  min-height: 100vh;
+  padding: 40px 0 60px;
 }
 
-/* kontener */
+/* „karta” w środku – inspirowana .game-container */
 .info-container {
-    width: 70%;
-    max-width: 1100px;
-    margin: 40px auto;
-    padding-bottom: 60px;
-    font-size: 17px;
-    line-height: 1.7;
-    color: #1a1a1a;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px 50px 50px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #1a1a1a;
 }
 
-/* WSZYSTKIE nagłówki h2 mają IDENTYCZNY wygląd */
+/* Nagłówki sekcji */
 .info-container h2 {
-    font-size: 36px;       /* tak samo jak Introduction */
-    font-weight: 700;
-    text-align: center;    /* wyśrodkowane */
-    margin-top: 60px;
-    margin-bottom: 25px;
-    color: #0f1836;        /* ciemnoniebieski jak navbar */
+  font-size: 34px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--nav);
+  margin-top: 40px;
+  margin-bottom: 22px;
+}
+
+/* delikatna linia nad i pod pierwszym nagłówkiem */
+.info-container h2:first-of-type {
+  margin-top: 10px;
+}
+
+.info-container h2::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 12px auto 0;
+  max-width: 80%;
 }
 
 /* listy */
 .info-container ul {
-    margin-left: 20px;
-    margin-bottom: 20px;
+  margin-left: 22px;
+  margin-bottom: 20px;
 }
 
 .info-container li {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 /* paragrafy */
 .info-container p {
-    margin-bottom: 18px;
+  margin-bottom: 18px;
 }
-
 `, ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
@@ -32809,10 +32865,21 @@ body {
   box-shadow: var(--shadow);
 }
 
-h2 {
+/* MNIEJSZA GRUBOŚĆ Tytułu */
+.login-title {
   text-align: center;
   color: var(--nav);
   margin-bottom: 28px;
+  font-weight: 600;          /* ← było 700, teraz wygląda normalnie */
+}
+
+/* CZERWONY NAPIS ZAMIAST BLOKU */
+.error-text {
+  color: #c00;
+  text-align: center;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  font-weight: 600;
 }
 
 label {
@@ -32859,16 +32926,7 @@ input.form-control {
 .register-link a:hover {
   text-decoration: underline;
 }
-
-.error-message {
-  background: #ffd8d8;
-  border: 1px solid #e55;
-  padding: 8px 10px;
-  border-radius: 10px;
-  color: #700;
-  margin-bottom: 14px;
-  text-align: center;
-}`, ""]);
+`, ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -33363,58 +33421,59 @@ var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBP
 // Module
 ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   --nav: #0f1836;
-  --tile: #0f1836;
   --gold: #d6b679;
 }
 
+/* NAVBAR */
 .navbar-login {
   background: var(--nav);
   padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 3px 10px rgba(0,0,0,.18);
 }
 
-/* LOGO */
 .navbar-login .brand img {
   height: 72px;
 }
 
-/* KONTENER PRZYCISKÓW */
-.auth-actions {
+/* BLOK PRZYCISKÓW */
+.navbar-login .auth-actions {
   display: flex;
   align-items: center;
 }
 
-.auth-actions a {
-  text-decoration: none;
+/* WSPÓLNE DLA LOGIN + REGISTER */
+.navbar-login .auth-actions a {
+  text-decoration: none;            /* ← usuwa podkreślenie */
   font-weight: 700;
   border-radius: 12px;
-  padding: 10px 16px;
-  margin-left: 10px;
-  font-size: 1.1rem;
+  padding: 10px 18px;
+  margin-left: 12px;
+  font-size: 1.15rem;
+  transition: transform 0.18s ease, filter 0.18s ease;
 }
 
-/* LOGIN (biały kafelek) */
-.btn-login {
-  background: #fff;
+/* LOGIN */
+.navbar-login .auth-actions .btn-login {
+  background: #ffffff;
   color: var(--nav);
-  transition: 0.15s ease-in-out;
 }
 
-.btn-login:hover {
-  background: #e9e9e9;
+.navbar-login .auth-actions .btn-login:hover {
+  transform: translateY(-3px);      /* ← unoszenie */
+  filter: brightness(0.92);
 }
 
-/* REGISTER (gradient) */
-.btn-register {
+/* REGISTER */
+.navbar-login .auth-actions .btn-register {
   background: linear-gradient(135deg, #1c3faa, #0e7c86);
   color: #fff;
-  transition: 0.15s ease-in-out;
 }
 
-.btn-register:hover {
+.navbar-login .auth-actions .btn-register:hover {
+  transform: translateY(-3px);      /* ← dodane unoszenie */
   filter: brightness(1.1);
 }
 `, ""]);
@@ -44652,8 +44711,10 @@ function LoginPage_LoginPage() {
   }
   return /*#__PURE__*/react_default().createElement("div", {
     className: "login-container"
-  }, /*#__PURE__*/react_default().createElement("h2", null, "Login to GameLore"), error && /*#__PURE__*/react_default().createElement("div", {
-    className: "error-message"
+  }, /*#__PURE__*/react_default().createElement("h2", {
+    className: "login-title"
+  }, "Login to GameLore"), error && /*#__PURE__*/react_default().createElement("div", {
+    className: "error-text"
   }, error), /*#__PURE__*/react_default().createElement("form", {
     onSubmit: handleSubmit
   }, /*#__PURE__*/react_default().createElement("div", {
@@ -44894,10 +44955,6 @@ function InformationPage_InformationPage() {
     _useState2 = InformationPage_slicedToArray(_useState, 2),
     user = _useState2[0],
     setUser = _useState2[1];
-  console.log("INFORMATION PAGE RENDERED!!!");
-
-  // sprawdzamy, czy user jest zalogowany – tylko po to,
-  // żeby wybrać odpowiedni navbar
   (0,react.useEffect)(function () {
     function loadUser() {
       return _loadUser.apply(this, arguments);
@@ -44947,13 +45004,13 @@ function InformationPage_InformationPage() {
     }
     loadUser();
   }, []);
-  return /*#__PURE__*/react_default().createElement("div", {
-    className: "info-page"
-  }, user ? /*#__PURE__*/react_default().createElement(src_components_Navbar, {
+  return /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, user ? /*#__PURE__*/react_default().createElement(src_components_Navbar, {
     user: user
   }) : /*#__PURE__*/react_default().createElement(src_components_NavbarLogin, null), /*#__PURE__*/react_default().createElement("div", {
+    className: "info-page"
+  }, /*#__PURE__*/react_default().createElement("div", {
     className: "info-container"
-  }, /*#__PURE__*/react_default().createElement("h2", null, "Introduction LLL"), /*#__PURE__*/react_default().createElement("p", null, "Hello, my name is Peter and I am the creator of this web application,", " ", /*#__PURE__*/react_default().createElement("strong", null, "GameLore"), "."), /*#__PURE__*/react_default().createElement("p", null, "You are currently in the ", /*#__PURE__*/react_default().createElement("em", null, "Information"), " section of the website, where I aim to provide a clear explanation of how the application works. This is not meant to be an exhaustive technical document but rather an accessible overview of the system, its main features, and potential future developments."), /*#__PURE__*/react_default().createElement("h2", null, "How it works?"), /*#__PURE__*/react_default().createElement("p", null, "Before discussing the internal mechanisms of the website, it is worth clarifying several terms: ", /*#__PURE__*/react_default().createElement("strong", null, "web scraping"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "NLP"), ", and ", /*#__PURE__*/react_default().createElement("strong", null, "LLM"), "."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Web scraping"), " \u2013 a technique used to retrieve information from existing websites and store it either in a database (as in this project) or directly in memory."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "NLP (Natural Language Processing)"), " \u2013 a branch of artificial intelligence focused on analyzing and interpreting human language. In this application, NLP is used to generate summaries for games with sufficiently detailed plots."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "LLM (Large Language Models)"), " \u2013 advanced neural models that apply NLP to understand and interpret text. In this project, an LLM powers the chatbot, allowing users to ask questions about any game they are exploring.")), /*#__PURE__*/react_default().createElement("p", null, "GameLore uses two main scraping tools:", " ", /*#__PURE__*/react_default().createElement("strong", null, "Playwright"), ", which retrieves webpage data using a headless browser, and ", /*#__PURE__*/react_default().createElement("strong", null, "BeautifulSoup"), ", which extracts only the necessary parts of that data. Information is sourced from:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "MobyGames"), " \u2013 for metadata such as cover art, genre, release date, developers, and score."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Wikipedia"), " \u2013 for gathering game plots.")), /*#__PURE__*/react_default().createElement("p", null, "Suppose a user searches for a game not yet in the database \u2014", " ", /*#__PURE__*/react_default().createElement("em", null, "Elden Ring"), ", for example. The user inputs the title via the search feature available on the ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " and", " ", /*#__PURE__*/react_default().createElement("em", null, "My Library"), " pages. The backend launches a headless browser via Playwright, opens the relevant MobyGames search page, retrieves the first ten results, filters out invalid entries, and displays the remaining games to the user."), /*#__PURE__*/react_default().createElement("p", null, "When a game is selected, the scraping process begins. The system checks if the game already exists in the database. If not, Playwright opens the game\u2019s MobyGames page and determines whether the entry represents a standalone title, a compilation, or an add-on."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilations"), " \u2013 all titles included in the compilation are shown, and the user selects one."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Add-ons"), " \u2013 the link to the base game is stored, after which the system proceeds as with standalone titles.")), /*#__PURE__*/react_default().createElement("p", null, "Six attributes are then scraped: ", /*#__PURE__*/react_default().createElement("strong", null, "Title"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Released"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Genre"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Developers"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Moby Score"), ", and the", " ", /*#__PURE__*/react_default().createElement("strong", null, "cover image"), "."), /*#__PURE__*/react_default().createElement("p", null, "Next, the scraper attempts to reach the corresponding Wikipedia page using the formatted title. It searches for plot-related section headings such as ", /*#__PURE__*/react_default().createElement("em", null, "Plot"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Synopsis"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Premise"), ",", " ", /*#__PURE__*/react_default().createElement("em", null, "Story"), ", or ", /*#__PURE__*/react_default().createElement("em", null, "Lore"), ". If found, the plot section is extracted and structured."), /*#__PURE__*/react_default().createElement("p", null, "If none of these headings exist:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "add-ons"), ", the system uses the previously saved base-game link and tries again."), /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "standalone titles"), ", the description from MobyGames is used instead, along with a remark that the chatbot can provide additional plot information if needed.")), /*#__PURE__*/react_default().createElement("p", null, "Once scraping is complete, the user is redirected to the game\u2019s detail page. Two additional features become available:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Summary"), " \u2013 generated using Hugging Face Transformers, with each plot subsection summarized separately."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot"), " \u2013 powered by ", /*#__PURE__*/react_default().createElement("strong", null, "OpenRouter.ai"), ", which offers access to multiple LLMs through a unified API. The current model in use is ", /*#__PURE__*/react_default().createElement("strong", null, "Mistral 7B Instruct"), ".")), /*#__PURE__*/react_default().createElement("h2", null, "What are the website\u2019s features?"), /*#__PURE__*/react_default().createElement("p", null, "Beyond scraping and chatbot support, GameLore includes a number of additional features. Some are only available to logged-in users, while others \u2014 such as ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " \u2014 are publicly accessible."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Login and Register Pages"), " \u2013 enabling account creation and authentication."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Profile Page"), " \u2013 allows users to update their username, password, and profile picture."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Explore Page"), " \u2013 displays all games in the database and includes search and sorting tools."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Search and Results Pages"), " \u2013 for locating games not yet in the database."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilation Page"), " \u2013 shown when a selected entry is part of a compilation."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Game Detail Page"), " \u2013 contains all game information, including plot, summary, chatbot access, and the option to rate the game."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "My Library Page"), " \u2013 stores a user\u2019s browsing history."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot Page"), " \u2013 a dedicated interface for interacting with the chatbot.")), /*#__PURE__*/react_default().createElement("h2", null, "What\u2019s the website\u2019s future?"), /*#__PURE__*/react_default().createElement("p", null, "GameLore originally started with a much smaller scope \u2014 basic authentication, exploration, viewing scraped details, and basic chatbot and summary functionality. Over time, with helpful feedback from those around me, the project expanded significantly, gaining more advanced features such as sorting, improved scraping logic, and user profiles."), /*#__PURE__*/react_default().createElement("p", null, "However, the application is not perfect. Certain features could be improved, optimized, or expanded, but implementing these enhancements is not something I currently plan to pursue."), /*#__PURE__*/react_default().createElement("p", null, "Despite this, creating GameLore has been an enjoyable and meaningful experience, and one that I will look back on fondly in the future.")));
+  }, /*#__PURE__*/react_default().createElement("h2", null, "Introduction"), /*#__PURE__*/react_default().createElement("p", null, "Hello, my name is Peter and I am the creator of this web application,", " ", /*#__PURE__*/react_default().createElement("strong", null, "GameLore"), "."), /*#__PURE__*/react_default().createElement("p", null, "You are currently in the ", /*#__PURE__*/react_default().createElement("em", null, "Information"), " section of the website, where I aim to provide a clear explanation of how the application works. This is not meant to be an exhaustive technical document but rather an accessible overview of the system, its main features, and potential future developments."), /*#__PURE__*/react_default().createElement("h2", null, "How it works?"), /*#__PURE__*/react_default().createElement("p", null, "Before discussing the internal mechanisms of the website, it is worth clarifying several terms: ", /*#__PURE__*/react_default().createElement("strong", null, "web scraping"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "NLP"), ", and ", /*#__PURE__*/react_default().createElement("strong", null, "LLM"), "."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Web scraping"), " \u2013 a technique used to retrieve information from existing websites and store it either in a database (as in this project) or directly in memory."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "NLP (Natural Language Processing)"), " \u2013 a branch of artificial intelligence focused on analyzing and interpreting human language. In this application, NLP is used to generate summaries for games with sufficiently detailed plots."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "LLM (Large Language Models)"), " \u2013 advanced neural models that apply NLP to understand and interpret text. In this project, an LLM powers the chatbot, allowing users to ask questions about any game they are exploring.")), /*#__PURE__*/react_default().createElement("p", null, "GameLore uses two main scraping tools:", " ", /*#__PURE__*/react_default().createElement("strong", null, "Playwright"), ", which retrieves webpage data using a headless browser, and ", /*#__PURE__*/react_default().createElement("strong", null, "BeautifulSoup"), ", which extracts only the necessary parts of that data. Information is sourced from:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "MobyGames"), " \u2013 for metadata such as cover art, genre, release date, developers, and score."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Wikipedia"), " \u2013 for gathering game plots.")), /*#__PURE__*/react_default().createElement("p", null, "Suppose a user searches for a game not yet in the database \u2013", " ", /*#__PURE__*/react_default().createElement("em", null, "Elden Ring"), ", for example. The user inputs the title via the search feature available on the ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " and", " ", /*#__PURE__*/react_default().createElement("em", null, "My Library"), " pages. The backend launches a headless browser via Playwright, opens the relevant MobyGames search page, retrieves the first ten results, filters out invalid entries, and displays the remaining games to the user."), /*#__PURE__*/react_default().createElement("p", null, "When a game is selected, the scraping process begins. The system checks if the game already exists in the database. If not, Playwright opens the game\u2019s MobyGames page and determines whether the entry represents a standalone title, a compilation, or an add-on."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilations"), " \u2013 all titles included in the compilation are shown, and the user selects one."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Add-ons"), " \u2013 the link to the base game is stored, after which the system proceeds as with standalone titles.")), /*#__PURE__*/react_default().createElement("p", null, "Six attributes are then scraped: ", /*#__PURE__*/react_default().createElement("strong", null, "Title"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Released"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Genre"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Developers"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Moby Score"), ", and the", " ", /*#__PURE__*/react_default().createElement("strong", null, "cover image"), "."), /*#__PURE__*/react_default().createElement("p", null, "Next, the scraper attempts to reach the corresponding Wikipedia page using the formatted title. It searches for plot-related section headings such as ", /*#__PURE__*/react_default().createElement("em", null, "Plot"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Synopsis"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Premise"), ",", " ", /*#__PURE__*/react_default().createElement("em", null, "Story"), ", or ", /*#__PURE__*/react_default().createElement("em", null, "Lore"), ". If found, the plot section is extracted and structured."), /*#__PURE__*/react_default().createElement("p", null, "If none of these headings exist:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "add-ons"), ", the system uses the previously saved base-game link and tries again."), /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "standalone titles"), ", the description from MobyGames is used instead, along with a remark that the chatbot can provide additional plot information if needed.")), /*#__PURE__*/react_default().createElement("p", null, "Once scraping is complete, the user is redirected to the game\u2019s detail page. Two additional features become available:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Summary"), " \u2013 generated using Hugging Face Transformers, with each plot subsection summarized separately."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot"), " \u2013 powered by ", /*#__PURE__*/react_default().createElement("strong", null, "OpenRouter.ai"), ", which offers access to multiple LLMs through a unified API. The current model in use is ", /*#__PURE__*/react_default().createElement("strong", null, "Mistral 7B Instruct"), ".")), /*#__PURE__*/react_default().createElement("h2", null, "What are the website\u2019s features?"), /*#__PURE__*/react_default().createElement("p", null, "Beyond scraping and chatbot support, GameLore includes a number of additional features. Some are only available to logged-in users, while others \u2013 such as ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " \u2013 are publicly accessible."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Login and Register Pages"), " \u2013 enabling account creation and authentication."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Profile Page"), " \u2013 allows users to update their username, password, and profile picture."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Explore Page"), " \u2013 displays all games in the database and includes search and sorting tools."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Search and Results Pages"), " \u2013 for locating games not yet in the database."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilation Page"), " \u2013 shown when a selected entry is part of a compilation."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Game Detail Page"), " \u2013 contains all game information, including plot, summary, chatbot access, and the option to rate the game."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "My Library Page"), " \u2013 stores a user\u2019s browsing history."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot Page"), " \u2013 a dedicated interface for interacting with the chatbot.")), /*#__PURE__*/react_default().createElement("h2", null, "What\u2019s the website\u2019s future?"), /*#__PURE__*/react_default().createElement("p", null, "GameLore originally started with a much smaller scope \u2013 basic authentication, exploration, viewing scraped details, and basic chatbot and summary functionality. Over time, with helpful feedback from those around me, the project expanded significantly, gaining more advanced features such as sorting, improved scraping logic, and user profiles."), /*#__PURE__*/react_default().createElement("p", null, "However, the application is not perfect. Certain features could be improved, optimized, or expanded, but implementing these enhancements is not something I currently plan to pursue."), /*#__PURE__*/react_default().createElement("p", null, "Despite this, creating GameLore has been an enjoyable and meaningful experience, and one that I will look back on fondly in the future."))));
 }
 /* harmony default export */ const src_pages_InformationPage = (InformationPage_InformationPage);
 // EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/pages/ExplorePage.css
@@ -46812,7 +46869,7 @@ function MyLibraryPage_MyLibraryPage() {
   }, /*#__PURE__*/react_default().createElement("div", {
     className: "col-md-4 d-flex justify-content-center"
   }, /*#__PURE__*/react_default().createElement("a", {
-    href: "/app/search/",
+    href: "/app/explore/",
     className: "text-decoration-none",
     style: {
       width: "100%",
@@ -47823,6 +47880,10 @@ function AdminGamesPage_AdminGamesPage() {
     _useState6 = AdminGamesPage_slicedToArray(_useState5, 2),
     sortOption = _useState6[0],
     setSortOption = _useState6[1];
+  var _useState7 = (0,react.useState)(null),
+    _useState8 = AdminGamesPage_slicedToArray(_useState7, 2),
+    loadingId = _useState8[0],
+    setLoadingId = _useState8[1];
   var fetchGames = /*#__PURE__*/function () {
     var _ref = AdminGamesPage_asyncToGenerator(/*#__PURE__*/AdminGamesPage_regenerator().m(function _callee() {
       var params, res, data, _t;
@@ -47910,6 +47971,7 @@ function AdminGamesPage_AdminGamesPage() {
             }
             return _context3.a(2);
           case 1:
+            setLoadingId(id);
             _context3.n = 2;
             return fetch("/app/admin-panel/reload-game/".concat(id, "/"), {
               method: "POST",
@@ -47921,7 +47983,9 @@ function AdminGamesPage_AdminGamesPage() {
             return res.json();
           case 3:
             data = _context3.v;
+            setLoadingId(null);
             alert(data.message || data.error);
+            fetchGames();
           case 4:
             return _context3.a(2);
         }
@@ -48033,7 +48097,11 @@ function AdminGamesPage_AdminGamesPage() {
         fontWeight: 600,
         color: "#0f1836"
       }
-    }, game.title)), /*#__PURE__*/react_default().createElement("td", null, /*#__PURE__*/react_default().createElement("input", {
+    }, game.title)), /*#__PURE__*/react_default().createElement("td", {
+      className: "score-cell"
+    }, /*#__PURE__*/react_default().createElement("div", {
+      className: "score-layout"
+    }, /*#__PURE__*/react_default().createElement("input", {
       type: "number",
       value: game.score,
       min: "0",
@@ -48042,14 +48110,10 @@ function AdminGamesPage_AdminGamesPage() {
       onChange: function onChange(e) {
         return updateScore(game.id, e.target.value);
       },
-      style: {
-        width: "70px",
-        textAlign: "center",
-        border: "1px solid #ccc",
-        borderRadius: "6px",
-        padding: "4px"
-      }
-    })), /*#__PURE__*/react_default().createElement("td", null, /*#__PURE__*/react_default().createElement("button", {
+      className: "score-input"
+    }), loadingId === game.id && /*#__PURE__*/react_default().createElement("div", {
+      className: "spinner-small"
+    }))), /*#__PURE__*/react_default().createElement("td", null, /*#__PURE__*/react_default().createElement("button", {
       className: "btn btn-danger btn-sm",
       onClick: function onClick() {
         return deleteGame(game.id);
