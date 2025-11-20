@@ -482,26 +482,25 @@ def game_detail_page(request, pk):
     return FileResponse(open(index_path, "rb"))
 
 @jwt_required
-def game_detail_api(request, pk):
+def api_game_detail(request, pk):
     game = get_object_or_404(Games, pk=pk)
-
-    # 🔥 DODAJEMY TO — HISTORIA ZNÓW DZIAŁA!
-    record_user_history(request.user, game)
-
     plot = GamePlots.objects.filter(game_id=game).first()
 
-    full_plot = plot.full_plot if plot else ""
-    summary   = plot.summary   if plot else ""
+    import markdown
+    full_plot_html = markdown.markdown(plot.full_plot if plot else "")
+    summary_html = markdown.markdown(plot.summary if plot else "")
 
-    # cover URL
-    cover_value = game.cover_image
-    if not cover_value:
-        cover_url = None
-    else:
-        if hasattr(cover_value, "url"):
-            cover_url = cover_value.url
+    cover = None
+    if game.cover_image:
+        if hasattr(game.cover_image, "url"):
+            cover = game.cover_image.url
         else:
-            cover_url = f"/media/{cover_value}"
+            cover = "/media/" + str(game.cover_image)
+
+    try:
+        score_value = float(game.score) if game.score is not None else None
+    except:
+        score_value = None
 
     return JsonResponse({
         "id": game.id,
@@ -509,13 +508,14 @@ def game_detail_api(request, pk):
         "release_date": str(game.release_date) if game.release_date else None,
         "genre": game.genre,
         "studio": game.studio,
-        "score": float(game.score) if game.score is not None else None,
-        "cover_image": cover_url,
+        "score": score_value,
+        "cover_image": cover,
         "mobygames_url": game.mobygames_url,
         "wikipedia_url": game.wikipedia_url,
-        "full_plot_html": markdown.markdown(full_plot or ""),
-        "summary_html": markdown.markdown(summary or ""),
+        "full_plot_html": full_plot_html,
+        "summary_html": summary_html,
     })
+
 
 
 # This function deals with that cursed game compilation situation I described multiple times in this project. But

@@ -1,13 +1,15 @@
+// webpack.config.js
 const path = require("path");
 const webpack = require("webpack");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.js",
 
   output: {
     path: path.resolve(__dirname, "./static/frontend"),
-    filename: "[name].js",
-    publicPath: "/",  // ← ważne!
+    filename: "main.js",                     // może być też "[name].js"
+    publicPath: "/static/frontend/",         // KLUCZOWE
   },
 
   resolve: {
@@ -40,6 +42,21 @@ module.exports = {
     ],
   },
 
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env.NODE_ENV": JSON.stringify("development"),
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, "public/index.html"),
+      filename: "index.html",
+      inject: "body",
+    }),
+  ],
+
+  optimization: {
+    minimize: false,
+  },
+
   devServer: {
     static: {
       directory: path.join(__dirname, "./static/frontend"),
@@ -48,14 +65,4 @@ module.exports = {
     hot: true,
     historyApiFallback: true,
   },
-
-  optimization: {
-    minimize: false,
-  },
-
-  plugins: [
-    new webpack.DefinePlugin({
-      "process.env.NODE_ENV": JSON.stringify("development"),
-    }),
-  ],
 };

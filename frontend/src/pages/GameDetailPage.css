@@ -65,10 +65,14 @@
 
 /* Score pill */
 .score-line {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;  /* wycentrowanie na szerokość całej karty */
+  gap: 8px;
+  margin: 18px 0 12px;      /* trochę oddechu nad i pod */
+  text-align: center;
 }
+
 
 .score-box {
   display: inline-block;

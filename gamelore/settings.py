@@ -50,7 +50,7 @@ ROOT_URLCONF = 'gamelore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend' / 'build'],
+        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'static', 'frontend')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -139,14 +139,11 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/app/login/'
 AUTH_USER_MODEL = 'app.UserModel'
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'frontend', 'build')]
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend', 'build', 'static')]
 
 handler404 = "frontend.views.react_index"
 handler500 = "frontend.views.react_index"

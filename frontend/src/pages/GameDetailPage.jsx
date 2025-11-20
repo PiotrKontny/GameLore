@@ -9,6 +9,19 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : "";
 }
 
+/* --- Score color helper (IDENTYCZNY JAK W ExplorePage) --- */
+function getScoreColor(rawScore) {
+  if (rawScore == null) return "blue";
+  const score = Number(rawScore);
+  if (Number.isNaN(score)) return "blue";
+
+  if (score >= 9.0) return "gold";
+  if (score >= 8.0) return "green";
+  if (score >= 6.0) return "yellow";
+  if (score >= 4.0) return "purple";
+  return "red";
+}
+
 const TAB_FULL = "full";
 const TAB_SUMMARY = "summary";
 const TAB_CHATBOT = "chatbot";
@@ -60,15 +73,32 @@ const GameDetailPage = () => {
 
         const data = await res.json();
 
+        // Jeśli kiedyś backend zacznie zwracać { game: {...} }, to nadal zadziała
         const gameObj = data.game || data;
+
         const fullPlotHtml =
           data.full_plot_html || gameObj.full_plot_html || "";
         const summaryHtmlRaw =
           data.summary_html || gameObj.summary_html || "";
 
+        // Normalizacja score – wymuszamy Number lub null
+        let normalizedScore = null;
+        if (gameObj.score !== undefined && gameObj.score !== null) {
+          const s = Number(gameObj.score);
+          normalizedScore = Number.isNaN(s) ? null : s;
+        }
+
         if (!cancelled) {
           setGameData({
-            ...gameObj,
+            id: gameObj.id,
+            title: gameObj.title,
+            release_date: gameObj.release_date,
+            genre: gameObj.genre,
+            studio: gameObj.studio,
+            cover_image: gameObj.cover_image,
+            mobygames_url: gameObj.mobygames_url,
+            wikipedia_url: gameObj.wikipedia_url,
+            score: normalizedScore, // <- zawsze klucz istnieje
             full_plot_html: fullPlotHtml,
           });
 
@@ -333,6 +363,19 @@ const GameDetailPage = () => {
           )}
         </div>
 
+                {/* SCORE */}
+        {gameData.score != null && (
+          <div className="score-line">
+            <span>
+              <strong>Score:</strong>
+            </span>
+            <span className={`score-box ${getScoreColor(gameData.score)}`}>
+              {gameData.score.toFixed ? gameData.score.toFixed(1) : gameData.score}
+            </span>
+          </div>
+        )}
+
+
         {/* SOURCES */}
         {(gameData.mobygames_url || gameData.wikipedia_url) && (
           <div className="sources">
@@ -340,12 +383,20 @@ const GameDetailPage = () => {
               <strong>Sources:</strong>
             </h5>
             {gameData.mobygames_url && (
-              <a href={gameData.mobygames_url} target="_blank" rel="noreferrer">
+              <a
+                href={gameData.mobygames_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 MobyGames
               </a>
             )}
             {gameData.wikipedia_url && (
-              <a href={gameData.wikipedia_url} target="_blank" rel="noreferrer">
+              <a
+                href={gameData.wikipedia_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Wikipedia
               </a>
             )}
@@ -380,7 +431,6 @@ const GameDetailPage = () => {
         {/* TABS + SLIDER */}
         <div className="tab-wrapper">
           <div className="tab-control" role="tablist">
-            {/* GRANATOWY SLIDER */}
             <div className="tab-highlight" style={highlightStyle} />
 
             <button
