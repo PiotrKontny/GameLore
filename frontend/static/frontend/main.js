@@ -542,12 +542,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
 .score-line {
   display: flex;
   align-items: center;
-  justify-content: center;  /* wycentrowanie na szerokość całej karty */
+  justify-content: center;
   gap: 8px;
-  margin: 18px 0 12px;      /* trochę oddechu nad i pod */
+  margin: 18px 0 12px;
   text-align: center;
 }
-
 
 .score-box {
   display: inline-block;
@@ -627,7 +626,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   position: relative;
   display: flex;
   width: 680px;
-  background: transparent;   /* ✔ NAPRAWIONE */
+  background: transparent;
   border: 2px solid var(--gold);
   border-radius: 40px;
   overflow: hidden;
@@ -44815,53 +44814,75 @@ function RegisterPage_RegisterPage() {
   };
   var handleRegister = /*#__PURE__*/function () {
     var _ref = RegisterPage_asyncToGenerator(/*#__PURE__*/RegisterPage_regenerator().m(function _callee(e) {
-      var res, data, _t;
+      var trimmedUsername, res, data, _t;
       return RegisterPage_regenerator().w(function (_context) {
         while (1) switch (_context.p = _context.n) {
           case 0:
             e.preventDefault();
             setError("");
             setSuccess("");
-            _context.p = 1;
-            _context.n = 2;
+            trimmedUsername = form.username.trim(); // --- Frontowa walidacja username ---
+            if (!(trimmedUsername.length < 4)) {
+              _context.n = 1;
+              break;
+            }
+            setError("Username must be at least 4 characters long.");
+            return _context.a(2);
+          case 1:
+            if (/^[A-Za-z0-9]+$/.test(trimmedUsername)) {
+              _context.n = 2;
+              break;
+            }
+            setError("Username can only contain letters and digits (no spaces or special characters).");
+            return _context.a(2);
+          case 2:
+            if (!(form.password.length < 5)) {
+              _context.n = 3;
+              break;
+            }
+            setError("Password must be at least 5 characters long.");
+            return _context.a(2);
+          case 3:
+            _context.p = 3;
+            _context.n = 4;
             return fetch("/app/register/", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 "x-requested-with": "XMLHttpRequest"
               },
-              body: JSON.stringify(form)
+              body: JSON.stringify(_objectSpread(_objectSpread({}, form), {}, {
+                username: trimmedUsername // zapisujemy bez spacji na końcach
+              }))
             });
-          case 2:
+          case 4:
             res = _context.v;
-            _context.n = 3;
+            _context.n = 5;
             return res.json();
-          case 3:
+          case 5:
             data = _context.v;
             if (res.ok) {
-              _context.n = 4;
+              _context.n = 6;
               break;
             }
             setError(data.error || "Registration failed.");
             return _context.a(2);
-          case 4:
+          case 6:
             setSuccess("Account created successfully!");
-
-            // małe opóźnienie aby użytkownik zobaczył komunikat
             setTimeout(function () {
               window.location.href = "/app/login/";
             }, 1000);
-            _context.n = 6;
+            _context.n = 8;
             break;
-          case 5:
-            _context.p = 5;
+          case 7:
+            _context.p = 7;
             _t = _context.v;
             console.error(_t);
             setError("Unexpected error occurred.");
-          case 6:
+          case 8:
             return _context.a(2);
         }
-      }, _callee, null, [[1, 5]]);
+      }, _callee, null, [[3, 7]]);
     }));
     return function handleRegister(_x) {
       return _ref.apply(this, arguments);
@@ -45713,7 +45734,7 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : "";
 }
 
-/* --- Score color helper (IDENTYCZNY JAK W ExplorePage) --- */
+/* --- Score color helper --- */
 function GameDetailPage_getScoreColor(rawScore) {
   if (rawScore == null) return "blue";
   var score = Number(rawScore);
@@ -45773,23 +45794,29 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
     currentAvg = _useState14[0],
     setCurrentAvg = _useState14[1];
 
-  // CHATBOT
-  var _useState15 = (0,react.useState)(false),
+  // NOWE: Hover na gwiazdkach
+  var _useState15 = (0,react.useState)(null),
     _useState16 = GameDetailPage_slicedToArray(_useState15, 2),
-    chatLoaded = _useState16[0],
-    setChatLoaded = _useState16[1];
-  var _useState17 = (0,react.useState)([]),
+    hoverValue = _useState16[0],
+    setHoverValue = _useState16[1];
+
+  // CHATBOT
+  var _useState17 = (0,react.useState)(false),
     _useState18 = GameDetailPage_slicedToArray(_useState17, 2),
-    chatMessages = _useState18[0],
-    setChatMessages = _useState18[1];
-  var _useState19 = (0,react.useState)(""),
+    chatLoaded = _useState18[0],
+    setChatLoaded = _useState18[1];
+  var _useState19 = (0,react.useState)([]),
     _useState20 = GameDetailPage_slicedToArray(_useState19, 2),
-    chatInput = _useState20[0],
-    setChatInput = _useState20[1];
-  var _useState21 = (0,react.useState)(false),
+    chatMessages = _useState20[0],
+    setChatMessages = _useState20[1];
+  var _useState21 = (0,react.useState)(""),
     _useState22 = GameDetailPage_slicedToArray(_useState21, 2),
-    chatThinking = _useState22[0],
-    setChatThinking = _useState22[1];
+    chatInput = _useState22[0],
+    setChatInput = _useState22[1];
+  var _useState23 = (0,react.useState)(false),
+    _useState24 = GameDetailPage_slicedToArray(_useState23, 2),
+    chatThinking = _useState24[0],
+    setChatThinking = _useState24[1];
 
   /* -------------------------------------------
       1. Fetch game data
@@ -45823,10 +45850,9 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               return res.json();
             case 4:
               data = _context.v;
-              // Jeśli kiedyś backend zacznie zwracać { game: {...} }, to nadal zadziała
               gameObj = data.game || data;
               fullPlotHtml = data.full_plot_html || gameObj.full_plot_html || "";
-              summaryHtmlRaw = data.summary_html || gameObj.summary_html || ""; // Normalizacja score – wymuszamy Number lub null
+              summaryHtmlRaw = data.summary_html || gameObj.summary_html || "";
               normalizedScore = null;
               if (gameObj.score !== undefined && gameObj.score !== null) {
                 s = Number(gameObj.score);
@@ -45843,7 +45869,6 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
                   mobygames_url: gameObj.mobygames_url,
                   wikipedia_url: gameObj.wikipedia_url,
                   score: normalizedScore,
-                  // <- zawsze klucz istnieje
                   full_plot_html: fullPlotHtml
                 });
                 setSummaryHtml(summaryHtmlRaw || "");
@@ -46040,7 +46065,7 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }();
 
   /* -------------------------------------------
-      6. CHATBOT – load history + send message
+      6. CHATBOT – load history
   -------------------------------------------- */
   (0,react.useEffect)(function () {
     if (activeTab !== TAB_CHATBOT || chatLoaded) return;
@@ -46224,14 +46249,26 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }, Array.from({
     length: 10
   }, function (_, i) {
+    var starValue = i + 1;
+    var isActive = hoverValue ? starValue <= hoverValue : starValue <= Math.round(currentAvg);
+
+    // Jeśli hover — zielony
+    // Jeśli nie hover — gwiazdki do średniej są złote
+    var starColor = hoverValue ? starValue <= hoverValue ? "limegreen" : "#ccc" : starValue <= Math.round(currentAvg) ? "#f6c700" : "#ccc";
     return /*#__PURE__*/react_default().createElement("span", {
       key: i,
       className: "star",
       onClick: function onClick() {
-        return handleStarClick(i + 1);
+        return handleStarClick(starValue);
+      },
+      onMouseEnter: function onMouseEnter() {
+        return setHoverValue(starValue);
+      },
+      onMouseLeave: function onMouseLeave() {
+        return setHoverValue(null);
       },
       style: {
-        color: i < Math.round(currentAvg) ? "#f6c700" : "#ccc"
+        color: starColor
       }
     }, "\u2605");
   })), /*#__PURE__*/react_default().createElement("p", {
@@ -46433,27 +46470,49 @@ function ProfilePage_ProfilePage() {
   // ========== ZMIANA USERNAME ==========
   var changeUsername = /*#__PURE__*/function () {
     var _ref = ProfilePage_asyncToGenerator(/*#__PURE__*/ProfilePage_regenerator().m(function _callee2(e) {
-      var form, res, data;
+      var newUsername, form, res, data;
       return ProfilePage_regenerator().w(function (_context2) {
         while (1) switch (_context2.n) {
           case 0:
             e.preventDefault();
             setMsgUsername(null); // reset komunikatu
+            newUsername = e.target.new_username.value.trim();
+            if (!(newUsername.length < 4)) {
+              _context2.n = 1;
+              break;
+            }
+            setMsgUsername({
+              text: "Username must be at least 4 characters long.",
+              error: true
+            });
+            return _context2.a(2);
+          case 1:
+            if (/^[A-Za-z0-9]+$/.test(newUsername)) {
+              _context2.n = 2;
+              break;
+            }
+            setMsgUsername({
+              text: "Username can only contain letters and digits (no spaces or special characters).",
+              error: true
+            });
+            return _context2.a(2);
+          case 2:
             form = new FormData(e.target);
-            _context2.n = 1;
+            form.set("new_username", newUsername); // zapisujemy w wersji przyciętej
+            _context2.n = 3;
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
               body: form
             });
-          case 1:
+          case 3:
             res = _context2.v;
-            _context2.n = 2;
+            _context2.n = 4;
             return res.json();
-          case 2:
+          case 4:
             data = _context2.v;
             if (res.ok) {
-              _context2.n = 3;
+              _context2.n = 5;
               break;
             }
             setMsgUsername({
@@ -46461,15 +46520,15 @@ function ProfilePage_ProfilePage() {
               error: true
             });
             return _context2.a(2);
-          case 3:
+          case 5:
             setMsgUsername({
               text: data.message,
               error: false
             });
             setUser(ProfilePage_objectSpread(ProfilePage_objectSpread({}, user), {}, {
-              username: form.get("new_username")
+              username: newUsername
             }));
-          case 4:
+          case 6:
             return _context2.a(2);
         }
       }, _callee2);
@@ -46543,27 +46602,38 @@ function ProfilePage_ProfilePage() {
   // ========== ZMIANA HASŁA ==========
   var changePassword = /*#__PURE__*/function () {
     var _ref3 = ProfilePage_asyncToGenerator(/*#__PURE__*/ProfilePage_regenerator().m(function _callee4(e) {
-      var form, res, data;
+      var newPassword, form, res, data;
       return ProfilePage_regenerator().w(function (_context4) {
         while (1) switch (_context4.n) {
           case 0:
             e.preventDefault();
             setMsgPassword(null);
+            newPassword = e.target.new_password.value;
+            if (!(newPassword.length < 5)) {
+              _context4.n = 1;
+              break;
+            }
+            setMsgPassword({
+              text: "New password must be at least 5 characters long.",
+              error: true
+            });
+            return _context4.a(2);
+          case 1:
             form = new FormData(e.target);
-            _context4.n = 1;
+            _context4.n = 2;
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
               body: form
             });
-          case 1:
-            res = _context4.v;
-            _context4.n = 2;
-            return res.json();
           case 2:
+            res = _context4.v;
+            _context4.n = 3;
+            return res.json();
+          case 3:
             data = _context4.v;
             if (res.ok) {
-              _context4.n = 3;
+              _context4.n = 4;
               break;
             }
             setMsgPassword({
@@ -46571,12 +46641,12 @@ function ProfilePage_ProfilePage() {
               error: true
             });
             return _context4.a(2);
-          case 3:
+          case 4:
             setMsgPassword({
               text: data.message,
               error: false
             });
-          case 4:
+          case 5:
             return _context4.a(2);
         }
       }, _callee4);

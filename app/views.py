@@ -200,7 +200,31 @@ class RegisterUser(APIView):
 
     def post(self, request):
         """Obsługuje rejestrację użytkownika (JSON IN → JSON OUT)."""
-        serializer = UserSerializer(data=request.data)
+
+        data = request.data
+
+        username = (data.get("username") or "").strip()
+        password = data.get("password") or ""
+
+        # --- WALIDACJA USERNAME ---
+        if len(username) < 4:
+            return JsonResponse({
+                "error": "Username must be at least 4 characters long."
+            }, status=400)
+
+        if not re.match(r"^[A-Za-z0-9]+$", username):
+            return JsonResponse({
+                "error": "Username can only contain letters and digits (no spaces or special characters)."
+            }, status=400)
+
+        # --- WALIDACJA HASŁA ---
+        if len(password) < 5:
+            return JsonResponse({
+                "error": "Password must be at least 5 characters long."
+            }, status=400)
+
+        # reszta jak było
+        serializer = UserSerializer(data=data)
 
         if not serializer.is_valid():
             # 🔥 React oczekuje czystego JSON — NIE renderujemy HTML
@@ -219,6 +243,7 @@ class RegisterUser(APIView):
         return JsonResponse({
             "message": "Account created successfully."
         }, status=201)
+
 
 
 # As the name suggests, it's a class for viewing games (GET operator)
@@ -847,11 +872,22 @@ def profile_view(request):
     # ---- ZMIANA USERNAME ----
     if action == "change_username":
         new_username = request.POST.get("new_username", "").strip()
+
         if not new_username:
             return JsonResponse({"error": "Username cannot be empty."}, status=400)
 
         if new_username == user.username:
             return JsonResponse({"message": "Nothing changed."})
+
+        if len(new_username) < 4:
+            return JsonResponse({
+                "error": "Username must be at least 4 characters long."
+            }, status=400)
+
+        if not re.match(r"^[A-Za-z0-9]+$", new_username):
+            return JsonResponse({
+                "error": "Username can only contain letters and digits (no spaces or special characters)."
+            }, status=400)
 
         if UserModel.objects.filter(username=new_username).exists():
             return JsonResponse({"error": "This username already exists."}, status=400)
@@ -870,6 +906,11 @@ def profile_view(request):
 
         if not new_password:
             return JsonResponse({"error": "New password cannot be empty."}, status=400)
+
+        if len(new_password) < 5:
+            return JsonResponse({
+                "error": "New password must be at least 5 characters long."
+            }, status=400)
 
         user.set_password(new_password)
         user.save()
@@ -1109,7 +1150,7 @@ def generate_summary_view(request, pk):
     plot = GamePlots.objects.filter(game_id=game).first()
 
     if not plot:
-        return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
+        return JsonResponse({"error": "No plot to summarize."}, status=400)
 
     # ✅ Jeśli streszczenie już istnieje — zwróć je bez generowania
     if plot.summary and "No Summary Available" not in plot.summary:
@@ -1117,7 +1158,7 @@ def generate_summary_view(request, pk):
 
     # ❌ Brak fabuły lub placeholder
     if not plot.full_plot or "No Plot Found" in plot.full_plot:
-        return JsonResponse({"error": "Brak fabuły do streszczenia."}, status=400)
+        return JsonResponse({"error": "No plot to summarize."}, status=400)
 
     try:
         print(f"[SUMMARY] Uruchamiam streszczenie z markdownu dla gry '{game.title}'")
@@ -1125,7 +1166,7 @@ def generate_summary_view(request, pk):
 
         if not summary_md:
             return JsonResponse({
-                "summary": "<p>Fabuła jest zbyt krótka, by wymagała streszczenia.</p>"
+                "summary": "<p>The plot is too short to require a summary.</p>"
             })
 
         # 📝 Zapis do bazy

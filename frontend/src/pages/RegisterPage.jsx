@@ -15,10 +15,29 @@ function RegisterPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = async (e) => {
+    const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    const trimmedUsername = form.username.trim();
+
+    // --- Frontowa walidacja username ---
+    if (trimmedUsername.length < 4) {
+      setError("Username must be at least 4 characters long.");
+      return;
+    }
+
+    if (!/^[A-Za-z0-9]+$/.test(trimmedUsername)) {
+      setError("Username can only contain letters and digits (no spaces or special characters).");
+      return;
+    }
+
+    // --- Frontowa walidacja hasła ---
+    if (form.password.length < 5) {
+      setError("Password must be at least 5 characters long.");
+      return;
+    }
 
     try {
       const res = await fetch("/app/register/", {
@@ -27,7 +46,10 @@ function RegisterPage() {
           "Content-Type": "application/json",
           "x-requested-with": "XMLHttpRequest",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          username: trimmedUsername, // zapisujemy bez spacji na końcach
+        }),
       });
 
       const data = await res.json();
@@ -39,7 +61,6 @@ function RegisterPage() {
 
       setSuccess("Account created successfully!");
 
-      // małe opóźnienie aby użytkownik zobaczył komunikat
       setTimeout(() => {
         window.location.href = "/app/login/";
       }, 1000);

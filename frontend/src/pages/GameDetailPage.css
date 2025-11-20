@@ -67,12 +67,11 @@
 .score-line {
   display: flex;
   align-items: center;
-  justify-content: center;  /* wycentrowanie na szerokość całej karty */
+  justify-content: center;
   gap: 8px;
-  margin: 18px 0 12px;      /* trochę oddechu nad i pod */
+  margin: 18px 0 12px;
   text-align: center;
 }
-
 
 .score-box {
   display: inline-block;
@@ -152,7 +151,7 @@
   position: relative;
   display: flex;
   width: 680px;
-  background: transparent;   /* ✔ NAPRAWIONE */
+  background: transparent;
   border: 2px solid var(--gold);
   border-radius: 40px;
   overflow: hidden;

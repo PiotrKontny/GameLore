@@ -9,7 +9,7 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : "";
 }
 
-/* --- Score color helper (IDENTYCZNY JAK W ExplorePage) --- */
+/* --- Score color helper --- */
 function getScoreColor(rawScore) {
   if (rawScore == null) return "blue";
   const score = Number(rawScore);
@@ -49,6 +49,9 @@ const GameDetailPage = () => {
   });
   const [currentAvg, setCurrentAvg] = useState(0);
 
+  // NOWE: Hover na gwiazdkach
+  const [hoverValue, setHoverValue] = useState(null);
+
   // CHATBOT
   const [chatLoaded, setChatLoaded] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
@@ -72,8 +75,6 @@ const GameDetailPage = () => {
         if (!res.ok) throw new Error("HTTP " + res.status);
 
         const data = await res.json();
-
-        // Jeśli kiedyś backend zacznie zwracać { game: {...} }, to nadal zadziała
         const gameObj = data.game || data;
 
         const fullPlotHtml =
@@ -81,7 +82,6 @@ const GameDetailPage = () => {
         const summaryHtmlRaw =
           data.summary_html || gameObj.summary_html || "";
 
-        // Normalizacja score – wymuszamy Number lub null
         let normalizedScore = null;
         if (gameObj.score !== undefined && gameObj.score !== null) {
           const s = Number(gameObj.score);
@@ -98,7 +98,7 @@ const GameDetailPage = () => {
             cover_image: gameObj.cover_image,
             mobygames_url: gameObj.mobygames_url,
             wikipedia_url: gameObj.wikipedia_url,
-            score: normalizedScore, // <- zawsze klucz istnieje
+            score: normalizedScore,
             full_plot_html: fullPlotHtml,
           });
 
@@ -237,7 +237,7 @@ const GameDetailPage = () => {
   };
 
   /* -------------------------------------------
-      6. CHATBOT – load history + send message
+      6. CHATBOT – load history
   -------------------------------------------- */
   useEffect(() => {
     if (activeTab !== TAB_CHATBOT || chatLoaded) return;
@@ -363,18 +363,19 @@ const GameDetailPage = () => {
           )}
         </div>
 
-                {/* SCORE */}
+        {/* SCORE */}
         {gameData.score != null && (
           <div className="score-line">
             <span>
               <strong>Score:</strong>
             </span>
             <span className={`score-box ${getScoreColor(gameData.score)}`}>
-              {gameData.score.toFixed ? gameData.score.toFixed(1) : gameData.score}
+              {gameData.score.toFixed
+                ? gameData.score.toFixed(1)
+                : gameData.score}
             </span>
           </div>
         )}
-
 
         {/* SOURCES */}
         {(gameData.mobygames_url || gameData.wikipedia_url) && (
@@ -408,27 +409,44 @@ const GameDetailPage = () => {
           <h5>
             <strong>Rating:</strong>
           </h5>
+
           <div id="stars">
-            {Array.from({ length: 10 }, (_, i) => (
+            {Array.from({ length: 10 }, (_, i) => {
+              const starValue = i + 1;
+
+              const isActive = hoverValue
+              ? starValue <= hoverValue
+              : starValue <= Math.round(currentAvg);
+
+            // Jeśli hover — zielony
+            // Jeśli nie hover — gwiazdki do średniej są złote
+            const starColor = hoverValue
+              ? (starValue <= hoverValue ? "limegreen" : "#ccc")
+              : (starValue <= Math.round(currentAvg) ? "#f6c700" : "#ccc");
+
+            return (
               <span
                 key={i}
                 className="star"
-                onClick={() => handleStarClick(i + 1)}
-                style={{
-                  color: i < Math.round(currentAvg) ? "#f6c700" : "#ccc",
-                }}
+                onClick={() => handleStarClick(starValue)}
+                onMouseEnter={() => setHoverValue(starValue)}
+                onMouseLeave={() => setHoverValue(null)}
+                style={{ color: starColor }}
               >
                 ★
               </span>
-            ))}
+            );
+
+            })}
           </div>
+
           <p id="rating-stats" className="mt-2 text-muted">
             {(ratingStats.avg || 0).toFixed(2)}/10 –{" "}
             {ratingStats.votes || 0} votes
           </p>
         </div>
 
-        {/* TABS + SLIDER */}
+        {/* TABS */}
         <div className="tab-wrapper">
           <div className="tab-control" role="tablist">
             <div className="tab-highlight" style={highlightStyle} />
@@ -442,6 +460,7 @@ const GameDetailPage = () => {
             >
               Full Lore
             </button>
+
             <button
               type="button"
               className={
@@ -451,6 +470,7 @@ const GameDetailPage = () => {
             >
               Summary
             </button>
+
             <button
               type="button"
               className={
@@ -515,6 +535,7 @@ const GameDetailPage = () => {
                     <div className="bubble">{m.text}</div>
                   </div>
                 ))}
+
                 {chatThinking && (
                   <p className="typing">Bot is thinking...</p>
                 )}

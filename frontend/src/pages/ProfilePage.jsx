@@ -25,12 +25,31 @@ function ProfilePage() {
   if (!user) return null;
 
   // ========== ZMIANA USERNAME ==========
-  const changeUsername = async (e) => {
+    const changeUsername = async (e) => {
     e.preventDefault();
 
     setMsgUsername(null); // reset komunikatu
 
+    const newUsername = e.target.new_username.value.trim();
+
+    if (newUsername.length < 4) {
+      setMsgUsername({
+        text: "Username must be at least 4 characters long.",
+        error: true,
+      });
+      return;
+    }
+
+    if (!/^[A-Za-z0-9]+$/.test(newUsername)) {
+      setMsgUsername({
+        text: "Username can only contain letters and digits (no spaces or special characters).",
+        error: true,
+      });
+      return;
+    }
+
     const form = new FormData(e.target);
+    form.set("new_username", newUsername); // zapisujemy w wersji przyciętej
 
     const res = await fetch("/app/api/profile/", {
       method: "POST",
@@ -46,8 +65,9 @@ function ProfilePage() {
     }
 
     setMsgUsername({ text: data.message, error: false });
-    setUser({ ...user, username: form.get("new_username") });
+    setUser({ ...user, username: newUsername });
   };
+
 
   // ========== ZMIANA ZDJĘCIA ==========
   const changePfp = async (e) => {
@@ -79,10 +99,20 @@ function ProfilePage() {
   };
 
   // ========== ZMIANA HASŁA ==========
-  const changePassword = async (e) => {
+    const changePassword = async (e) => {
     e.preventDefault();
 
     setMsgPassword(null);
+
+    const newPassword = e.target.new_password.value;
+
+    if (newPassword.length < 5) {
+      setMsgPassword({
+        text: "New password must be at least 5 characters long.",
+        error: true,
+      });
+      return;
+    }
 
     const form = new FormData(e.target);
 
@@ -101,6 +131,7 @@ function ProfilePage() {
 
     setMsgPassword({ text: data.message, error: false });
   };
+
 
   // ========== LOGOUT ==========
   const logout = async () => {
