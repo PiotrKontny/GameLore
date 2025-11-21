@@ -145,11 +145,10 @@ LOGIN_URL = '/app/login/'
 AUTH_USER_MODEL = 'app.UserModel'
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-handler404 = "frontend.views.react_index"
-handler500 = "frontend.views.react_index"
-handler403 = "frontend.views.react_index"
-handler400 = "frontend.views.react_index"
-
+handler404 = "app.views.react_404"
+handler500 = "app.views.react_500"
+handler403 = "app.views.react_403"
+handler400 = "app.views.react_400"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

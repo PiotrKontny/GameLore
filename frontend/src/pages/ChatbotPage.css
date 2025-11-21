@@ -1,0 +1,280 @@
+:root {
+  --nav:#0f1836;
+  --gold:#d6b679;
+  --shadow:0 12px 28px rgba(0,0,0,.25);
+  --radius:18px;
+}
+
+/* -------------------------------- */
+/* PAGE WRAPPER */
+/* -------------------------------- */
+.chatbot-page {
+  background:#f4f6fa;
+  min-height: calc(100vh - 70px);
+}
+
+.chatbot-wrapper {
+  display:flex;
+  height: calc(100vh - 80px);
+  overflow:hidden;
+}
+
+/* -------------------------------- */
+/* LEFT SIDEBAR */
+/* -------------------------------- */
+.chatbot-sidebar {
+  width: 320px;
+  background:white;
+  border-right:1px solid #ddd;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+}
+
+.chatbot-search-box input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.chatbot-games-list {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 5px;
+}
+
+/* -------------------------------- */
+/* GAME ITEM */
+/* -------------------------------- */
+.chatbot-game-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 8px;
+  margin-bottom: 10px;
+  min-height: 64px;
+
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* -------------------------------- */
+/* FIXED-SIZE THUMBNAILS */
+/* -------------------------------- */
+.chatbot-game-item img.cover {
+  width: 42px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+/* GAME ITEM TITLE */
+.chatbot-game-item .title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.3;
+  word-break: break-word;
+  max-width: 180px;
+}
+
+/* HOVER & ACTIVE STATES */
+.chatbot-game-item:hover {
+  background:#f4f6fa;
+  transform:scale(1.01);
+}
+
+.chatbot-game-item.active {
+  background:var(--nav);
+  color:white;
+  font-weight:600;
+  border-color:var(--nav);
+}
+
+.chatbot-game-item.active:hover {
+  background:#162a5c;
+}
+
+/* DELETE ICON */
+.chatbot-delete-icon {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+  filter: grayscale(100%) brightness(80%);
+  transition: all 0.2s ease;
+}
+
+.chatbot-delete-icon:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  filter: grayscale(0%) brightness(100%);
+  cursor:pointer;
+}
+
+.chatbot-game-item.active .chatbot-delete-icon {
+  filter: invert(1) brightness(2.0);
+  opacity: 0.9;
+}
+
+.chatbot-game-item.active .chatbot-delete-icon:hover {
+  transform: scale(1.2);
+  opacity: 1;
+  filter: invert(1) brightness(2.4);
+}
+
+/* -------------------------------- */
+/* RIGHT PANEL (CHAT) */
+/* -------------------------------- */
+.chatbot-chat-container {
+  flex: 1;
+  display: flex;
+  padding: 25px;
+}
+
+/* CHATBOX - full width, responsive */
+.chatbot-chat-box {
+  flex: 1;
+  height: calc(100vh - 160px);
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+}
+
+/* MESSAGES */
+.chatbot-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.chatbot-message {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.chatbot-message.user {
+  justify-content: flex-end;
+}
+
+.chatbot-message.bot {
+  justify-content: flex-start;
+}
+
+.chatbot-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.chatbot-message.user .chatbot-bubble {
+  background: var(--nav);
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.chatbot-message.bot .chatbot-bubble {
+  background: #e9ecef;
+  color: #111;
+  border-bottom-left-radius: 0;
+}
+
+/* INPUT ROW */
+.chatbot-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.chatbot-input-row input {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.chatbot-input-row button {
+  background: var(--nav);
+  color: var(--gold);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.chatbot-input-row button:hover {
+  background:#182b5c;
+  color:#f5dca1;
+}
+
+.chatbot-typing {
+  font-style: italic;
+  color: #777;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.chatbot-empty-state {
+  color: #666;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* -------------------------------- */
+/* RESPONSIVE BREAKPOINTS */
+/* -------------------------------- */
+@media (max-width: 1100px) {
+  .chatbot-sidebar {
+    width: 260px;
+  }
+
+  .chatbot-game-item .title {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 900px) {
+  .chatbot-wrapper {
+    flex-direction: column;
+  }
+
+  .chatbot-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .chatbot-chat-container {
+    padding: 10px;
+  }
+
+  .chatbot-chat-box {
+    height: calc(100vh - 260px);
+  }
+}

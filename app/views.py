@@ -26,7 +26,7 @@ from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySeria
 from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
 
 from .utils import (search_mobygames, scrape_game_info, record_user_history, jwt_required, get_jwt_user,
-                    CookieJWTAuthentication)
+                    CookieJWTAuthentication, _wants_json)
 from decimal import Decimal, InvalidOperation
 import asyncio
 import json
@@ -1237,7 +1237,11 @@ def admin_panel(request):
     """
     # tylko admin
     if not getattr(request.user, "is_admin", False):
-        return HttpResponseForbidden("Brak uprawnień do panelu administratora")
+        # jeśli fetch / API → JSON 403
+        if _wants_json(request):
+            return JsonResponse({"error": "Access denied"}, status=403)
+        # zwykłe wejście → strona błędu z Reacta
+        return redirect("/error/403")
 
     from django.http import FileResponse
     import os
@@ -1252,6 +1256,7 @@ def admin_panel(request):
     )
 
     return FileResponse(open(index_path, "rb"))
+
 
 
 
@@ -1309,24 +1314,31 @@ def admin_edit_game_score(request, game_id):
 @jwt_required
 def admin_users_view(request):
 
-    # ❗ 1. Uprawnienia
-    if not request.user.is_admin:
-        return JsonResponse({"error": "Access denied"}, status=403)
+    # 1. Uprawnienia
+    if not getattr(request.user, "is_admin", False):
+        # fetch / API → JSON
+        if _wants_json(request):
+            return JsonResponse({"error": "Access denied"}, status=403)
+        # normalne wejście → React error page
+        return redirect("/error/403")
 
-    # ❗ 2. Parametry z URL
+    # 2. Parametry z URL
     sort_option = request.GET.get("sort", "oldest")
     query = (request.GET.get("q") or "").strip()
 
-    # ❗ 3. Jeśli React fetch → zwróć JSON
-    if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
-
+    # 3. Jeśli React fetch → zwróć JSON
+    if (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        or request.GET.get("format") == "json"
+        or _wants_json(request)
+    ):
         users = UserModel.objects.all()
 
-        # 🔍 Filtrowanie
+        # Filtrowanie
         if query:
             users = users.filter(username__icontains=query)
 
-        # 🔽 Sortowanie
+        # Sortowanie
         if sort_option == "newest":
             users = users.order_by("-date_joined")
         else:
@@ -1344,7 +1356,7 @@ def admin_users_view(request):
 
         return JsonResponse({"users": data})
 
-    # ❗ 4. Jeśli to nie JSON → zwróć index.html Reacta
+    # 4. Jeśli to nie JSON → zwróć index.html Reacta
     from django.http import FileResponse
     import os
     from django.conf import settings
@@ -1362,15 +1374,22 @@ def admin_users_view(request):
 
 
 
+
 @jwt_required
 def admin_games_view(request):
 
-    # ⛔ 1. Sprawdzenie czy user to admin
-    if not request.user.is_admin:
-        return JsonResponse({"error": "Access denied"}, status=403)
+    # 1. Sprawdzenie czy user to admin
+    if not getattr(request.user, "is_admin", False):
+        if _wants_json(request):
+            return JsonResponse({"error": "Access denied"}, status=403)
+        return redirect("/error/403")
 
-    # ⛔ 2. Jeśli to request AJAX → zwróć JSON (dla React fetch)
-    if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
+    # 2. Jeśli to request AJAX / JSON → zwróć JSON (dla React fetch)
+    if (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        or request.GET.get("format") == "json"
+        or _wants_json(request)
+    ):
 
         sort_option = request.GET.get("sort", "oldest")
         query = (request.GET.get("q") or "").strip()
@@ -1397,7 +1416,7 @@ def admin_games_view(request):
         ]
         return JsonResponse({"games": data})
 
-    # ⛔ 3. Jeśli nie jest to fetch → zwróć index.html Reacta
+    # 3. Jeśli nie jest to fetch → zwróć index.html Reacta
     from django.http import FileResponse
     import os
     from django.conf import settings
@@ -1411,6 +1430,7 @@ def admin_games_view(request):
     )
 
     return FileResponse(open(index_path, "rb"))
+
 
 
 
@@ -1473,6 +1493,47 @@ def information_view(request):
     return FileResponse(open(index_path, "rb"))
 
 
-#def home(request):
-#    return react_index(request)
+def react_error_page(request, exception=None, code=404):
+    index_path = os.path.join(
+        settings.BASE_DIR, "frontend", "static", "frontend", "index.html"
+    )
+    response = FileResponse(open(index_path, "rb"))
+    response.status_code = code
+    return response
+
+
+def react_404(request, exception):
+    return react_error_page(request, code=404)
+
+def react_500(request):
+    return react_error_page(request, code=500)
+
+def react_403(request, exception):
+    return react_error_page(request, code=403)
+
+def react_400(request, exception):
+    return react_error_page(request, code=400)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def refresh_access_token(request):
+    refresh = request.COOKIES.get("refresh_token")
+    if not refresh:
+        return JsonResponse({"error": "No refresh token"}, status=401)
+
+    try:
+        new_access = RefreshToken(refresh).access_token
+        response = JsonResponse({"access": str(new_access)})
+        response.set_cookie(
+            "access_token",
+            str(new_access),
+            httponly=True,
+            max_age=60 * 60,
+            samesite=None,
+            secure=False
+        )
+        return response
+
+    except Exception:
+        return JsonResponse({"error": "Invalid refresh token"}, status=401)
 

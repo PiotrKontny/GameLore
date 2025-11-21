@@ -5,7 +5,9 @@ import "./GameDetailPage.css";
 
 /* --- CSRF --- */
 function getCookie(name) {
-  const match = document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)");
+  const match = document.cookie.match(
+    "(^|;)\\s*" + name + "\\s*=\\s*([^;]+)"
+  );
   return match ? decodeURIComponent(match.pop()) : "";
 }
 
@@ -33,7 +35,6 @@ const GameDetailPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState(null);
-
   const [activeTab, setActiveTab] = useState(TAB_FULL);
 
   // SUMMARY
@@ -48,8 +49,6 @@ const GameDetailPage = () => {
     user_rating: null,
   });
   const [currentAvg, setCurrentAvg] = useState(0);
-
-  // NOWE: Hover na gwiazdkach
   const [hoverValue, setHoverValue] = useState(null);
 
   // CHATBOT
@@ -59,17 +58,20 @@ const GameDetailPage = () => {
   const [chatThinking, setChatThinking] = useState(false);
 
   /* -------------------------------------------
-      1. Fetch game data
-  -------------------------------------------- */
+   * 1. Fetch game data
+   * ------------------------------------------ */
   useEffect(() => {
     let cancelled = false;
 
     async function fetchGame() {
       setLoading(true);
-
       try {
         const res = await fetch(`/app/api/game/${gameId}/`, {
           credentials: "include",
+          headers: {
+            "x-requested-with": "XMLHttpRequest",
+            Accept: "application/json",
+          },
         });
 
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -83,7 +85,10 @@ const GameDetailPage = () => {
           data.summary_html || gameObj.summary_html || "";
 
         let normalizedScore = null;
-        if (gameObj.score !== undefined && gameObj.score !== null) {
+        if (
+          gameObj.score !== undefined &&
+          gameObj.score !== null
+        ) {
           const s = Number(gameObj.score);
           normalizedScore = Number.isNaN(s) ? null : s;
         }
@@ -101,7 +106,6 @@ const GameDetailPage = () => {
             score: normalizedScore,
             full_plot_html: fullPlotHtml,
           });
-
           setSummaryHtml(summaryHtmlRaw || "");
         }
       } catch (e) {
@@ -118,11 +122,10 @@ const GameDetailPage = () => {
   }, [gameId]);
 
   /* -------------------------------------------
-      2. Detect summary placeholder properly
-  -------------------------------------------- */
+   * 2. Detect summary placeholder
+   * ------------------------------------------ */
   const isSummaryMissing = useMemo(() => {
     if (!summaryHtml) return true;
-
     const clean = summaryHtml
       .toLowerCase()
       .replace(/\s+/g, "")
@@ -143,8 +146,8 @@ const GameDetailPage = () => {
   }, [summaryHtml]);
 
   /* -------------------------------------------
-      3. Load rating
-  -------------------------------------------- */
+   * 3. Load rating
+   * ------------------------------------------ */
   useEffect(() => {
     if (!gameId) return;
 
@@ -152,8 +155,13 @@ const GameDetailPage = () => {
       try {
         const res = await fetch(`/app/games/${gameId}/rating/`, {
           credentials: "include",
+          headers: {
+            "x-requested-with": "XMLHttpRequest",
+            Accept: "application/json",
+          },
         });
-        if (!res.ok) throw new Error("Rating HTTP " + res.status);
+        if (!res.ok)
+          throw new Error("Rating HTTP " + res.status);
 
         const data = await res.json();
         const avg = Number(data.avg || 0);
@@ -163,7 +171,6 @@ const GameDetailPage = () => {
           votes: data.votes || 0,
           user_rating: data.user_rating ?? null,
         });
-
         setCurrentAvg(avg);
       } catch (err) {
         console.error("Rating fetch error", err);
@@ -174,8 +181,8 @@ const GameDetailPage = () => {
   }, [gameId]);
 
   /* -------------------------------------------
-      4. Save rating
-  -------------------------------------------- */
+   * 4. Save rating
+   * ------------------------------------------ */
   const handleStarClick = async (value) => {
     try {
       const res = await fetch(`/app/games/${gameId}/rating/`, {
@@ -184,6 +191,8 @@ const GameDetailPage = () => {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrftoken,
+          "x-requested-with": "XMLHttpRequest",
+          Accept: "application/json",
         },
         body: JSON.stringify({ rating: value }),
       });
@@ -196,7 +205,6 @@ const GameDetailPage = () => {
         votes: data.votes || 0,
         user_rating: value,
       });
-
       setCurrentAvg(avg);
     } catch (err) {
       console.error("Rating save error", err);
@@ -204,25 +212,29 @@ const GameDetailPage = () => {
   };
 
   /* -------------------------------------------
-      5. SUMMARY – Generate Summary
-  -------------------------------------------- */
+   * 5. SUMMARY – Generate Summary
+   * ------------------------------------------ */
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
     setSummaryError("");
 
     try {
-      const res = await fetch(`/app/games/${gameId}/generate-summary/`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken,
-        },
-        body: JSON.stringify({}),
-      });
+      const res = await fetch(
+        `/app/games/${gameId}/generate-summary/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+            "x-requested-with": "XMLHttpRequest",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
 
       const data = await res.json();
-
       if (data.summary) {
         setSummaryHtml(data.summary);
       } else {
@@ -237,27 +249,32 @@ const GameDetailPage = () => {
   };
 
   /* -------------------------------------------
-      6. CHATBOT – load history
-  -------------------------------------------- */
+   * 6. CHATBOT – load history
+   * ------------------------------------------ */
   useEffect(() => {
     if (activeTab !== TAB_CHATBOT || chatLoaded) return;
 
     async function loadHistory() {
       try {
-        const res = await fetch(`/app/chatbot/history/?game_id=${gameId}`, {
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error("Chat history HTTP " + res.status);
+        const res = await fetch(
+          `/app/chatbot/history/?game_id=${gameId}`,
+          {
+            credentials: "include",
+            headers: {
+              "x-requested-with": "XMLHttpRequest",
+              Accept: "application/json",
+            },
+          }
+        );
+        if (!res.ok)
+          throw new Error("Chat history HTTP " + res.status);
 
         const history = await res.json();
-
         const msgs = [];
         history.forEach((h) => {
           msgs.push({ role: "user", text: h.question });
           msgs.push({ role: "bot", text: h.answer });
         });
-
         setChatMessages(msgs);
         setChatLoaded(true);
       } catch (err) {
@@ -273,7 +290,10 @@ const GameDetailPage = () => {
     if (!question) return;
 
     setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", text: question }]);
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", text: question },
+    ]);
     setChatThinking(true);
 
     try {
@@ -283,13 +303,16 @@ const GameDetailPage = () => {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrftoken,
+          "x-requested-with": "XMLHttpRequest",
+          Accept: "application/json",
         },
         body: JSON.stringify({ question, game_id: gameId }),
       });
 
       const data = await res.json();
+      let answer =
+        data.answer || data.error || "No answer from chatbot.";
 
-      let answer = data.answer || data.error || "No answer from chatbot.";
       answer = answer
         .replace(/~~(.*?)~~/g, "$1")
         .replace(/<\/?s>/g, "")
@@ -298,7 +321,10 @@ const GameDetailPage = () => {
         .replace(/\[\/?INSTR?\]/gi, "")
         .trim();
 
-      setChatMessages((prev) => [...prev, { role: "bot", text: answer }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "bot", text: answer },
+      ]);
     } catch (err) {
       console.error("Chat ask error", err);
       setChatMessages((prev) => [
@@ -311,17 +337,23 @@ const GameDetailPage = () => {
   };
 
   /* -------------------------------------------
-      7. Slider highlight style
-  -------------------------------------------- */
+   * 7. Slider highlight style
+   * ------------------------------------------ */
   const highlightStyle = useMemo(() => {
     const index =
-      activeTab === TAB_FULL ? 0 : activeTab === TAB_SUMMARY ? 1 : 2;
-    return { transform: `translateX(${index * 100}%)` };
+      activeTab === TAB_FULL
+        ? 0
+        : activeTab === TAB_SUMMARY
+        ? 1
+        : 2;
+    return {
+      transform: `translateX(${index * 100}%)`,
+    };
   }, [activeTab]);
 
   /* -------------------------------------------
-      8. Render
-  -------------------------------------------- */
+   * 8. Render
+   * ------------------------------------------ */
   if (loading || !gameData) {
     return (
       <div className="game-detail-loading">
@@ -369,7 +401,11 @@ const GameDetailPage = () => {
             <span>
               <strong>Score:</strong>
             </span>
-            <span className={`score-box ${getScoreColor(gameData.score)}`}>
+            <span
+              className={`score-box ${getScoreColor(
+                gameData.score
+              )}`}
+            >
               {gameData.score.toFixed
                 ? gameData.score.toFixed(1)
                 : gameData.score}
@@ -378,7 +414,8 @@ const GameDetailPage = () => {
         )}
 
         {/* SOURCES */}
-        {(gameData.mobygames_url || gameData.wikipedia_url) && (
+        {(gameData.mobygames_url ||
+          gameData.wikipedia_url) && (
           <div className="sources">
             <h5>
               <strong>Sources:</strong>
@@ -409,37 +446,32 @@ const GameDetailPage = () => {
           <h5>
             <strong>Rating:</strong>
           </h5>
-
           <div id="stars">
             {Array.from({ length: 10 }, (_, i) => {
               const starValue = i + 1;
 
-              const isActive = hoverValue
-              ? starValue <= hoverValue
-              : starValue <= Math.round(currentAvg);
+              const starColor = hoverValue
+                ? starValue <= hoverValue
+                  ? "limegreen"
+                  : "#ccc"
+                : starValue <= Math.round(currentAvg)
+                ? "#f6c700"
+                : "#ccc";
 
-            // Jeśli hover — zielony
-            // Jeśli nie hover — gwiazdki do średniej są złote
-            const starColor = hoverValue
-              ? (starValue <= hoverValue ? "limegreen" : "#ccc")
-              : (starValue <= Math.round(currentAvg) ? "#f6c700" : "#ccc");
-
-            return (
-              <span
-                key={i}
-                className="star"
-                onClick={() => handleStarClick(starValue)}
-                onMouseEnter={() => setHoverValue(starValue)}
-                onMouseLeave={() => setHoverValue(null)}
-                style={{ color: starColor }}
-              >
-                ★
-              </span>
-            );
-
+              return (
+                <span
+                  key={i}
+                  className="star"
+                  onClick={() => handleStarClick(starValue)}
+                  onMouseEnter={() => setHoverValue(starValue)}
+                  onMouseLeave={() => setHoverValue(null)}
+                  style={{ color: starColor }}
+                >
+                  ★
+                </span>
+              );
             })}
           </div>
-
           <p id="rating-stats" className="mt-2 text-muted">
             {(ratingStats.avg || 0).toFixed(2)}/10 –{" "}
             {ratingStats.votes || 0} votes
@@ -449,32 +481,38 @@ const GameDetailPage = () => {
         {/* TABS */}
         <div className="tab-wrapper">
           <div className="tab-control" role="tablist">
-            <div className="tab-highlight" style={highlightStyle} />
-
+            <div
+              className="tab-highlight"
+              style={highlightStyle}
+            />
             <button
               type="button"
               className={
-                activeTab === TAB_FULL ? "tab-btn active" : "tab-btn"
+                activeTab === TAB_FULL
+                  ? "tab-btn active"
+                  : "tab-btn"
               }
               onClick={() => setActiveTab(TAB_FULL)}
             >
               Full Lore
             </button>
-
             <button
               type="button"
               className={
-                activeTab === TAB_SUMMARY ? "tab-btn active" : "tab-btn"
+                activeTab === TAB_SUMMARY
+                  ? "tab-btn active"
+                  : "tab-btn"
               }
               onClick={() => setActiveTab(TAB_SUMMARY)}
             >
               Summary
             </button>
-
             <button
               type="button"
               className={
-                activeTab === TAB_CHATBOT ? "tab-btn active" : "tab-btn"
+                activeTab === TAB_CHATBOT
+                  ? "tab-btn active"
+                  : "tab-btn"
               }
               onClick={() => setActiveTab(TAB_CHATBOT)}
             >
@@ -487,7 +525,9 @@ const GameDetailPage = () => {
         {activeTab === TAB_FULL && (
           <div
             className="markdown-content"
-            dangerouslySetInnerHTML={{ __html: gameData.full_plot_html }}
+            dangerouslySetInnerHTML={{
+              __html: gameData.full_plot_html,
+            }}
           />
         )}
 
@@ -496,9 +536,13 @@ const GameDetailPage = () => {
           <div className="tab-pane">
             {isSummaryMissing && !isGeneratingSummary && (
               <div className="text-center mt-4">
-                <p className="muted">Summary not yet generated.</p>
+                <p className="muted">
+                  Summary not yet generated.
+                </p>
                 {summaryError && (
-                  <p className="text-danger">{summaryError}</p>
+                  <p className="text-danger">
+                    {summaryError}
+                  </p>
                 )}
                 <button
                   className="btn btn-primary"
@@ -531,25 +575,33 @@ const GameDetailPage = () => {
             <div id="chat-window">
               <div id="chat-history">
                 {chatMessages.map((m, idx) => (
-                  <div key={idx} className={`message ${m.role}`}>
+                  <div
+                    key={idx}
+                    className={`message ${m.role}`}
+                  >
                     <div className="bubble">{m.text}</div>
                   </div>
                 ))}
-
                 {chatThinking && (
                   <p className="typing">Bot is thinking...</p>
                 )}
               </div>
             </div>
-
             <div className="input-group">
               <input
                 className="form-control"
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                onChange={(e) =>
+                  setChatInput(e.target.value)
+                }
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleSendChat()
+                }
               />
-              <button className="btn btn-primary" onClick={handleSendChat}>
+              <button
+                className="btn btn-primary"
+                onClick={handleSendChat}
+              >
                 Send
               </button>
             </div>

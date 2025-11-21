@@ -29635,6 +29635,308 @@ var __webpack_unused_export__;
 
 /***/ }),
 
+/***/ 2594:
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   A: () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1601);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6314);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `:root {
+  --nav:#0f1836;
+  --gold:#d6b679;
+  --shadow:0 12px 28px rgba(0,0,0,.25);
+  --radius:18px;
+}
+
+/* -------------------------------- */
+/* PAGE WRAPPER */
+/* -------------------------------- */
+.chatbot-page {
+  background:#f4f6fa;
+  min-height: calc(100vh - 70px);
+}
+
+.chatbot-wrapper {
+  display:flex;
+  height: calc(100vh - 80px);
+  overflow:hidden;
+}
+
+/* -------------------------------- */
+/* LEFT SIDEBAR */
+/* -------------------------------- */
+.chatbot-sidebar {
+  width: 320px;
+  background:white;
+  border-right:1px solid #ddd;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+}
+
+.chatbot-search-box input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.chatbot-games-list {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 5px;
+}
+
+/* -------------------------------- */
+/* GAME ITEM */
+/* -------------------------------- */
+.chatbot-game-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 8px;
+  margin-bottom: 10px;
+  min-height: 64px;
+
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* -------------------------------- */
+/* FIXED-SIZE THUMBNAILS */
+/* -------------------------------- */
+.chatbot-game-item img.cover {
+  width: 42px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+/* GAME ITEM TITLE */
+.chatbot-game-item .title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.3;
+  word-break: break-word;
+  max-width: 180px;
+}
+
+/* HOVER & ACTIVE STATES */
+.chatbot-game-item:hover {
+  background:#f4f6fa;
+  transform:scale(1.01);
+}
+
+.chatbot-game-item.active {
+  background:var(--nav);
+  color:white;
+  font-weight:600;
+  border-color:var(--nav);
+}
+
+.chatbot-game-item.active:hover {
+  background:#162a5c;
+}
+
+/* DELETE ICON */
+.chatbot-delete-icon {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+  filter: grayscale(100%) brightness(80%);
+  transition: all 0.2s ease;
+}
+
+.chatbot-delete-icon:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  filter: grayscale(0%) brightness(100%);
+  cursor:pointer;
+}
+
+.chatbot-game-item.active .chatbot-delete-icon {
+  filter: invert(1) brightness(2.0);
+  opacity: 0.9;
+}
+
+.chatbot-game-item.active .chatbot-delete-icon:hover {
+  transform: scale(1.2);
+  opacity: 1;
+  filter: invert(1) brightness(2.4);
+}
+
+/* -------------------------------- */
+/* RIGHT PANEL (CHAT) */
+/* -------------------------------- */
+.chatbot-chat-container {
+  flex: 1;
+  display: flex;
+  padding: 25px;
+}
+
+/* CHATBOX - full width, responsive */
+.chatbot-chat-box {
+  flex: 1;
+  height: calc(100vh - 160px);
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+}
+
+/* MESSAGES */
+.chatbot-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.chatbot-message {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.chatbot-message.user {
+  justify-content: flex-end;
+}
+
+.chatbot-message.bot {
+  justify-content: flex-start;
+}
+
+.chatbot-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.chatbot-message.user .chatbot-bubble {
+  background: var(--nav);
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.chatbot-message.bot .chatbot-bubble {
+  background: #e9ecef;
+  color: #111;
+  border-bottom-left-radius: 0;
+}
+
+/* INPUT ROW */
+.chatbot-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.chatbot-input-row input {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.chatbot-input-row button {
+  background: var(--nav);
+  color: var(--gold);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.chatbot-input-row button:hover {
+  background:#182b5c;
+  color:#f5dca1;
+}
+
+.chatbot-typing {
+  font-style: italic;
+  color: #777;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.chatbot-empty-state {
+  color: #666;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* -------------------------------- */
+/* RESPONSIVE BREAKPOINTS */
+/* -------------------------------- */
+@media (max-width: 1100px) {
+  .chatbot-sidebar {
+    width: 260px;
+  }
+
+  .chatbot-game-item .title {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 900px) {
+  .chatbot-wrapper {
+    flex-direction: column;
+  }
+
+  .chatbot-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .chatbot-chat-container {
+    padding: 10px;
+  }
+
+  .chatbot-chat-box {
+    height: calc(100vh - 260px);
+  }
+}
+`, ""]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ }),
+
 /***/ 2750:
 /***/ ((module, __webpack_exports__, __webpack_require__) => {
 
@@ -32807,7 +33109,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.error-container {
   padding-top: 120px;
   text-align: center;
   background-color: #f3f5f7;
-  height: calc(100vh - 80px); /* po odjęciu Navbara */
+  height: calc(100vh - 80px);
 }
 
 .error-code {
@@ -32821,6 +33123,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.error-container {
   font-size: 32px;
   color: #0f1836;
   font-weight: 500;
+}
+
+.error-description {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #19254a;
 }
 `, ""]);
 // Exports
@@ -44177,6 +44485,18 @@ function htmlEscape(str) {
 
 
 
+;// ./src/utils/navigateGlobal.js
+var navigateFunc = null;
+function setNavigate(func) {
+  navigateFunc = func;
+}
+function navigateGlobal_navigate(path) {
+  if (navigateFunc) {
+    navigateFunc(path);
+  } else {
+    console.error("navigate() called before setNavigate()");
+  }
+}
 // EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js
 var injectStylesIntoStyleTag = __webpack_require__(5072);
 var injectStylesIntoStyleTag_default = /*#__PURE__*/__webpack_require__.n(injectStylesIntoStyleTag);
@@ -45793,8 +46113,6 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
     _useState14 = GameDetailPage_slicedToArray(_useState13, 2),
     currentAvg = _useState14[0],
     setCurrentAvg = _useState14[1];
-
-  // NOWE: Hover na gwiazdkach
   var _useState15 = (0,react.useState)(null),
     _useState16 = GameDetailPage_slicedToArray(_useState15, 2),
     hoverValue = _useState16[0],
@@ -45819,8 +46137,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
     setChatThinking = _useState24[1];
 
   /* -------------------------------------------
-      1. Fetch game data
-  -------------------------------------------- */
+   * 1. Fetch game data
+   * ------------------------------------------ */
   (0,react.useEffect)(function () {
     var cancelled = false;
     function fetchGame() {
@@ -45836,7 +46154,11 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               _context.p = 1;
               _context.n = 2;
               return fetch("/app/api/game/".concat(gameId, "/"), {
-                credentials: "include"
+                credentials: "include",
+                headers: {
+                  "x-requested-with": "XMLHttpRequest",
+                  Accept: "application/json"
+                }
               });
             case 2:
               res = _context.v;
@@ -45897,8 +46219,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }, [gameId]);
 
   /* -------------------------------------------
-      2. Detect summary placeholder properly
-  -------------------------------------------- */
+   * 2. Detect summary placeholder
+   * ------------------------------------------ */
   var isSummaryMissing = (0,react.useMemo)(function () {
     if (!summaryHtml) return true;
     var clean = summaryHtml.toLowerCase().replace(/\s+/g, "").replace(/<p>/g, "").replace(/<\/p>/g, "").trim();
@@ -45906,8 +46228,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }, [summaryHtml]);
 
   /* -------------------------------------------
-      3. Load rating
-  -------------------------------------------- */
+   * 3. Load rating
+   * ------------------------------------------ */
   (0,react.useEffect)(function () {
     if (!gameId) return;
     function loadRating() {
@@ -45922,7 +46244,11 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               _context2.p = 0;
               _context2.n = 1;
               return fetch("/app/games/".concat(gameId, "/rating/"), {
-                credentials: "include"
+                credentials: "include",
+                headers: {
+                  "x-requested-with": "XMLHttpRequest",
+                  Accept: "application/json"
+                }
               });
             case 1:
               res = _context2.v;
@@ -45960,8 +46286,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }, [gameId]);
 
   /* -------------------------------------------
-      4. Save rating
-  -------------------------------------------- */
+   * 4. Save rating
+   * ------------------------------------------ */
   var handleStarClick = /*#__PURE__*/function () {
     var _ref = GameDetailPage_asyncToGenerator(/*#__PURE__*/GameDetailPage_regenerator().m(function _callee3(value) {
       var res, data, avg, _t3;
@@ -45975,7 +46301,9 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               credentials: "include",
               headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               },
               body: JSON.stringify({
                 rating: value
@@ -46011,8 +46339,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }();
 
   /* -------------------------------------------
-      5. SUMMARY – Generate Summary
-  -------------------------------------------- */
+   * 5. SUMMARY – Generate Summary
+   * ------------------------------------------ */
   var handleGenerateSummary = /*#__PURE__*/function () {
     var _ref2 = GameDetailPage_asyncToGenerator(/*#__PURE__*/GameDetailPage_regenerator().m(function _callee4() {
       var res, data, _t4;
@@ -46028,7 +46356,9 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               credentials: "include",
               headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               },
               body: JSON.stringify({})
             });
@@ -46065,8 +46395,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }();
 
   /* -------------------------------------------
-      6. CHATBOT – load history
-  -------------------------------------------- */
+   * 6. CHATBOT – load history
+   * ------------------------------------------ */
   (0,react.useEffect)(function () {
     if (activeTab !== TAB_CHATBOT || chatLoaded) return;
     function loadHistory() {
@@ -46081,7 +46411,11 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               _context5.p = 0;
               _context5.n = 1;
               return fetch("/app/chatbot/history/?game_id=".concat(gameId), {
-                credentials: "include"
+                credentials: "include",
+                headers: {
+                  "x-requested-with": "XMLHttpRequest",
+                  Accept: "application/json"
+                }
               });
             case 1:
               res = _context5.v;
@@ -46151,7 +46485,9 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               credentials: "include",
               headers: {
                 "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               },
               body: JSON.stringify({
                 question: question,
@@ -46199,8 +46535,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }();
 
   /* -------------------------------------------
-      7. Slider highlight style
-  -------------------------------------------- */
+   * 7. Slider highlight style
+   * ------------------------------------------ */
   var highlightStyle = (0,react.useMemo)(function () {
     var index = activeTab === TAB_FULL ? 0 : activeTab === TAB_SUMMARY ? 1 : 2;
     return {
@@ -46209,8 +46545,8 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   }, [activeTab]);
 
   /* -------------------------------------------
-      8. Render
-  -------------------------------------------- */
+   * 8. Render
+   * ------------------------------------------ */
   if (loading || !gameData) {
     return /*#__PURE__*/react_default().createElement("div", {
       className: "game-detail-loading"
@@ -46250,10 +46586,6 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
     length: 10
   }, function (_, i) {
     var starValue = i + 1;
-    var isActive = hoverValue ? starValue <= hoverValue : starValue <= Math.round(currentAvg);
-
-    // Jeśli hover — zielony
-    // Jeśli nie hover — gwiazdki do średniej są złote
     var starColor = hoverValue ? starValue <= hoverValue ? "limegreen" : "#ccc" : starValue <= Math.round(currentAvg) ? "#f6c700" : "#ccc";
     return /*#__PURE__*/react_default().createElement("span", {
       key: i,
@@ -46405,6 +46737,7 @@ function ProfilePage_unsupportedIterableToArray(r, a) { if (r) { if ("string" ==
 function ProfilePage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function ProfilePage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function ProfilePage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// src/pages/ProfilePage.jsx
 
 
 function ProfilePage_ProfilePage() {
@@ -46412,8 +46745,6 @@ function ProfilePage_ProfilePage() {
     _useState2 = ProfilePage_slicedToArray(_useState, 2),
     user = _useState2[0],
     setUser = _useState2[1];
-
-  // osobne komunikaty
   var _useState3 = (0,react.useState)(null),
     _useState4 = ProfilePage_slicedToArray(_useState3, 2),
     msgUsername = _useState4[0],
@@ -46442,7 +46773,8 @@ function ProfilePage_ProfilePage() {
               return fetch("/app/api/profile/", {
                 credentials: "include",
                 headers: {
-                  "x-requested-with": "XMLHttpRequest"
+                  "x-requested-with": "XMLHttpRequest",
+                  Accept: "application/json"
                 }
               });
             case 1:
@@ -46475,7 +46807,7 @@ function ProfilePage_ProfilePage() {
         while (1) switch (_context2.n) {
           case 0:
             e.preventDefault();
-            setMsgUsername(null); // reset komunikatu
+            setMsgUsername(null);
             newUsername = e.target.new_username.value.trim();
             if (!(newUsername.length < 4)) {
               _context2.n = 1;
@@ -46498,12 +46830,15 @@ function ProfilePage_ProfilePage() {
             return _context2.a(2);
           case 2:
             form = new FormData(e.target);
-            form.set("new_username", newUsername); // zapisujemy w wersji przyciętej
+            form.set("new_username", newUsername);
             _context2.n = 3;
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
-              body: form
+              body: form,
+              headers: {
+                "x-requested-with": "XMLHttpRequest"
+              }
             });
           case 3:
             res = _context2.v;
@@ -46552,7 +46887,10 @@ function ProfilePage_ProfilePage() {
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
-              body: form
+              body: form,
+              headers: {
+                "x-requested-with": "XMLHttpRequest"
+              }
             });
           case 1:
             res = _context3.v;
@@ -46574,12 +46912,12 @@ function ProfilePage_ProfilePage() {
               text: data.message,
               error: false
             });
-
-            // reload
             _context3.n = 4;
             return fetch("/app/api/profile/", {
+              credentials: "include",
               headers: {
-                "x-requested-with": "XMLHttpRequest"
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               }
             });
           case 4:
@@ -46624,7 +46962,10 @@ function ProfilePage_ProfilePage() {
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
-              body: form
+              body: form,
+              headers: {
+                "x-requested-with": "XMLHttpRequest"
+              }
             });
           case 2:
             res = _context4.v;
@@ -46669,11 +47010,17 @@ function ProfilePage_ProfilePage() {
             return fetch("/app/api/profile/", {
               method: "POST",
               credentials: "include",
-              body: form
+              body: form,
+              headers: {
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
+              }
             });
           case 1:
             res = _context5.v;
-            if (res.ok) window.location.href = "/app/login/";
+            if (res.ok) {
+              window.location.href = "/app/login/";
+            }
           case 2:
             return _context5.a(2);
         }
@@ -46805,6 +47152,7 @@ function MyLibraryPage_unsupportedIterableToArray(r, a) { if (r) { if ("string" 
 function MyLibraryPage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function MyLibraryPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function MyLibraryPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// src/pages/MyLibraryPage.jsx
 
 
 function MyLibraryPage_MyLibraryPage() {
@@ -46837,10 +47185,11 @@ function MyLibraryPage_MyLibraryPage() {
           case 0:
             setLoading(true);
             _context.n = 1;
-            return fetch("/app/api/my_library/?q=".concat(query, "&sort=").concat(sort), {
+            return fetch("/app/api/my_library/?q=".concat(encodeURIComponent(query), "&sort=").concat(encodeURIComponent(sort)), {
               credentials: "include",
               headers: {
-                "x-requested-with": "XMLHttpRequest"
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               }
             });
           case 1:
@@ -46865,9 +47214,8 @@ function MyLibraryPage_MyLibraryPage() {
   }
   (0,react.useEffect)(function () {
     loadLibrary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sort]);
-
-  // wyszukiwanie
   var handleSearch = function handleSearch(e) {
     e.preventDefault();
     loadLibrary();
@@ -46895,7 +47243,8 @@ function MyLibraryPage_MyLibraryPage() {
               credentials: "include",
               headers: {
                 "Content-Type": "application/json",
-                "x-requested-with": "XMLHttpRequest"
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
               },
               body: JSON.stringify({
                 game_id: id
@@ -47023,6 +47372,35 @@ function MyLibraryPage_MyLibraryPage() {
   }))));
 }
 /* harmony default export */ const src_pages_MyLibraryPage = (MyLibraryPage_MyLibraryPage);
+// EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/pages/ChatbotPage.css
+var ChatbotPage = __webpack_require__(2594);
+;// ./src/pages/ChatbotPage.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var ChatbotPage_options = {};
+
+ChatbotPage_options.styleTagTransform = (styleTagTransform_default());
+ChatbotPage_options.setAttributes = (setAttributesWithoutAttributes_default());
+ChatbotPage_options.insert = insertBySelector_default().bind(null, "head");
+ChatbotPage_options.domAPI = (styleDomAPI_default());
+ChatbotPage_options.insertStyleElement = (insertStyleElement_default());
+
+var ChatbotPage_update = injectStylesIntoStyleTag_default()(ChatbotPage/* default */.A, ChatbotPage_options);
+
+
+
+
+       /* harmony default export */ const pages_ChatbotPage = (ChatbotPage/* default */.A && ChatbotPage/* default */.A.locals ? ChatbotPage/* default */.A.locals : undefined);
+
 ;// ./src/pages/ChatbotPage.jsx
 function ChatbotPage_toConsumableArray(r) { return ChatbotPage_arrayWithoutHoles(r) || ChatbotPage_iterableToArray(r) || ChatbotPage_unsupportedIterableToArray(r) || ChatbotPage_nonIterableSpread(); }
 function ChatbotPage_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -47039,8 +47417,8 @@ function ChatbotPage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a 
 function ChatbotPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function ChatbotPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 
-var chatbotStyles = "\n  :root {\n    --nav:#0f1836;\n    --gold:#d6b679;\n    --shadow:0 12px 28px rgba(0,0,0,.25);\n    --radius:18px;\n  }\n\n  .chatbot-page {\n    background:#f4f6fa;\n    font-family:\"Segoe UI\", Roboto, sans-serif;\n    margin:0;\n    padding:0;\n    min-height: calc(100vh - 70px); /* wysoko\u015B\u0107 bez paska nawigacji */\n  }\n\n  .chatbot-wrapper {\n    display:flex;\n    height:calc(100vh - 80px); /* troch\u0119 luzu na navbar */\n    max-height:calc(100vh - 80px);\n    overflow:hidden;\n  }\n\n  /* LEFT PANEL */\n  .chatbot-sidebar {\n    width: 320px;\n    background: #fff;\n    border-right: 1px solid #ddd;\n    display: flex;\n    flex-direction: column;\n    padding: 12px;\n  }\n\n  .chatbot-search-box input {\n    width:100%;\n    border-radius:8px;\n    border:1px solid #ccc;\n    padding:6px 10px;\n    margin-bottom:10px;\n    font-size: 14px;\n  }\n\n  .chatbot-games-list {\n    overflow-y:auto;\n    flex:1;\n    padding-right:5px;\n  }\n\n  .chatbot-game-item {\n    position: relative;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 10px;\n    padding: 10px 8px;\n    margin-bottom: 10px;\n    border-radius: 10px;\n    cursor: pointer;\n    transition: all 0.2s ease;\n    min-height: 64px;\n    word-break: break-word;\n    white-space: normal;\n    border: 1px solid #e0e0e0;\n    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);\n    background-color: #fff;\n  }\n  \n  .chatbot-game-item img.cover {\n    width: 42px;\n    height: 58px;\n    border-radius: 6px;\n    object-fit: cover;\n    margin-top: 3px;\n    margin-bottom: 3px;\n}\n\n\n  .chatbot-game-item:hover {\n    background: #f4f6fa;\n    transform: scale(1.01);\n  }\n\n  .chatbot-game-item.active {\n    background: var(--nav);\n    color: white;\n    font-weight: 600;\n    border-color: #0f1836;\n  }\n\n  .chatbot-game-item.active:hover {\n    background:#162a5c;\n  }\n\n  .chatbot-game-item span.title {\n    flex: 1;\n    text-align: center;\n    font-size: 15px;\n    line-height: 1.3;\n    word-wrap: break-word;\n  }\n\n  .chatbot-delete-icon {\n    position: absolute;\n    top: 6px;\n    right: 8px;\n    width: 16px;\n    height: 16px;\n    object-fit: contain;\n    display: block;\n    opacity: 0.6;\n    transition: all 0.2s ease;\n    filter: grayscale(100%) brightness(85%);\n  }\n\n  .chatbot-delete-icon:hover {\n    opacity: 1;\n    transform: scale(1.2);\n    filter: grayscale(0%) brightness(100%);\n    cursor: pointer;\n  }\n\n  /* Ikona \u015Bmietnika na aktywnym (granatowym) kafelku */\n  .chatbot-game-item.active .chatbot-delete-icon {\n    filter: invert(1) brightness(1.8);\n    opacity: 0.9;\n  }\n\n  .chatbot-game-item.active .chatbot-delete-icon:hover {\n    transform: scale(1.2);\n    opacity: 1;\n    filter: invert(1) brightness(2.2);\n  }\n\n  /* RIGHT PANEL (CHAT) */\n  .chatbot-chat-container {\n    flex:1;\n    display:flex;\n    justify-content:center;\n    align-items:center;\n    padding:30px 30px;\n  }\n\n  .chatbot-chat-box {\n    width:100%;\n    max-width:1250px;\n    height:calc(110vh - 220px);\n    background:white;\n    border-radius:var(--radius);\n    box-shadow:var(--shadow);\n    padding:25px;\n    display:flex;\n    flex-direction:column;\n  }\n\n  .chatbot-chat-messages {\n    flex:1;\n    overflow-y:auto;\n    padding:10px;\n  }\n\n  .chatbot-message {\n    display:flex;\n    margin-bottom:12px;\n  }\n\n  .chatbot-message.user {\n    justify-content:flex-end;\n  }\n\n  .chatbot-message.bot {\n    justify-content:flex-start;\n  }\n\n  .chatbot-bubble {\n    max-width:70%;\n    padding:10px 14px;\n    border-radius:15px;\n    line-height:1.4;\n    word-wrap:break-word;\n    white-space:pre-wrap;\n  }\n\n  .chatbot-message.user .chatbot-bubble {\n    background:var(--nav);\n    color:#fff;\n    border-bottom-right-radius:0;\n  }\n\n  .chatbot-message.bot .chatbot-bubble {\n    background:#e9ecef;\n    color:#222;\n    border-bottom-left-radius:0;\n  }\n\n  .chatbot-input-row {\n    display:flex;\n    gap:10px;\n    margin-top:10px;\n  }\n\n  .chatbot-input-row input {\n    flex:1;\n    border-radius:10px;\n    border:1px solid #ccc;\n    padding:8px 10px;\n    font-size: 14px;\n  }\n\n  .chatbot-input-row button {\n    background:var(--nav);\n    color:var(--gold);\n    border:none;\n    border-radius:10px;\n    padding:8px 20px;\n    font-weight:600;\n    box-shadow:var(--shadow);\n  }\n\n  .chatbot-input-row button:hover {\n    background:#182b5c;\n    color:#f5dca1;\n  }\n\n  .chatbot-typing {\n    font-style:italic;\n    color:#888;\n    text-align:center;\n    margin-bottom:10px;\n  }\n\n  .chatbot-empty-state {\n    text-align:center;\n    color:#555;\n    margin-top:20px;\n  }\n";
-function ChatbotPage() {
+
+function ChatbotPage_ChatbotPage() {
   var _useState = (0,react.useState)([]),
     _useState2 = ChatbotPage_slicedToArray(_useState, 2),
     games = _useState2[0],
@@ -47052,7 +47430,7 @@ function ChatbotPage() {
   var _useState5 = (0,react.useState)([]),
     _useState6 = ChatbotPage_slicedToArray(_useState5, 2),
     messages = _useState6[0],
-    setMessages = _useState6[1]; // {role: 'user'|'bot', text: string}
+    setMessages = _useState6[1];
   var _useState7 = (0,react.useState)(""),
     _useState8 = ChatbotPage_slicedToArray(_useState7, 2),
     searchTerm = _useState8[0],
@@ -47069,18 +47447,6 @@ function ChatbotPage() {
     _useState12 = ChatbotPage_slicedToArray(_useState11, 2),
     inputValue = _useState12[0],
     setInputValue = _useState12[1];
-
-  // Wstrzyknięcie stylów tylko na tej stronie
-  (0,react.useEffect)(function () {
-    var styleTag = document.createElement("style");
-    styleTag.innerHTML = chatbotStyles;
-    document.head.appendChild(styleTag);
-    return function () {
-      document.head.removeChild(styleTag);
-    };
-  }, []);
-
-  // Początkowe pobranie listy gier + domyślnej gry
   (0,react.useEffect)(function () {
     function fetchInit() {
       return _fetchInit.apply(this, arguments);
@@ -47101,37 +47467,30 @@ function ChatbotPage() {
               });
             case 1:
               res = _context.v;
-              if (res.ok) {
-                _context.n = 2;
-                break;
-              }
-              console.error("Failed to load chatbot init", res.status);
-              return _context.a(2);
-            case 2:
-              _context.n = 3;
+              _context.n = 2;
               return res.json();
-            case 3:
+            case 2:
               data = _context.v;
               setGames(data.games || []);
-              defaultId = data.default_game_id || (data.games && data.games.length > 0 ? data.games[0].id : null);
+              defaultId = data.default_game_id || (data.games && data.games.length ? data.games[0].id : null);
               if (!defaultId) {
-                _context.n = 4;
+                _context.n = 3;
                 break;
               }
               setCurrentGameId(defaultId);
-              _context.n = 4;
+              _context.n = 3;
               return loadHistory(defaultId);
-            case 4:
-              _context.n = 6;
+            case 3:
+              _context.n = 5;
               break;
-            case 5:
-              _context.p = 5;
+            case 4:
+              _context.p = 4;
               _t = _context.v;
               console.error("Error loading chatbot init:", _t);
-            case 6:
+            case 5:
               return _context.a(2);
           }
-        }, _callee, null, [[0, 5]]);
+        }, _callee, null, [[0, 4]]);
       }));
       return _fetchInit.apply(this, arguments);
     }
@@ -47155,17 +47514,9 @@ function ChatbotPage() {
             });
           case 2:
             res = _context2.v;
-            if (res.ok) {
-              _context2.n = 3;
-              break;
-            }
-            console.error("Failed to load history", res.status);
-            setLoadingHistory(false);
-            return _context2.a(2);
-          case 3:
-            _context2.n = 4;
+            _context2.n = 3;
             return res.json();
-          case 4:
+          case 3:
             data = _context2.v;
             msgs = [];
             data.forEach(function (h) {
@@ -47179,20 +47530,20 @@ function ChatbotPage() {
               });
             });
             setMessages(msgs);
-            _context2.n = 6;
+            _context2.n = 5;
             break;
+          case 4:
+            _context2.p = 4;
+            _t2 = _context2.v;
+            console.error("Error loading chatbot history");
           case 5:
             _context2.p = 5;
-            _t2 = _context2.v;
-            console.error("Error loading history:", _t2);
-          case 6:
-            _context2.p = 6;
             setLoadingHistory(false);
-            return _context2.f(6);
-          case 7:
+            return _context2.f(5);
+          case 6:
             return _context2.a(2);
         }
-      }, _callee2, null, [[1, 5, 6, 7]]);
+      }, _callee2, null, [[1, 4, 5, 6]]);
     }));
     return _loadHistory.apply(this, arguments);
   }
@@ -47201,7 +47552,7 @@ function ChatbotPage() {
   }
   function _handleSend() {
     _handleSend = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee3() {
-      var text, res, data, errText, _t3;
+      var text, res, data, _t3;
       return ChatbotPage_regenerator().w(function (_context3) {
         while (1) switch (_context3.p = _context3.n) {
           case 0:
@@ -47239,22 +47590,12 @@ function ChatbotPage() {
             return res.json();
           case 4:
             data = _context3.v;
-            if (!res.ok) {
-              errText = data.error || "Error from server.";
-              setMessages(function (prev) {
-                return [].concat(ChatbotPage_toConsumableArray(prev), [{
-                  role: "bot",
-                  text: errText
-                }]);
-              });
-            } else {
-              setMessages(function (prev) {
-                return [].concat(ChatbotPage_toConsumableArray(prev), [{
-                  role: "bot",
-                  text: data.answer || "No response"
-                }]);
-              });
-            }
+            setMessages(function (prev) {
+              return [].concat(ChatbotPage_toConsumableArray(prev), [{
+                role: "bot",
+                text: data.answer || "No response"
+              }]);
+            });
             _context3.n = 6;
             break;
           case 5:
@@ -47302,7 +47643,7 @@ function ChatbotPage() {
                 "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                game_id: gameId
+                game_id: game_id
               })
             });
           case 2:
@@ -47382,7 +47723,7 @@ function ChatbotPage() {
     }));
   }), filteredGames.length === 0 && /*#__PURE__*/react_default().createElement("div", {
     className: "chatbot-empty-state"
-  }, "No games found in your history."))), /*#__PURE__*/react_default().createElement("div", {
+  }, "No games found."))), /*#__PURE__*/react_default().createElement("div", {
     className: "chatbot-chat-container"
   }, /*#__PURE__*/react_default().createElement("div", {
     className: "chatbot-chat-box"
@@ -47403,16 +47744,13 @@ function ChatbotPage() {
     className: "chatbot-input-row"
   }, /*#__PURE__*/react_default().createElement("input", {
     type: "text",
-    placeholder: currentGameId ? "Ask something about this game..." : "Select a game from the left...",
+    placeholder: currentGameId ? "Ask something about this game..." : "Select a game...",
     value: inputValue,
     onChange: function onChange(e) {
       return setInputValue(e.target.value);
     },
     onKeyDown: function onKeyDown(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSend();
-      }
+      return e.key === "Enter" && handleSend();
     },
     disabled: !currentGameId
   }), /*#__PURE__*/react_default().createElement("button", {
@@ -47420,7 +47758,7 @@ function ChatbotPage() {
     disabled: !currentGameId || thinking
   }, "Send"))))));
 }
-/* harmony default export */ const pages_ChatbotPage = (ChatbotPage);
+/* harmony default export */ const src_pages_ChatbotPage = (ChatbotPage_ChatbotPage);
 // EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/pages/CompilationPage.css
 var CompilationPage = __webpack_require__(3814);
 ;// ./src/pages/CompilationPage.css
@@ -47763,6 +48101,7 @@ function AdminUsersPage_unsupportedIterableToArray(r, a) { if (r) { if ("string"
 function AdminUsersPage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function AdminUsersPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function AdminUsersPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// src/pages/AdminUsersPage.js
 
 
 
@@ -47794,7 +48133,11 @@ function AdminUsersPage_AdminUsersPage() {
             });
             _context.n = 1;
             return fetch("/app/admin-panel/users/?".concat(params.toString()), {
-              credentials: "include"
+              credentials: "include",
+              headers: {
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
+              }
             });
           case 1:
             res = _context.v;
@@ -47820,6 +48163,7 @@ function AdminUsersPage_AdminUsersPage() {
   }();
   (0,react.useEffect)(function () {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortOption]);
   var deleteUser = /*#__PURE__*/function () {
     var _ref2 = AdminUsersPage_asyncToGenerator(/*#__PURE__*/AdminUsersPage_regenerator().m(function _callee2(id) {
@@ -47836,7 +48180,11 @@ function AdminUsersPage_AdminUsersPage() {
             _context2.n = 2;
             return fetch("/app/admin-panel/delete-user/".concat(id, "/"), {
               method: "POST",
-              credentials: "include"
+              credentials: "include",
+              headers: {
+                "x-requested-with": "XMLHttpRequest",
+                Accept: "application/json"
+              }
             });
           case 2:
             res = _context2.v;
@@ -48262,20 +48610,49 @@ var ErrorPage_update = injectStylesIntoStyleTag_default()(ErrorPage/* default */
 ;// ./src/pages/ErrorPage.jsx
 
 
+
 function ErrorPage_ErrorPage(_ref) {
   var _ref$code = _ref.code,
     code = _ref$code === void 0 ? 404 : _ref$code,
-    _ref$message = _ref.message,
-    message = _ref$message === void 0 ? "Page not Found" : _ref$message;
+    message = _ref.message;
+  var location = useLocation();
+  var defaultMessages = {
+    400: "Bad Request",
+    401: "Unauthorized",
+    403: "Forbidden",
+    404: "Page not Found",
+    500: "Internal Server Error"
+  };
+  var finalMessage = message || defaultMessages[code] || "Unknown Error";
+  var extra;
+  if (code === 404) {
+    extra = /*#__PURE__*/react_default().createElement("p", {
+      className: "error-description"
+    }, "The page ", /*#__PURE__*/react_default().createElement("strong", null, location.pathname), " does not exist.");
+  } else if (code === 401) {
+    extra = /*#__PURE__*/react_default().createElement("p", {
+      className: "error-description"
+    }, "Your session may have expired. Please log in again.");
+  } else if (code === 403) {
+    extra = /*#__PURE__*/react_default().createElement("p", {
+      className: "error-description"
+    }, "You do not have permission to view this page.");
+  } else {
+    extra = /*#__PURE__*/react_default().createElement("p", {
+      className: "error-description"
+    }, "An unexpected error occurred while loading", " ", /*#__PURE__*/react_default().createElement("strong", null, location.pathname), ".");
+  }
   return /*#__PURE__*/react_default().createElement("div", {
     className: "error-container"
   }, /*#__PURE__*/react_default().createElement("h1", {
     className: "error-code"
   }, code), /*#__PURE__*/react_default().createElement("p", {
     className: "error-message"
-  }, message));
+  }, finalMessage), extra);
 }
 ;// ./src/App.js
+// src/App.js
+
 
 
 
@@ -48302,8 +48679,44 @@ function ErrorPage_ErrorPage(_ref) {
 
 // ERROR
 
+
+/**
+ * Mostek do navigateGlobal – zapisuje hook useNavigate
+ * tak, żeby fetchWithAuth.js mógł robić navigate('/error/401')
+ */
+function NavigationHandler() {
+  var navigate = useNavigate();
+  (0,react.useEffect)(function () {
+    setNavigate(navigate);
+  }, [navigate]);
+  return null;
+}
 function App() {
-  return /*#__PURE__*/react_default().createElement(BrowserRouter, null, /*#__PURE__*/react_default().createElement(Routes, null, /*#__PURE__*/react_default().createElement(Route, {
+  return /*#__PURE__*/react_default().createElement(BrowserRouter, null, /*#__PURE__*/react_default().createElement(NavigationHandler, null), /*#__PURE__*/react_default().createElement(Routes, null, /*#__PURE__*/react_default().createElement(Route, {
+    path: "/error/401",
+    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_NavbarLogin, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
+      code: 401,
+      message: "Unauthorized \u2013 please log in."
+    }))
+  }), /*#__PURE__*/react_default().createElement(Route, {
+    path: "/error/403",
+    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
+      code: 403,
+      message: "Access denied \u2013 insufficient permissions."
+    }))
+  }), /*#__PURE__*/react_default().createElement(Route, {
+    path: "/error/404",
+    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
+      code: 404,
+      message: "Page not found."
+    }))
+  }), /*#__PURE__*/react_default().createElement(Route, {
+    path: "/error/500",
+    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
+      code: 500,
+      message: "Internal server error. Please try again later."
+    }))
+  }), /*#__PURE__*/react_default().createElement(Route, {
     path: "/app/login/",
     element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_NavbarLogin, null), /*#__PURE__*/react_default().createElement(src_pages_LoginPage, null))
   }), /*#__PURE__*/react_default().createElement(Route, {
@@ -48334,7 +48747,7 @@ function App() {
       element: /*#__PURE__*/react_default().createElement(src_pages_MyLibraryPage, null)
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "chatbot/",
-      element: /*#__PURE__*/react_default().createElement(pages_ChatbotPage, null)
+      element: /*#__PURE__*/react_default().createElement(src_pages_ChatbotPage, null)
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "explore/",
       element: /*#__PURE__*/react_default().createElement(src_pages_ExplorePage, null)
@@ -48363,6 +48776,12 @@ function App() {
         message: "Page not found"
       })
     })))
+  }), /*#__PURE__*/react_default().createElement(Route, {
+    path: "*",
+    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
+      code: 404,
+      message: "Page not found"
+    }))
   })));
 }
 /* harmony default export */ const src_App = (App);

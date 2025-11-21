@@ -48,4 +48,6 @@ urlpatterns = [
     path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
     path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
     path("chatbot/delete/", views.delete_chat_history, name="delete_chat_history"),
+
+    path("app/api/refresh/", views.refresh_access_token)
 ]

@@ -2,6 +2,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import redirect
 from django.utils import timezone
 from .models import UserModel, Games, UserHistory
 from playwright.async_api import async_playwright
@@ -56,43 +57,79 @@ def record_user_history(user, game, refresh_timestamp=True):
 
 # The function below serves as a decorator (thus view_func in it's arguments) for any pages which are restricted to the
 # not logged-in users.
+def _wants_json(request):
+    """
+    True, jeśli żądanie wygląda na API / fetch:
+    - AJAX (X-Requested-With: XMLHttpRequest)
+    - albo nagłówek Accept zawiera application/json
+    """
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return True
+    accept = request.headers.get("Accept", "")
+    if "application/json" in accept:
+        return True
+    return False
+
+
 def jwt_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
 
-        # --- ADMIN ALWAYS PASSES WITHOUT JWT ---
-        if request.user.is_authenticated and request.user.is_superuser:
-            print("[JWT] SKIPPING JWT CHECK FOR ADMIN")
+        # === 0. Admin zalogowany klasycznie (np. przez /admin/) ===
+        # Jeśli Django już ma ustawionego zalogowanego superusera,
+        # nie bawimy się w JWT.
+        if getattr(request.user, "is_authenticated", False) and getattr(request.user, "is_superuser", False):
+            print("[JWT] SKIPPING JWT CHECK FOR ADMIN (session auth)")
             return view_func(request, *args, **kwargs)
 
+        wants_json = _wants_json(request)
         jwt_auth = JWTAuthentication()
 
-        # --- 1. Pobierz token z nagłówka lub ciasteczka ---
+        # === 1. Wyciągamy token ===
         token = None
 
+        # 1a. Nagłówek Authorization: Bearer ...
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
-            candidate = auth_header.split(" ")[1].strip()
+            candidate = auth_header.split(" ", 1)[1].strip()
             if candidate and candidate.lower() not in ("null", "undefined"):
                 token = candidate
 
+        # 1b. Ciasteczko access_token
         if not token:
             token = request.COOKIES.get("access_token")
 
+        # === 2. Brak tokena ===
         if not token:
             print("[JWT] Brak tokena JWT")
-            return JsonResponse({"error": "Brak tokena JWT"}, status=401)
 
+            if wants_json:
+                # API / fetch → czysty JSON
+                return JsonResponse({"error": "Brak tokena JWT"}, status=401)
+            else:
+                # Zwykłe wejście w przeglądarce → przekierowanie na 401
+                return redirect("/error/401")
+
+        # JWTAuthentication wymaga headera Authorization
         request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
 
         try:
+            # === 3. Próba uwierzytelnienia ===
             user_auth_tuple = jwt_auth.authenticate(request)
+
             if not user_auth_tuple:
-                print("[JWT] Token nieprawidłowy lub wygasł.")
-                return JsonResponse({"error": "Nieprawidłowy token JWT"}, status=403)
+                print("[JWT] Token nieprawidłowy lub wygasł (authenticate zwróciło None).")
+                if wants_json:
+                    return JsonResponse(
+                        {"error": "Token JWT nieprawidłowy lub wygasł."},
+                        status=403,
+                    )
+                else:
+                    return redirect("/error/403")
 
             jwt_user, validated_token = user_auth_tuple
 
+            # === 4. Mapowanie na UserModel z bazy ===
             mapped_user = (
                 UserModel.objects.filter(pk=jwt_user.pk).first()
                 or UserModel.objects.filter(username=jwt_user.username).first()
@@ -100,19 +137,36 @@ def jwt_required(view_func):
             )
 
             if not mapped_user:
-                print("[JWT] Nie znaleziono użytkownika w bazie.")
-                return JsonResponse({"error": "Użytkownik nie istnieje"}, status=403)
+                print("[JWT] Użytkownik z tokena nie istnieje w bazie.")
+                if wants_json:
+                    return JsonResponse({"error": "Użytkownik nie istnieje"}, status=403)
+                else:
+                    return redirect("/error/403")
 
+            # Sukces – podpinamy usera pod request
             request.user = mapped_user
             print(f"[JWT] Authenticated user: {mapped_user.username}")
 
             return view_func(request, *args, **kwargs)
 
+        except AuthenticationFailed as e:
+            # Błąd zgłoszony przez SimpleJWT
+            print(f"[JWT] AuthenticationFailed: {e}")
+            if wants_json:
+                return JsonResponse({"error": "Token JWT nieprawidłowy lub wygasł."}, status=403)
+            else:
+                return redirect("/error/403")
+
         except Exception as e:
+            # Inne niespodziewane błędy
             print(f"[JWT] Authentication failed (internal error): {e!r}")
-            return JsonResponse({"error": "Token JWT nieprawidłowy lub wygasł."}, status=403)
+            if wants_json:
+                return JsonResponse({"error": "Błąd uwierzytelniania JWT."}, status=500)
+            else:
+                return redirect("/error/500")
 
     return _wrapped_view
+
 
 
 def get_jwt_user(request):
