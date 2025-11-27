@@ -1,6 +1,11 @@
+// frontend/src/pages/ExplorePage.jsx
+
 import React, { useEffect, useState } from "react";
 import "./ExplorePage.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+
+import Navbar from "../components/Navbar";
+import NavbarLogin from "../components/NavbarLogin";
 
 function ExplorePage() {
   const [games, setGames] = useState([]);
@@ -8,6 +13,25 @@ function ExplorePage() {
   const [query, setQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
   const [sort, setSort] = useState("oldest");
+
+  const [user, setUser] = useState(null);
+
+  /* === LOAD USER (identycznie jak w InformationPage) === */
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/app/api/user/", {
+          credentials: "include",
+          headers: { "x-requested-with": "XMLHttpRequest" },
+        });
+        if (res.ok) setUser(await res.json());
+        else setUser(null);
+      } catch (e) {
+        setUser(null);
+      }
+    }
+    loadUser();
+  }, []);
 
   const fetchGames = async () => {
     const params = new URLSearchParams({
@@ -38,6 +62,9 @@ function ExplorePage() {
 
   return (
     <div>
+      {/* === NAVBAR (dokładnie jak na InformationPage) === */}
+      {user ? <Navbar user={user} /> : <NavbarLogin />}
+
       <div className="container text-center">
         <h2 className="explore-heading">
           <a href="/app/explore/">Explore Game Lores</a>

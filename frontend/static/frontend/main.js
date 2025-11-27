@@ -45429,6 +45429,10 @@ function ExplorePage_unsupportedIterableToArray(r, a) { if (r) { if ("string" ==
 function ExplorePage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function ExplorePage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function ExplorePage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// frontend/src/pages/ExplorePage.jsx
+
+
+
 
 
 
@@ -45453,11 +45457,66 @@ function ExplorePage_ExplorePage() {
     _useState0 = ExplorePage_slicedToArray(_useState9, 2),
     sort = _useState0[0],
     setSort = _useState0[1];
+  var _useState1 = (0,react.useState)(null),
+    _useState10 = ExplorePage_slicedToArray(_useState1, 2),
+    user = _useState10[0],
+    setUser = _useState10[1];
+
+  /* === LOAD USER (identycznie jak w InformationPage) === */
+  (0,react.useEffect)(function () {
+    function loadUser() {
+      return _loadUser.apply(this, arguments);
+    }
+    function _loadUser() {
+      _loadUser = ExplorePage_asyncToGenerator(/*#__PURE__*/ExplorePage_regenerator().m(function _callee() {
+        var res, _t, _t2;
+        return ExplorePage_regenerator().w(function (_context) {
+          while (1) switch (_context.p = _context.n) {
+            case 0:
+              _context.p = 0;
+              _context.n = 1;
+              return fetch("/app/api/user/", {
+                credentials: "include",
+                headers: {
+                  "x-requested-with": "XMLHttpRequest"
+                }
+              });
+            case 1:
+              res = _context.v;
+              if (!res.ok) {
+                _context.n = 3;
+                break;
+              }
+              _t = setUser;
+              _context.n = 2;
+              return res.json();
+            case 2:
+              _t(_context.v);
+              _context.n = 4;
+              break;
+            case 3:
+              setUser(null);
+            case 4:
+              _context.n = 6;
+              break;
+            case 5:
+              _context.p = 5;
+              _t2 = _context.v;
+              setUser(null);
+            case 6:
+              return _context.a(2);
+          }
+        }, _callee, null, [[0, 5]]);
+      }));
+      return _loadUser.apply(this, arguments);
+    }
+    loadUser();
+  }, []);
   var fetchGames = /*#__PURE__*/function () {
-    var _ref = ExplorePage_asyncToGenerator(/*#__PURE__*/ExplorePage_regenerator().m(function _callee() {
+    var _ref = ExplorePage_asyncToGenerator(/*#__PURE__*/ExplorePage_regenerator().m(function _callee2() {
       var params, res, data;
-      return ExplorePage_regenerator().w(function (_context) {
-        while (1) switch (_context.n) {
+      return ExplorePage_regenerator().w(function (_context2) {
+        while (1) switch (_context2.n) {
           case 0:
             params = new URLSearchParams({
               format: "json",
@@ -45465,22 +45524,22 @@ function ExplorePage_ExplorePage() {
               sort: sort,
               genre: selectedGenre
             });
-            _context.n = 1;
+            _context2.n = 1;
             return fetch("/app/explore/?".concat(params.toString()), {
               credentials: "include"
             });
           case 1:
-            res = _context.v;
-            _context.n = 2;
+            res = _context2.v;
+            _context2.n = 2;
             return res.json();
           case 2:
-            data = _context.v;
+            data = _context2.v;
             setGames(data.games || []);
             setGenres(data.genres || []);
           case 3:
-            return _context.a(2);
+            return _context2.a(2);
         }
-      }, _callee);
+      }, _callee2);
     }));
     return function fetchGames() {
       return _ref.apply(this, arguments);
@@ -45493,7 +45552,9 @@ function ExplorePage_ExplorePage() {
     e.preventDefault();
     fetchGames();
   };
-  return /*#__PURE__*/react_default().createElement("div", null, /*#__PURE__*/react_default().createElement("div", {
+  return /*#__PURE__*/react_default().createElement("div", null, user ? /*#__PURE__*/react_default().createElement(src_components_Navbar, {
+    user: user
+  }) : /*#__PURE__*/react_default().createElement(src_components_NavbarLogin, null), /*#__PURE__*/react_default().createElement("div", {
     className: "container text-center"
   }, /*#__PURE__*/react_default().createElement("h2", {
     className: "explore-heading"
@@ -48758,12 +48819,11 @@ function ErrorPage_ErrorPage(_ref) {
 
 /**
  * Mostek do navigateGlobal – zapisuje hook useNavigate
- * tak, żeby fetchWithAuth.js mógł robić navigate('/error/401')
  */
 function NavigationHandler() {
   var navigate = useNavigate();
   (0,react.useEffect)(function () {
-    setNavigate(navigate);
+    return setNavigate(navigate);
   }, [navigate]);
   return null;
 }
@@ -48815,43 +48875,43 @@ function App() {
     element: /*#__PURE__*/react_default().createElement(src_pages_AdminGamesPage, null)
   }), /*#__PURE__*/react_default().createElement(Route, {
     path: "/app/*",
-    element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(Routes, null, /*#__PURE__*/react_default().createElement(Route, {
-      path: "profile/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_ProfilePage, null)
-    }), /*#__PURE__*/react_default().createElement(Route, {
-      path: "my_library/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_MyLibraryPage, null)
-    }), /*#__PURE__*/react_default().createElement(Route, {
-      path: "chatbot/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_ChatbotPage, null)
-    }), /*#__PURE__*/react_default().createElement(Route, {
+    element: /*#__PURE__*/react_default().createElement(Routes, null, /*#__PURE__*/react_default().createElement(Route, {
       path: "explore/",
       element: /*#__PURE__*/react_default().createElement(src_pages_ExplorePage, null)
     }), /*#__PURE__*/react_default().createElement(Route, {
+      path: "profile/",
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_ProfilePage, null))
+    }), /*#__PURE__*/react_default().createElement(Route, {
+      path: "my_library/",
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_MyLibraryPage, null))
+    }), /*#__PURE__*/react_default().createElement(Route, {
+      path: "chatbot/",
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_ChatbotPage, null))
+    }), /*#__PURE__*/react_default().createElement(Route, {
       path: "search/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_SearchFormPage, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_SearchFormPage, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "results/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_SearchResultsPage, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_SearchResultsPage, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "compilation/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_CompilationPage, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_CompilationPage, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "details/",
-      element: /*#__PURE__*/react_default().createElement(DetailsRedirectPage, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(DetailsRedirectPage, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "games/:id",
-      element: /*#__PURE__*/react_default().createElement(src_pages_GameDetailPage, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_GameDetailPage, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "admin/home/",
-      element: /*#__PURE__*/react_default().createElement(src_pages_AdminHome, null)
+      element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(src_pages_AdminHome, null))
     }), /*#__PURE__*/react_default().createElement(Route, {
       path: "*",
       element: /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {
         code: 404,
         message: "Page not found"
       })
-    })))
+    }))
   }), /*#__PURE__*/react_default().createElement(Route, {
     path: "*",
     element: /*#__PURE__*/react_default().createElement((react_default()).Fragment, null, /*#__PURE__*/react_default().createElement(src_components_Navbar, null), /*#__PURE__*/react_default().createElement(ErrorPage_ErrorPage, {

@@ -37,50 +37,36 @@ import ErrorPage from "./pages/ErrorPage";
 
 /**
  * Mostek do navigateGlobal – zapisuje hook useNavigate
- * tak, żeby fetchWithAuth.js mógł robić navigate('/error/401')
  */
 function NavigationHandler() {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setNavigate(navigate);
-  }, [navigate]);
-
+  useEffect(() => setNavigate(navigate), [navigate]);
   return null;
 }
 
 function App() {
   return (
     <BrowserRouter>
-      {/* globalny mostek do navigateGlobal */}
       <NavigationHandler />
 
       <Routes>
-        {/* ========= GLOBALNE STRONY BŁĘDÓW (z navbarami) ========= */}
-        {/* 401 – raczej user niezalogowany → navbar od logowania */}
+        {/* ========= GLOBALNE STRONY BŁĘDÓW ========= */}
         <Route
           path="/error/401"
           element={
             <>
               <NavbarLogin />
-              <ErrorPage
-                code={401}
-                message="Unauthorized – please log in."
-              />
+              <ErrorPage code={401} message="Unauthorized – please log in." />
             </>
           }
         />
 
-        {/* 403 – zwykle zalogowany, ale bez uprawnień → normalny navbar */}
         <Route
           path="/error/403"
           element={
             <>
               <Navbar />
-              <ErrorPage
-                code={403}
-                message="Access denied – insufficient permissions."
-              />
+              <ErrorPage code={403} message="Access denied – insufficient permissions." />
             </>
           }
         />
@@ -100,10 +86,7 @@ function App() {
           element={
             <>
               <Navbar />
-              <ErrorPage
-                code={500}
-                message="Internal server error. Please try again later."
-              />
+              <ErrorPage code={500} message="Internal server error. Please try again later." />
             </>
           }
         />
@@ -131,47 +114,124 @@ function App() {
         {/* ========= HOME ========= */}
         <Route path="/" element={<HomePage />} />
 
-        {/* ========= INFORMATION (jak było) ========= */}
+        {/* ========= INFORMATION — ma własny navbar w komponencie ========= */}
         <Route path="/app/information/" element={<InformationPage />} />
 
-        {/* ========= ADMIN PANEL – BEZ STANDARDOWEGO NAVBARA ========= */}
+        {/* ========= ADMIN PANEL – BEZ NAVBARA ========= */}
         <Route path="/app/admin-panel/" element={<AdminPanelPage />} />
         <Route path="/app/admin-panel/users/" element={<AdminUsersPage />} />
         <Route path="/app/admin-panel/games/" element={<AdminGamesPage />} />
 
-        {/* ========= POZOSTAŁE STRONY Z NORMALNYM NAVBAREM ========= */}
+        {/* ========= STRONY W /app/* ========= */}
         <Route
           path="/app/*"
           element={
-            <>
-              <Navbar />
-              <Routes>
-                <Route path="profile/" element={<ProfilePage />} />
-                <Route path="my_library/" element={<MyLibraryPage />} />
-                <Route path="chatbot/" element={<ChatbotPage />} />
-                <Route path="explore/" element={<ExplorePage />} />
-                <Route path="search/" element={<SearchFormPage />} />
-                <Route path="results/" element={<SearchResultsPage />} />
-                <Route path="compilation/" element={<CompilationPage />} />
-                <Route path="details/" element={<DetailsRedirectPage />} />
-                <Route path="games/:id" element={<GameDetailPage />} />
+            <Routes>
+              {/* ========= EXPLORE – MA WŁASNY NAVBAR ========= */}
+              <Route path="explore/" element={<ExplorePage />} />
 
-                {/* Admin HOME używa zwykłego Navbara */}
-                <Route path="admin/home/" element={<AdminHomePage />} />
+              {/* ========= POZOSTAŁE STRONY — DODAJEMY NAVBAR TUTAJ ========= */}
+              <Route
+                path="profile/"
+                element={
+                  <>
+                    <Navbar />
+                    <ProfilePage />
+                  </>
+                }
+              />
 
-                {/* 404 wewnątrz /app/* */}
-                <Route
-                  path="*"
-                  element={
-                    <ErrorPage code={404} message="Page not found" />
-                  }
-                />
-              </Routes>
-            </>
+              <Route
+                path="my_library/"
+                element={
+                  <>
+                    <Navbar />
+                    <MyLibraryPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="chatbot/"
+                element={
+                  <>
+                    <Navbar />
+                    <ChatbotPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="search/"
+                element={
+                  <>
+                    <Navbar />
+                    <SearchFormPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="results/"
+                element={
+                  <>
+                    <Navbar />
+                    <SearchResultsPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="compilation/"
+                element={
+                  <>
+                    <Navbar />
+                    <CompilationPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="details/"
+                element={
+                  <>
+                    <Navbar />
+                    <DetailsRedirectPage />
+                  </>
+                }
+              />
+
+              <Route
+                path="games/:id"
+                element={
+                  <>
+                    <Navbar />
+                    <GameDetailPage />
+                  </>
+                }
+              />
+
+              {/* Admin HOME */}
+              <Route
+                path="admin/home/"
+                element={
+                  <>
+                    <Navbar />
+                    <AdminHomePage />
+                  </>
+                }
+              />
+
+              {/* 404 wewnątrz /app/* */}
+              <Route
+                path="*"
+                element={<ErrorPage code={404} message="Page not found" />}
+              />
+            </Routes>
           }
         />
 
-        {/* ========= GLOBALNE 404 DLA CAŁEJ RESZTY ========= */}
+        {/* ========= GLOBALNE 404 ========= */}
         <Route
           path="*"
           element={
