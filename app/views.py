@@ -1,44 +1,37 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseForbidden
-from django.core.paginator import Paginator
-from django.contrib.auth import get_user_model, user_logged_in
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db.models import Avg, Count
-from django.core.cache import cache
+from django.db.models.functions import Trim
 from django.http import FileResponse
 from django.conf import settings
-from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.admin.views.decorators import staff_member_required
-from rest_framework import generics, status, viewsets, serializers
+from rest_framework import viewsets, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
                           ChatBotSerializer, UserRatingSerializer)
 from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
 
 from .utils import (search_mobygames, scrape_game_info, record_user_history, jwt_required, get_jwt_user,
-                    CookieJWTAuthentication, _wants_json)
+                    CookieJWTAuthentication, _wants_json, summarize_plot_from_markdown, scrape_game_info_admin)
 from decimal import Decimal, InvalidOperation
+import markdown
 import asyncio
 import json
 import re
-import markdown
-import uuid
 import requests, os
 
 
 def react_index(request):
-    """Zwraca Reactowe index.html dla ścieżek /app/..."""
-
     index_path = os.path.join(
         settings.BASE_DIR,
         "frontend",
@@ -48,28 +41,20 @@ def react_index(request):
     )
     return FileResponse(open(index_path, "rb"))
 
-
+# This function handles everything about the user that is being displayed in the Navbar of every page.
 @jwt_required
 def api_user(request):
     user = request.user
 
-    pfp = user.profile_picture
+    # profile_picture ZAWSZE jest stringiem, więc nie trzeba sprawdzać .url
+    pfp = user.profile_picture or "profile_pictures/default_user.png"
 
-    # Jeśli to ImageField → wyciągamy .url
-    if hasattr(pfp, "url"):
-        pfp_url = request.build_absolute_uri(pfp.url)
+    # Jeśli ścieżka nie ma prefiksu, to go dodajemy
+    if not pfp.startswith("/media/"):
+        pfp = "/media/" + pfp
 
-    # Jeśli to zwykły string (np. "profile_pictures/admin_avatar.png")
-    elif isinstance(pfp, str) and pfp:
-        # upewniamy się, że zaczyna się od /media/
-        if pfp.startswith("/media/"):
-            pfp_url = request.build_absolute_uri(pfp)
-        else:
-            pfp_url = request.build_absolute_uri("/media/" + pfp)
-
-    # Brak zdjęcia → domyślne
-    else:
-        pfp_url = request.build_absolute_uri("/media/profile_pictures/default_user.png")
+    # budujemy absolutny URL
+    pfp_url = request.build_absolute_uri(pfp)
 
     return JsonResponse({
         "username": user.username,
@@ -78,29 +63,31 @@ def api_user(request):
 
 
 
+# A class that validates user login with either username or email field in the database
 class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        # Pozwala logować się przez username lub email
         User = get_user_model()
+        # Getting the value of login field with either of those two below, login or email
         login_val = (
-            self.initial_data.get("login")
-            or self.initial_data.get("username")
+            self.initial_data.get("username")
             or self.initial_data.get("email")
         )
 
+        # Checks if the input values of that login are in the database
         if login_val:
-            # znajdź użytkownika po username lub email
             user = (
                 User.objects.filter(username__iexact=login_val).first()
                 or User.objects.filter(email__iexact=login_val).first()
             )
+            # If the user has given anything as an input
             if not user:
-                raise serializers.ValidationError("Nie znaleziono użytkownika.")
-
+                raise serializers.ValidationError("No user found.")
+            # If the password doesn't match, the error is raised
             if not user.check_password(attrs.get("password")):
-                raise serializers.ValidationError("Nieprawidłowe hasło.")
+                raise serializers.ValidationError("Incorrect password.")
 
-            # ✅ tutaj generujemy parę tokenów ręcznie
+            # When the input credentials are validated then the user gets both refresh and access tokens typical for
+            # the TokenObtainPairSerializer method used
             refresh = RefreshToken.for_user(user)
             data = {
                 "refresh": str(refresh),
@@ -108,21 +95,16 @@ class LoginOrEmailTokenObtainPairSerializer(TokenObtainPairSerializer):
             }
             return data
 
-        # fallback
         return super().validate(attrs)
 
+
+# A class for the login page
 class LoginView(APIView):
+    # Any user can log in
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        """
-        React version — zwraca index.html,
-        a frontend sam obsłuży UI logowania.
-        """
-        from django.http import FileResponse
-        import os
-        from django.conf import settings
-
+        # Gets React's page for Login
         index_path = os.path.join(
             settings.BASE_DIR,
             "frontend",
@@ -134,13 +116,12 @@ class LoginView(APIView):
         return FileResponse(open(index_path, "rb"))
 
     def post(self, request, *args, **kwargs):
-        """Obsługuje logowanie użytkownika i zapisuje tokeny w cookies."""
+        # A variable that uses the validation function
         serializer = LoginOrEmailTokenObtainPairSerializer(data=request.data)
 
         if not serializer.is_valid():
-            print("[Login] Błąd logowania:", serializer.errors)
+            print("[Login] Login Error:", serializer.errors)
 
-            # 🔥 React oczekuje JSON, nie HTML!
             return JsonResponse({
                 "error": "Invalid username or password."
             }, status=401)
@@ -149,11 +130,15 @@ class LoginView(APIView):
         access_token = data.get("access")
         refresh_token = data.get("refresh")
 
+        # Prints the first 50 characters for both access and refresh tokens when any user logs in. Initially it was
+        # used for debug but later I decided to let it stay shall any other issues arise
         print("ACCESS TOKEN:", str(access_token)[:50], "...")
         print("REFRESH TOKEN:", str(refresh_token)[:50], "...")
 
+        # Redirect to the main page after logging in
         response = HttpResponseRedirect("/")
 
+        # The access token expires after 1 hour, as it's saved into website's cookies
         if access_token:
             response.set_cookie(
                 key="access_token",
@@ -164,6 +149,7 @@ class LoginView(APIView):
                 max_age=60 * 60
             )
 
+        # The refresh token expires after 7 days
         if refresh_token:
             response.set_cookie(
                 key="refresh_token",
@@ -177,18 +163,14 @@ class LoginView(APIView):
         return response
 
 
-
+# A class that handles everything about user's registration
 class RegisterUser(APIView):
+
+    # Any user can register
     permission_classes = [AllowAny]
 
+    # Yet again getting, it's page from frontend
     def get(self, request):
-        """
-        React version — zwraca index.html, a frontend zajmuje się UI rejestracji.
-        """
-        from django.http import FileResponse
-        import os
-        from django.conf import settings
-
         index_path = os.path.join(
             settings.BASE_DIR,
             "frontend",
@@ -199,43 +181,52 @@ class RegisterUser(APIView):
         return FileResponse(open(index_path, "rb"))
 
     def post(self, request):
-        """Obsługuje rejestrację użytkownika (JSON IN → JSON OUT)."""
 
         data = request.data
 
         username = (data.get("username") or "").strip()
         password = data.get("password") or ""
 
-        # --- WALIDACJA USERNAME ---
+        # The username has to be at least 4 characters long
         if len(username) < 4:
             return JsonResponse({
                 "error": "Username must be at least 4 characters long."
             }, status=400)
 
+        # The only allowed characters in username are letters and numbers
         if not re.match(r"^[A-Za-z0-9]+$", username):
             return JsonResponse({
                 "error": "Username can only contain letters and digits (no spaces or special characters)."
             }, status=400)
 
-        # --- WALIDACJA HASŁA ---
-        if len(password) < 5:
+        # The password has to be at least 6 characters long
+        if len(password) < 6:
             return JsonResponse({
                 "error": "Password must be at least 5 characters long."
             }, status=400)
 
-        # reszta jak było
+        # Allowed characters in password: letters, digits, special symbols
+        if not re.match(r"^[A-Za-z0-9!@#$%^&*()_\+\-\=\[\]\{\}\|;:'\",\.<>\/\?]+$", password):
+            return JsonResponse({
+                "error": "Password can contain letters, digits, and special characters."
+            }, status=400)
+
+        # Creates the user
         serializer = UserSerializer(data=data)
 
+        # Checks if everything is alright and raises an error if there are any
         if not serializer.is_valid():
-            # 🔥 React oczekuje czystego JSON — NIE renderujemy HTML
             return JsonResponse({
                 "error": "Please correct the errors below.",
                 "details": serializer.errors,
             }, status=400)
 
+        # Finally creates the user's account and saves it into the database
         user = serializer.save()
 
-        # upewniamy się, że hasło jest zahashowane
+        # All passwords must be encrypted when saved into the database. Therefore, this if statement checks if the
+        # password is already encrypted by starts with checking if it starts with "pbkdf2_", which all encrypted
+        # passwords share in common
         if not user.password.startswith("pbkdf2_"):
             user.password = make_password(user.password)
             user.save(update_fields=["password"])
@@ -276,14 +267,7 @@ def game_detail(request, pk: int):
 @jwt_required
 @csrf_exempt
 def search_view(request):
-    # ============================
-    # 1) GET → Zwracamy React index.html
-    # ============================
     if request.method == "GET":
-        from django.http import FileResponse
-        import os
-        from django.conf import settings
-
         index_path = os.path.join(
             settings.BASE_DIR,
             "frontend",
@@ -292,10 +276,6 @@ def search_view(request):
             "index.html"
         )
         return FileResponse(open(index_path, "rb"))
-
-    # ============================
-    # 2) POST → logika wyszukiwania
-    # ============================
     game = None
 
     if request.content_type and "application/json" in request.content_type:
@@ -310,14 +290,11 @@ def search_view(request):
     if not game:
         return HttpResponseBadRequest('Missing "game"')
 
-    # wykonaj scraping
     results = asyncio.run(search_mobygames(game))
 
-    # jeśli API → zwróć JSON
     if request.headers.get("Accept") == "application/json":
         return JsonResponse({"query": game, "results": results})
 
-    # zapis do sesji (dla /app/results/)
     request.session["ai_last_results"] = results
     request.session["ai_last_query"] = game
 
@@ -330,17 +307,11 @@ def results_view(request):
     results = request.session.get('ai_last_results') or []
     query = request.session.get('ai_last_query') or ''
 
-    # Jeśli to React fetch – zwróć JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
         return JsonResponse({
             "results": results,
             "query": query
         })
-
-    # W przeciwnym wypadku – Reactowy index.html
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
 
     index_path = os.path.join(
         settings.BASE_DIR,
@@ -395,13 +366,12 @@ def details_view(request):
             record_user_history(request.user, existing)
             return redirect('game_detail_page', pk=existing.id)
 
-    # --- Tu nie zmieniamy scrapowania fabuły, ale usuwamy generowanie streszczenia ---
     data = asyncio.run(scrape_game_info(url, media_root=settings.MEDIA_ROOT, save_image=True))
 
     if not data:
         print(f"[ERROR] Scraper returned None for URL: {url}")
         return render(request, "frontend/error.html", {
-            "message": "Nie udało się pobrać danych o grze. Spróbuj ponownie."
+            "message": "Could not get the data on this game. Please try again."
         })
 
     if data.get("is_compilation"):
@@ -430,7 +400,6 @@ def details_view(request):
         wikipedia_url=data.get('wikipedia_url'),
     )
 
-    # --- tutaj zapisujemy zawsze tylko pełny plot, bez summary ---
     GamePlots.objects.create(
         game_id=games,
         full_plot=data.get('full_plot') or '',
@@ -443,16 +412,9 @@ def details_view(request):
 
 
 
-# As explained couple lines before, this part of code handles displaying the scraped results for each game
 @jwt_required
 def game_detail_page(request, pk):
-    """
-    API + frontend dla Reacta.
-    Jeśli request jest fetch → JSON
-    Jeśli normalne wejście → index.html (React przejmie routing)
-    """
 
-    # 🔥 Jeśli fetch / React request – zwróć JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
         game = get_object_or_404(Games, pk=pk)
         record_user_history(request.user, game)
@@ -461,11 +423,9 @@ def game_detail_page(request, pk):
         full_plot_md = plot.full_plot if plot else ""
         summary_md = plot.summary if plot else ""
 
-        import markdown
         full_plot_html = markdown.markdown(full_plot_md or "")
         summary_html = markdown.markdown(summary_md or "")
 
-        # poprawne pobranie URL okładki
         cover_value = game.cover_image
         if not cover_value:
             cover_url = None
@@ -482,20 +442,12 @@ def game_detail_page(request, pk):
             "genre": game.genre,
             "studio": game.studio,
             "score": float(game.score) if game.score is not None else None,
-
             "mobygames_url": game.mobygames_url,
             "wikipedia_url": game.wikipedia_url,
             "cover_image": cover_url,
-
-            # to czego React wymaga
             "full_plot_html": full_plot_html,
             "summary_html": summary_html,
         })
-
-    # 🔥 W innym przypadku → zwróć Reacta
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
 
     index_path = os.path.join(
         settings.BASE_DIR,
@@ -506,12 +458,13 @@ def game_detail_page(request, pk):
     )
     return FileResponse(open(index_path, "rb"))
 
+
+
 @jwt_required
 def api_game_detail(request, pk):
     game = get_object_or_404(Games, pk=pk)
     plot = GamePlots.objects.filter(game_id=game).first()
 
-    import markdown
     full_plot_html = markdown.markdown(plot.full_plot if plot else "")
     summary_html = markdown.markdown(plot.summary if plot else "")
 
@@ -556,16 +509,11 @@ def compilation_view(request):
     if not result.get("is_compilation"):
         return JsonResponse({"error": "Not a compilation"}, status=400)
 
-    # JSON dla React
     if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
         return JsonResponse({
             "title": result.get("title"),
             "included_games": result.get("included_games", [])
         })
-
-    # fallback do React index.html
-    from django.http import FileResponse
-    import os
 
     index_path = os.path.join(settings.BASE_DIR, "frontend", "static", "frontend", "index.html")
     return FileResponse(open(index_path, "rb"))
@@ -577,10 +525,8 @@ def details_view(request):
     if not url:
         return JsonResponse({"error": "Missing url"}, status=400)
 
-    # jeśli to fetch → React oczekuje JSON
     is_json = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json"
 
-    # próbujemy znaleźć tytuł gry w session
     title_guess = None
     for r in request.session.get('ai_last_results', []):
         if r.get('url') == url:
@@ -589,7 +535,6 @@ def details_view(request):
             title_guess = (m.group(1) if m else first_line).strip()
             break
 
-    # jeśli gra istnieje w bazie → zwróć JSON redirect target
     if title_guess:
         existing = Games.objects.filter(title__iexact=title_guess).first()
         if existing:
@@ -598,19 +543,16 @@ def details_view(request):
                 return JsonResponse({"redirect_game_id": existing.id})
             return redirect('game_detail_page', pk=existing.id)
 
-    # scrapowanie
     data = asyncio.run(scrape_game_info(url, media_root=settings.MEDIA_ROOT, save_image=True))
 
     if not data:
         return JsonResponse({"error": "Scraper failed"}, status=500) if is_json else render(...)
 
-    # kompilacja
     if data.get("is_compilation"):
         if is_json:
             return JsonResponse({"redirect_compilation": True})
         return redirect(f"/app/compilation/?url={url}")
 
-    # zapis gry
     for key, val in list(data.items()):
         if isinstance(val, Decimal):
             data[key] = float(val)
@@ -643,9 +585,6 @@ def details_view(request):
 
 @jwt_required
 def my_library_view(request):
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
 
     index_path = os.path.join(
         settings.BASE_DIR,
@@ -669,7 +608,6 @@ def my_library_api(request):
     if query:
         history = history.filter(game_id__title__icontains=query)
 
-    # sort
     if sort_option == "oldest":
         history = history.order_by("viewed_at")
     elif sort_option == "rating":
@@ -692,7 +630,6 @@ def my_library_api(request):
 
         user_rating = UserRatings.objects.filter(user_id=user, game_id=game).first()
 
-        # cover URL
         cover = None
         if game.cover_image:
             if hasattr(game.cover_image, "url"):
@@ -752,23 +689,10 @@ def delete_history_entry(request):
 # they click one of the links to the game detail page, that game is then saved into their library. This view is not
 # require the user to log in, however when they want to view one of the games in detail, then they must log in
 def explore_view(request):
-    """
-    React version of explore page:
-    - If fetch/XHR → return JSON
-    - Otherwise → return index.html (React handles UI)
-    """
-    from django.db.models import Avg
-    from django.db.models.functions import Trim
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
-
-    # Params
     sort_option = request.GET.get('sort', 'oldest')
     query = (request.GET.get('q') or '').strip()
     selected_genre = (request.GET.get('genre') or '').strip()
 
-    # If React fetch → return JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
 
         base_qs = Games.objects.all()
@@ -786,7 +710,7 @@ def explore_view(request):
         elif sort_option == 'rating':
             qs = qs.annotate(avg_rating=Avg('game_ratings__rating')).order_by('-avg_rating')
         else:
-            qs = qs.order_by('id')  # oldest
+            qs = qs.order_by('id')
 
         genres = (
             Games.objects.exclude(genre__isnull=True).exclude(genre='')
@@ -816,7 +740,6 @@ def explore_view(request):
             "selected_genre": selected_genre,
         })
 
-    # Otherwise → send React index.html
     index_path = os.path.join(
         settings.BASE_DIR,
         "frontend",
@@ -831,11 +754,6 @@ def explore_view(request):
 @csrf_exempt
 @jwt_required
 def profile_view(request):
-    """
-    React version:
-    - GET → zwraca JSON z danymi użytkownika
-    - POST → obsługuje akcje update (username, password, pfp, logout)
-    """
 
     user = None
     if isinstance(request.user, UserModel):
@@ -846,9 +764,7 @@ def profile_view(request):
     if not user:
         return JsonResponse({"error": "User not found"}, status=404)
 
-    # ========== GET: zwróć dane użytkownika ==========
     if request.method == "GET":
-        # zdjęcie profilowe — URL
         pfp = user.profile_picture
         if hasattr(pfp, "url"):
             pfp_url = request.build_absolute_uri(pfp.url)
@@ -866,10 +782,8 @@ def profile_view(request):
             "profile_picture": pfp_url
         })
 
-    # ========== POST: akcje profilu ==========
     action = request.POST.get("action")
 
-    # ---- ZMIANA USERNAME ----
     if action == "change_username":
         new_username = request.POST.get("new_username", "").strip()
 
@@ -896,7 +810,6 @@ def profile_view(request):
         user.save()
         return JsonResponse({"message": "Username has been changed!"})
 
-    # ---- ZMIANA HASŁA ----
     if action == "change_password":
         old_password = request.POST.get("old_password", "")
         new_password = request.POST.get("new_password", "")
@@ -916,14 +829,10 @@ def profile_view(request):
         user.save()
         return JsonResponse({"message": "Password has been changed!"})
 
-    # ---- ZMIANA ZDJĘCIA PROFILOWEGO ----
     if action == "change_profile_picture":
         file = request.FILES.get("profile_picture")
         if not file:
             return JsonResponse({"error": "No file uploaded."}, status=400)
-
-        from django.core.files.storage import default_storage
-        from django.core.files.base import ContentFile
 
         filename = f"profile_pictures/{user.username}_{file.name}"
         file_path = default_storage.save(filename, ContentFile(file.read()))
@@ -932,7 +841,6 @@ def profile_view(request):
 
         return JsonResponse({"message": "Profile picture updated successfully!"})
 
-    # ---- LOGOUT ----
     if action == "logout":
         response = JsonResponse({"message": "Logged out"})
         response.delete_cookie("access_token")
@@ -942,10 +850,6 @@ def profile_view(request):
 
 
 
-
-
-
-# The function for returning user's chatbot history for the corresponding game
 @jwt_required
 def chatbot_history(request):
     game_id = request.GET.get("game_id")
@@ -1048,16 +952,9 @@ def chatbot_ask(request):
 
 @jwt_required
 def chatbot_page(request):
-    """
-    React version:
-    - jeśli fetch/XHR lub ?format=json → zwraca JSON (lista gier + domyślna gra)
-    - inaczej → index.html (React przejmuje routing)
-    """
     user = request.user
 
-    # Jeśli to fetch / React → zwróć JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("format") == "json":
-        # Wszystkie gry z historii użytkownika
         history = (
             UserHistory.objects.filter(user_id=user)
             .select_related("game_id")
@@ -1080,11 +977,9 @@ def chatbot_page(request):
                 "cover_image": cover,
             })
 
-        # Ostatnia gra z chatu
         last_chat = ChatBot.objects.filter(user_id=user).order_by("-created_at").first()
         default_game_id = last_chat.game_id.id if last_chat else None
 
-        # Jeśli brak czatu, domyślnie ostatnio oglądana gra
         if not default_game_id and games:
             default_game_id = games[0]["id"]
 
@@ -1092,11 +987,6 @@ def chatbot_page(request):
             "games": games,
             "default_game_id": default_game_id,
         })
-
-    # W innym przypadku → zwróć Reacta (index.html)
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
 
     index_path = os.path.join(
         settings.BASE_DIR,
@@ -1111,9 +1001,6 @@ def chatbot_page(request):
 @jwt_required
 @csrf_exempt
 def delete_chat_history(request):
-    """
-    Usuwa całą historię chatu użytkownika dla konkretnej gry.
-    """
     if request.method != "POST":
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
@@ -1138,13 +1025,6 @@ def delete_chat_history(request):
 @csrf_exempt
 @jwt_required
 def generate_summary_view(request, pk):
-    """
-    Generuje streszczenie fabuły gry po kliknięciu przycisku "Generate Summary".
-    Działa na podstawie istniejącego full_plot z bazy (markdown).
-    Nie scrapuje Wikipedii — działa lokalnie.
-    """
-    import markdown
-    from .utils import summarize_plot_from_markdown
 
     game = get_object_or_404(Games, pk=pk)
     plot = GamePlots.objects.filter(game_id=game).first()
@@ -1152,16 +1032,14 @@ def generate_summary_view(request, pk):
     if not plot:
         return JsonResponse({"error": "No plot to summarize."}, status=400)
 
-    # ✅ Jeśli streszczenie już istnieje — zwróć je bez generowania
     if plot.summary and "No Summary Available" not in plot.summary:
         return JsonResponse({"summary": markdown.markdown(plot.summary)})
 
-    # ❌ Brak fabuły lub placeholder
     if not plot.full_plot or "No Plot Found" in plot.full_plot:
         return JsonResponse({"error": "No plot to summarize."}, status=400)
 
     try:
-        print(f"[SUMMARY] Uruchamiam streszczenie z markdownu dla gry '{game.title}'")
+        print(f"[SUMMARY] Running markdown summarizer for the game '{game.title}'")
         summary_md = summarize_plot_from_markdown(plot.full_plot)
 
         if not summary_md:
@@ -1169,7 +1047,6 @@ def generate_summary_view(request, pk):
                 "summary": "<p>The plot is too short to require a summary.</p>"
             })
 
-        # 📝 Zapis do bazy
         plot.summary = summary_md
         plot.save(update_fields=["summary"])
 
@@ -1179,17 +1056,13 @@ def generate_summary_view(request, pk):
 
     except Exception as e:
         print(f"[SUMMARY ERROR] {e}")
-        return JsonResponse({"error": f"Błąd podczas generowania streszczenia: {e}"}, status=500)
+        return JsonResponse({"error": f"There was an error during summary generation: {e}"}, status=500)
 
 
 
 @csrf_exempt
 @jwt_required
 def game_rating_view(request, pk):
-    """
-    GET – pobiera średnią ocenę, liczbę głosów i ocenę użytkownika
-    POST/PUT – zapisuje lub aktualizuje ocenę użytkownika
-    """
     user = request.user
     game = get_object_or_404(Games, pk=pk)
 
@@ -1231,21 +1104,10 @@ def game_rating_view(request, pk):
 
 @jwt_required
 def admin_panel(request):
-    """
-    Główny panel administratora – wersja React.
-    Zwraca index.html, a React zajmuje się resztą.
-    """
-    # tylko admin
     if not getattr(request.user, "is_admin", False):
-        # jeśli fetch / API → JSON 403
         if _wants_json(request):
             return JsonResponse({"error": "Access denied"}, status=403)
-        # zwykłe wejście → strona błędu z Reacta
         return redirect("/error/403")
-
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
 
     index_path = os.path.join(
         settings.BASE_DIR,
@@ -1259,74 +1121,69 @@ def admin_panel(request):
 
 
 
-
 @csrf_exempt
 @jwt_required
 @require_http_methods(["POST"])
 def admin_delete_user(request, user_id):
-    print("[ADMIN] admin_delete_user wywołany")
+    print("[ADMIN] admin_delete_user has been activated")
     if not getattr(request.user, "is_admin", False):
-        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+        return JsonResponse({"error": "Unauthorized"}, status=403)
     user = UserModel.objects.filter(id=user_id).first()
     if not user:
-        return JsonResponse({"error": "Użytkownik nie istnieje"}, status=404)
+        return JsonResponse({"error": "This user does not exist"}, status=404)
     user.delete()
-    return JsonResponse({"message": "Użytkownik został usunięty"})
+    return JsonResponse({"message": "The user has been deleted"})
+
 
 
 @csrf_exempt
 @jwt_required
 @require_http_methods(["POST"])
 def admin_delete_game(request, game_id):
-    print("[ADMIN] admin_delete_game wywołany")
+    print("[ADMIN] admin_delete_game has been activated")
     if not getattr(request.user, "is_admin", False):
-        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+        return JsonResponse({"error": "Unauthorized"}, status=403)
     game = Games.objects.filter(id=game_id).first()
     if not game:
-        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+        return JsonResponse({"error": "This game does not exist"}, status=404)
     game.delete()
-    return JsonResponse({"message": "Gra została usunięta"})
+    return JsonResponse({"message": "The game has been deleted"})
 
 
 @csrf_exempt
 @jwt_required
 @require_http_methods(["POST"])
 def admin_edit_game_score(request, game_id):
-    print("[ADMIN] admin_edit_game_score wywołany")
+    print("[ADMIN] admin_edit_game_score has been activated")
     if not getattr(request.user, "is_admin", False):
-        return JsonResponse({"error": "Brak uprawnień"}, status=403)
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
     try:
         data = json.loads(request.body)
         new_score = Decimal(str(data.get("score")))
     except Exception as e:
-        return JsonResponse({"error": f"Błąd danych: {e}"}, status=400)
+        return JsonResponse({"error": f"Data error: {e}"}, status=400)
 
     game = Games.objects.filter(id=game_id).first()
     if not game:
-        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+        return JsonResponse({"error": "The game doesn't exist"}, status=404)
 
     game.score = new_score
     game.save(update_fields=["score"])
-    return JsonResponse({"message": f"Score gry '{game.title}' zmieniono na {new_score}"})
+    return JsonResponse({"message": f"'{game.title}' score changed to {new_score}"})
 
 
 @jwt_required
 def admin_users_view(request):
 
-    # 1. Uprawnienia
     if not getattr(request.user, "is_admin", False):
-        # fetch / API → JSON
         if _wants_json(request):
             return JsonResponse({"error": "Access denied"}, status=403)
-        # normalne wejście → React error page
         return redirect("/error/403")
 
-    # 2. Parametry z URL
     sort_option = request.GET.get("sort", "oldest")
     query = (request.GET.get("q") or "").strip()
 
-    # 3. Jeśli React fetch → zwróć JSON
     if (
         request.headers.get("x-requested-with") == "XMLHttpRequest"
         or request.GET.get("format") == "json"
@@ -1334,7 +1191,6 @@ def admin_users_view(request):
     ):
         users = UserModel.objects.all()
 
-        # Filtrowanie
         if query:
             users = users.filter(username__icontains=query)
 
@@ -1356,11 +1212,6 @@ def admin_users_view(request):
 
         return JsonResponse({"users": data})
 
-    # 4. Jeśli to nie JSON → zwróć index.html Reacta
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
-
     index_path = os.path.join(
         settings.BASE_DIR,
         "frontend",
@@ -1378,13 +1229,11 @@ def admin_users_view(request):
 @jwt_required
 def admin_games_view(request):
 
-    # 1. Sprawdzenie czy user to admin
     if not getattr(request.user, "is_admin", False):
         if _wants_json(request):
             return JsonResponse({"error": "Access denied"}, status=403)
         return redirect("/error/403")
 
-    # 2. Jeśli to request AJAX / JSON → zwróć JSON (dla React fetch)
     if (
         request.headers.get("x-requested-with") == "XMLHttpRequest"
         or request.GET.get("format") == "json"
@@ -1416,11 +1265,6 @@ def admin_games_view(request):
         ]
         return JsonResponse({"games": data})
 
-    # 3. Jeśli nie jest to fetch → zwróć index.html Reacta
-    from django.http import FileResponse
-    import os
-    from django.conf import settings
-
     index_path = os.path.join(
         settings.BASE_DIR,
         "frontend",
@@ -1433,32 +1277,22 @@ def admin_games_view(request):
 
 
 
-
-
-
-
 @csrf_exempt
 @jwt_required
 @require_http_methods(["POST"])
 def admin_reload_game(request, game_id):
-    """
-    Przeładowuje (scrapuje ponownie) wybraną grę i aktualizuje jej fabułę + streszczenie.
-    """
     if not getattr(request.user, "is_admin", False):
-        return JsonResponse({"error": "Brak uprawnień"}, status=403)
-
-    from .models import Games, GamePlots
-    from .utils import scrape_game_info_admin
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
     game = Games.objects.filter(id=game_id).first()
     if not game:
-        return JsonResponse({"error": "Gra nie istnieje"}, status=404)
+        return JsonResponse({"error": "The game doesn't exist"}, status=404)
 
     if not game.mobygames_url:
-        return JsonResponse({"error": "Brak adresu URL MobyGames dla tej gry."}, status=400)
+        return JsonResponse({"error": "There is no MobyGames URL for this game."}, status=400)
 
     try:
-        print(f"[ADMIN RELOAD] Uruchamiam ponowne scrapowanie dla gry: {game.title}")
+        print(f"[ADMIN RELOAD] Running the scraping process again for the game: {game.title}")
         data = asyncio.run(scrape_game_info_admin(game.mobygames_url, settings.MEDIA_ROOT))
 
         plot = GamePlots.objects.filter(game_id=game).first()
@@ -1472,17 +1306,14 @@ def admin_reload_game(request, game_id):
         game.wikipedia_url = data.get("wikipedia_url")
         game.save(update_fields=["wikipedia_url"])
 
-        print(f"[ADMIN RELOAD] Gra '{game.title}' została przeładowana.")
-        return JsonResponse({"message": f"Gra '{game.title}' została ponownie załadowana i zaktualizowana."})
+        print(f"[ADMIN RELOAD] The game '{game.title}' has been reloaded.")
+        return JsonResponse({"message": f"The game '{game.title}' has been reloaded and updated."})
     except Exception as e:
         print(f"[ADMIN RELOAD ERROR] {e}")
-        return JsonResponse({"error": f"Błąd podczas ponownego ładowania gry: {e}"}, status=500)
+        return JsonResponse({"error": f"There was an error during the reload process: {e}"}, status=500)
 
 
 def information_view(request):
-    """
-    Serves the React InformationPage.
-    """
     index_path = os.path.join(
         settings.BASE_DIR,
         "frontend",

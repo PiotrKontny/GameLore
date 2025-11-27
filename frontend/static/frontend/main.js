@@ -507,12 +507,14 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   padding: 40px 50px;
 }
 
-.game-title {
-  font-size: 2.1rem;
+.game-detail-page .game-title {
+  font-size: 2.4rem !important;
   text-align: center;
   color: var(--nav);
   font-weight: 800;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  line-height: 1.15;
+  display: block;
 }
 
 .cover {

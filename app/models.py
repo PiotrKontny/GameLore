@@ -1,10 +1,6 @@
-from django.utils.timezone import now
-import os
 from django.utils import timezone
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin, AbstractBaseUser
-from django.core.validators import RegexValidator, FileExtensionValidator
 from django.contrib.auth.hashers import make_password, check_password
 
 
@@ -17,7 +13,7 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(username=username, email=email, **extra_fields)
         if password:
-            user.password = make_password(password)  # zapisze do kolumny user_password
+            user.password = make_password(password)
         else:
             user.password = make_password(self.make_random_password())
         user.save(using=self._db)

@@ -1,20 +1,18 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from django.db import IntegrityError, transaction
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import  JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
 from .models import UserModel, Games, UserHistory
 from playwright.async_api import async_playwright
 from transformers import pipeline
 from bs4 import BeautifulSoup
+from shutil import copyfile
 import urllib.parse
-import asyncio
 import os
 import re
 import time
 from io import BytesIO
-from decimal import Decimal
 import requests
 from PIL import Image
 from functools import wraps
@@ -55,14 +53,8 @@ def record_user_history(user, game, refresh_timestamp=True):
         print(f"[record_user_history] Error: {e}")
 
 
-# The function below serves as a decorator (thus view_func in it's arguments) for any pages which are restricted to the
-# not logged-in users.
+# This function checks whether the request expects a JSON response rather than a standard HTML error page.
 def _wants_json(request):
-    """
-    True, jeśli żądanie wygląda na API / fetch:
-    - AJAX (X-Requested-With: XMLHttpRequest)
-    - albo nagłówek Accept zawiera application/json
-    """
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return True
     accept = request.headers.get("Accept", "")
@@ -70,14 +62,15 @@ def _wants_json(request):
         return True
     return False
 
-
+# This is the function responsible for the main mechanism of authorization. It works as a decorator, so basically
+# something that I put before the functions in views.py to make those pages require an authorization handled by this
+# function.
 def jwt_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
 
-        # === 0. Admin zalogowany klasycznie (np. przez /admin/) ===
-        # Jeśli Django już ma ustawionego zalogowanego superusera,
-        # nie bawimy się w JWT.
+        # This if statement is meant for the app's scalability as it ignores jwt_required decorator for the superusers
+        # also known as Django session admins. This app currently does not use it but it might in the future.
         if getattr(request.user, "is_authenticated", False) and getattr(request.user, "is_superuser", False):
             print("[JWT] SKIPPING JWT CHECK FOR ADMIN (session auth)")
             return view_func(request, *args, **kwargs)
@@ -85,43 +78,42 @@ def jwt_required(view_func):
         wants_json = _wants_json(request)
         jwt_auth = JWTAuthentication()
 
-        # === 1. Wyciągamy token ===
         token = None
 
-        # 1a. Nagłówek Authorization: Bearer ...
+        # Checking the header Authorization Bearer (basically the access token given to each user after logging in)
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             candidate = auth_header.split(" ", 1)[1].strip()
             if candidate and candidate.lower() not in ("null", "undefined"):
                 token = candidate
 
-        # 1b. Ciasteczko access_token
+        # If there is no token found in the previous if statement then the app checks cookies
         if not token:
             token = request.COOKIES.get("access_token")
 
-        # === 2. Brak tokena ===
+        # No token means that the user is not logged in
         if not token:
-            print("[JWT] Brak tokena JWT")
+            print("[JWT] There is no JSON Web Token (JWT)")
 
             if wants_json:
-                # API / fetch → czysty JSON
-                return JsonResponse({"error": "Brak tokena JWT"}, status=401)
+                return JsonResponse({"error": "There is no JWT"}, status=401)
             else:
-                # Zwykłe wejście w przeglądarce → przekierowanie na 401
+                # Redirects to the already prepared error 401 page
                 return redirect("/error/401")
 
-        # JWTAuthentication wymaga headera Authorization
+        # JWTAuthentication requires Authorization Bearer token
         request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
 
         try:
-            # === 3. Próba uwierzytelnienia ===
+            # The attempt to authorize the token
             user_auth_tuple = jwt_auth.authenticate(request)
 
+            # If the authenticate function returns None then the token is deemed as wrong or expired
             if not user_auth_tuple:
-                print("[JWT] Token nieprawidłowy lub wygasł (authenticate zwróciło None).")
+                print("[JWT] The token is wrong or expired (authenticate has returned None).")
                 if wants_json:
                     return JsonResponse(
-                        {"error": "Token JWT nieprawidłowy lub wygasł."},
+                        {"error": "Token JWT is wrong or it expired."},
                         status=403,
                     )
                 else:
@@ -129,7 +121,7 @@ def jwt_required(view_func):
 
             jwt_user, validated_token = user_auth_tuple
 
-            # === 4. Mapowanie na UserModel z bazy ===
+            # Checking if the user exists in the database
             mapped_user = (
                 UserModel.objects.filter(pk=jwt_user.pk).first()
                 or UserModel.objects.filter(username=jwt_user.username).first()
@@ -137,46 +129,42 @@ def jwt_required(view_func):
             )
 
             if not mapped_user:
-                print("[JWT] Użytkownik z tokena nie istnieje w bazie.")
+                print("[JWT] The user from the token does not exist in the database.")
                 if wants_json:
-                    return JsonResponse({"error": "Użytkownik nie istnieje"}, status=403)
+                    return JsonResponse({"error": "The user does not exist"}, status=403)
                 else:
                     return redirect("/error/403")
 
-            # Sukces – podpinamy usera pod request
+            # The user is authenticated
             request.user = mapped_user
             print(f"[JWT] Authenticated user: {mapped_user.username}")
 
             return view_func(request, *args, **kwargs)
 
+        # The authentication failed due to SimpleJWT
         except AuthenticationFailed as e:
-            # Błąd zgłoszony przez SimpleJWT
             print(f"[JWT] AuthenticationFailed: {e}")
             if wants_json:
-                return JsonResponse({"error": "Token JWT nieprawidłowy lub wygasł."}, status=403)
+                return JsonResponse({"error": "Token JWT is wrong or it expired."}, status=403)
             else:
                 return redirect("/error/403")
 
+        # Any other unexpected errors
         except Exception as e:
-            # Inne niespodziewane błędy
             print(f"[JWT] Authentication failed (internal error): {e!r}")
             if wants_json:
-                return JsonResponse({"error": "Błąd uwierzytelniania JWT."}, status=500)
+                return JsonResponse({"error": "Error in JWT authentication."}, status=500)
             else:
                 return redirect("/error/500")
 
     return _wrapped_view
 
 
-
+# Requesting user without throwing errors like jwt_required. Used for simpler functions like saving the game to history
+# or giving a rating. With its similarity to jwt_required, the explanation is not needed.
 def get_jwt_user(request):
-    """
-    Próbuje uwierzytelnić użytkownika na podstawie JWT z ciasteczka 'access_token'.
-    Nie zwraca błędów 403 — tylko obiekt użytkownika lub None.
-    """
     jwt_auth = JWTAuthentication()
 
-    # Jeśli brak nagłówka Authorization — spróbuj wyciągnąć token z ciasteczka
     if "HTTP_AUTHORIZATION" not in request.META:
         token = request.COOKIES.get("access_token")
         if token:
@@ -186,7 +174,6 @@ def get_jwt_user(request):
         user_auth_tuple = jwt_auth.authenticate(request)
         if user_auth_tuple is not None:
             jwt_user, _ = user_auth_tuple
-            from .models import UserModel
             mapped_user = (
                 UserModel.objects.filter(username=jwt_user.username).first()
                 or UserModel.objects.filter(email=jwt_user.email).first()
@@ -198,21 +185,20 @@ def get_jwt_user(request):
     return None
 
 
+# This class allows JWT authentication using the access_token cookie when the Authorization header is not provided.
 class CookieJWTAuthentication(JWTAuthentication):
-    """
-    Pozwala odczytywać token JWT z ciasteczka `access_token` zamiast tylko z nagłówka Authorization.
-    """
     def authenticate(self, request):
-        # Najpierw próbuj jak zwykle (Authorization)
+        # First tries the standard authorization header method
         header = self.get_header(request)
         if header:
             return super().authenticate(request)
 
-        # Jeśli brak nagłówka, spróbuj z ciasteczka
+        # If there is no header then it tries to get token from cookies
         raw_token = request.COOKIES.get("access_token")
         if raw_token is None:
             return None
 
+        # Token validation
         validated_token = self.get_validated_token(raw_token)
         try:
             user = self.get_user(validated_token)
@@ -684,19 +670,16 @@ async def search_mobygames(game_name: str):
                             default_icon = os.path.join(media_root, "default_icon.png")
                             out_path = os.path.join(media_root, f"result_{index}.png")
                             if os.path.exists(default_icon):
-                                from shutil import copyfile
                                 copyfile(default_icon, out_path)
                     else:
                         default_icon = os.path.join(media_root, "default_icon.png")
                         out_path = os.path.join(media_root, f"result_{index}.png")
                         if os.path.exists(default_icon):
-                            from shutil import copyfile
                             copyfile(default_icon, out_path)
                 else:
                     default_icon = os.path.join(media_root, "default_icon.png")
                     out_path = os.path.join(media_root, f"result_{index}.png")
                     if os.path.exists(default_icon):
-                        from shutil import copyfile
                         copyfile(default_icon, out_path)
             except Exception as e:
                 print(f"[!] Błąd przy zapisie miniatury result_{index}: {e}")
@@ -1032,10 +1015,6 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
 # Różni się tym, że automatycznie generuje streszczenie (summary_md)
 # przy użyciu summarize_plot_sections() oraz nadpisuje stare dane gry.
 async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = True):
-    """
-    Scraper używany w panelu admina — generuje pełną fabułę i streszczenie.
-    """
-    from .models import Games, GamePlots
 
     print(f"[ADMIN RELOAD] Rozpoczynam pełne przeładowanie gry z URL: {url}")
     start_time = time.time()

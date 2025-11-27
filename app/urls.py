@@ -1,9 +1,8 @@
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    # --- Strony główne ---
-    #path('', views.home, name="home"),
+    # --- Main Pages ---
     path("explore/", views.explore_view, name="explore"),
     path("my_library/", views.my_library_view, name="my_library"),
     path("api/my_library/", views.my_library_api, name="my_library_api"),
@@ -13,12 +12,12 @@ urlpatterns = [
     path("profile/", views.react_index, name="profile_page"),
     path("api/profile/", views.profile_view, name="api_profile"),
 
-    # --- Logowanie / Rejestracja ---
+    # --- Register and Login ---
     path('register/', views.RegisterUser.as_view(), name='register'),
     path('login/', views.LoginView.as_view(), name='login'),
     path("api/user/", views.api_user, name="api_user"),
 
-    # --- Wyszukiwanie i gry ---
+    # --- Games ---
     path('search/', views.search_view, name='search'),
     path('results/', views.results_view, name='results'),
     path('details/', views.details_view, name='details'),
@@ -29,25 +28,24 @@ urlpatterns = [
     path('compilation/', views.compilation_view, name='compilation'),
     path("games/<int:pk>/generate-summary/", views.generate_summary_view, name="generate_summary"),
 
-    # --- Admin panel główny ---
+    # --- Admin panel ---
     path("admin-panel/", views.admin_panel, name="admin_panel"),
-
-    # --- Nowe podstrony admina ---
     path("admin-panel/users/", views.admin_users_view, name="admin_users"),
     path("admin-panel/games/", views.admin_games_view, name="admin_games"),
 
-    # --- Akcje admina (AJAX) ---
+    # --- Admin actions endpoints ---
     path("admin-panel/delete-user/<int:user_id>/", views.admin_delete_user, name="admin_delete_user"),
     path("admin-panel/delete-game/<int:game_id>/", views.admin_delete_game, name="admin_delete_game"),
     path("admin-panel/edit-game-score/<int:game_id>/", views.admin_edit_game_score, name="admin_edit_game_score"),
     path("admin-panel/reload-game/<int:game_id>/", views.admin_reload_game, name="admin_reload_game"),
 
-    # --- Chatbot i historia ---
+    # --- Chatbot and history ---
     path("chatbot/", views.chatbot_page, name="chatbot_page"),
     path("chatbot/ask/", views.chatbot_ask, name="chatbot_ask"),
     path("chatbot/history/", views.chatbot_history, name="chatbot_history"),
     path("delete_history/", views.delete_history_entry, name="delete_history_entry"),
     path("chatbot/delete/", views.delete_chat_history, name="delete_chat_history"),
 
+    # --- Refresh access token ---
     path("app/api/refresh/", views.refresh_access_token)
 ]
