@@ -1,6 +1,6 @@
 // src/pages/GameDetailPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./GameDetailPage.css";
 
 /* --- CSRF --- */
@@ -31,6 +31,7 @@ const TAB_CHATBOT = "chatbot";
 const GameDetailPage = () => {
   const { id } = useParams();
   const gameId = id;
+  const navigate = useNavigate();
   const csrftoken = getCookie("csrftoken");
 
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,19 @@ const GameDetailPage = () => {
           },
         });
 
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        // ⬇️ KLUCZOWA ZMIANA: jeśli backend zwróci 404 (HTML, a nie JSON),
+        // NIE próbujemy czytać res.json(), tylko przenosimy użytkownika
+        if (res.status === 404) {
+          if (!cancelled) {
+            setLoading(false);
+            navigate("/error/404");
+          }
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
 
         const data = await res.json();
         const gameObj = data.game || data;
@@ -119,7 +132,7 @@ const GameDetailPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [gameId]);
+  }, [gameId, navigate]);
 
   /* -------------------------------------------
    * 2. Detect summary placeholder

@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from django.http import  JsonResponse
+from django.http import JsonResponse, Http404
 from django.shortcuts import redirect
 from django.utils import timezone
 from .models import UserModel, Games, UserHistory
@@ -142,6 +142,10 @@ def jwt_required(view_func):
             return view_func(request, *args, **kwargs)
 
         # The authentication failed due to SimpleJWT
+        except Http404:
+            # nie zmieniamy 404 na 500!!!
+            raise
+
         except AuthenticationFailed as e:
             print(f"[JWT] AuthenticationFailed: {e}")
             if wants_json:
@@ -149,7 +153,6 @@ def jwt_required(view_func):
             else:
                 return redirect("/error/403")
 
-        # Any other unexpected errors
         except Exception as e:
             print(f"[JWT] Authentication failed (internal error): {e!r}")
             if wants_json:

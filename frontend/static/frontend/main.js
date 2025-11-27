@@ -46074,6 +46074,7 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
   var _useParams = useParams(),
     id = _useParams.id;
   var gameId = id;
+  var navigate = useNavigate();
   var csrftoken = getCookie("csrftoken");
   var _useState = (0,react.useState)(true),
     _useState2 = GameDetailPage_slicedToArray(_useState, 2),
@@ -46164,15 +46165,25 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
               });
             case 2:
               res = _context.v;
-              if (res.ok) {
+              if (!(res.status === 404)) {
                 _context.n = 3;
                 break;
               }
-              throw new Error("HTTP " + res.status);
+              if (!cancelled) {
+                setLoading(false);
+                navigate("/error/404");
+              }
+              return _context.a(2);
             case 3:
-              _context.n = 4;
-              return res.json();
+              if (res.ok) {
+                _context.n = 4;
+                break;
+              }
+              throw new Error("HTTP " + res.status);
             case 4:
+              _context.n = 5;
+              return res.json();
+            case 5:
               data = _context.v;
               gameObj = data.game || data;
               fullPlotHtml = data.full_plot_html || gameObj.full_plot_html || "";
@@ -46197,20 +46208,20 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
                 });
                 setSummaryHtml(summaryHtmlRaw || "");
               }
-              _context.n = 6;
+              _context.n = 7;
               break;
-            case 5:
-              _context.p = 5;
-              _t = _context.v;
-              console.error("Game fetch error", _t);
             case 6:
               _context.p = 6;
-              if (!cancelled) setLoading(false);
-              return _context.f(6);
+              _t = _context.v;
+              console.error("Game fetch error", _t);
             case 7:
+              _context.p = 7;
+              if (!cancelled) setLoading(false);
+              return _context.f(7);
+            case 8:
               return _context.a(2);
           }
-        }, _callee, null, [[1, 5, 6, 7]]);
+        }, _callee, null, [[1, 6, 7, 8]]);
       }));
       return _fetchGame.apply(this, arguments);
     }
@@ -46218,7 +46229,7 @@ var GameDetailPage_GameDetailPage = function GameDetailPage() {
     return function () {
       cancelled = true;
     };
-  }, [gameId]);
+  }, [gameId, navigate]);
 
   /* -------------------------------------------
    * 2. Detect summary placeholder
