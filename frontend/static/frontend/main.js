@@ -47463,77 +47463,118 @@ function ChatbotPage_ChatbotPage() {
     _useState12 = ChatbotPage_slicedToArray(_useState11, 2),
     inputValue = _useState12[0],
     setInputValue = _useState12[1];
-  (0,react.useEffect)(function () {
-    function fetchInit() {
-      return _fetchInit.apply(this, arguments);
-    }
-    function _fetchInit() {
-      _fetchInit = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee() {
-        var res, data, defaultId, _t;
-        return ChatbotPage_regenerator().w(function (_context) {
-          while (1) switch (_context.p = _context.n) {
-            case 0:
-              _context.p = 0;
-              _context.n = 1;
-              return fetch("/app/chatbot/?format=json", {
-                credentials: "include",
-                headers: {
-                  "x-requested-with": "XMLHttpRequest"
-                }
-              });
-            case 1:
-              res = _context.v;
-              _context.n = 2;
-              return res.json();
-            case 2:
-              data = _context.v;
-              setGames(data.games || []);
-              defaultId = data.default_game_id || (data.games && data.games.length ? data.games[0].id : null);
-              if (!defaultId) {
-                _context.n = 3;
-                break;
+
+  // -------- INITIAL LOAD --------
+  function fetchInit() {
+    return _fetchInit.apply(this, arguments);
+  }
+  function _fetchInit() {
+    _fetchInit = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee() {
+      var res, data, defaultId, _t;
+      return ChatbotPage_regenerator().w(function (_context) {
+        while (1) switch (_context.p = _context.n) {
+          case 0:
+            _context.p = 0;
+            _context.n = 1;
+            return fetch("/app/chatbot/?format=json", {
+              credentials: "include",
+              headers: {
+                "x-requested-with": "XMLHttpRequest"
               }
-              setCurrentGameId(defaultId);
+            });
+          case 1:
+            res = _context.v;
+            _context.n = 2;
+            return res.json();
+          case 2:
+            data = _context.v;
+            setGames(data.games || []);
+            defaultId = data.default_game_id || (data.games && data.games.length ? data.games[0].id : null);
+            if (!defaultId) {
               _context.n = 3;
-              return loadHistory(defaultId);
-            case 3:
-              _context.n = 5;
               break;
-            case 4:
-              _context.p = 4;
-              _t = _context.v;
-              console.error("Error loading chatbot init:", _t);
-            case 5:
-              return _context.a(2);
-          }
-        }, _callee, null, [[0, 4]]);
-      }));
-      return _fetchInit.apply(this, arguments);
-    }
+            }
+            setCurrentGameId(defaultId);
+            _context.n = 3;
+            return loadHistory(defaultId);
+          case 3:
+            _context.n = 5;
+            break;
+          case 4:
+            _context.p = 4;
+            _t = _context.v;
+            console.error("Error loading chatbot init:", _t);
+          case 5:
+            return _context.a(2);
+        }
+      }, _callee, null, [[0, 4]]);
+    }));
+    return _fetchInit.apply(this, arguments);
+  }
+  (0,react.useEffect)(function () {
     fetchInit();
   }, []);
-  function loadHistory(_x) {
-    return _loadHistory.apply(this, arguments);
-  }
-  function _loadHistory() {
-    _loadHistory = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee2(gameId) {
-      var res, data, msgs, _t2;
+
+  // -------- REFRESH ONLY GAMES LIST (NO CHAT SWITCH) --------
+  function refreshGamesList() {
+    return _refreshGamesList.apply(this, arguments);
+  } // -------- LOAD HISTORY FOR GIVEN GAME --------
+  function _refreshGamesList() {
+    _refreshGamesList = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee2() {
+      var res, data, _t2;
       return ChatbotPage_regenerator().w(function (_context2) {
         while (1) switch (_context2.p = _context2.n) {
           case 0:
+            _context2.p = 0;
+            _context2.n = 1;
+            return fetch("/app/chatbot/?format=json", {
+              credentials: "include",
+              headers: {
+                "x-requested-with": "XMLHttpRequest"
+              }
+            });
+          case 1:
+            res = _context2.v;
+            _context2.n = 2;
+            return res.json();
+          case 2:
+            data = _context2.v;
+            setGames(data.games || []);
+            _context2.n = 4;
+            break;
+          case 3:
+            _context2.p = 3;
+            _t2 = _context2.v;
+            console.error("Error refreshing game list:", _t2);
+          case 4:
+            return _context2.a(2);
+        }
+      }, _callee2, null, [[0, 3]]);
+    }));
+    return _refreshGamesList.apply(this, arguments);
+  }
+  function loadHistory(_x) {
+    return _loadHistory.apply(this, arguments);
+  } // -------- SEND MESSAGE --------
+  function _loadHistory() {
+    _loadHistory = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee3(gameId) {
+      var res, data, msgs, _t3;
+      return ChatbotPage_regenerator().w(function (_context3) {
+        while (1) switch (_context3.p = _context3.n) {
+          case 0:
             setLoadingHistory(true);
             setMessages([]);
-            _context2.p = 1;
-            _context2.n = 2;
+            _context3.p = 1;
+            _context3.n = 2;
             return fetch("/app/chatbot/history/?game_id=".concat(gameId), {
               credentials: "include"
             });
           case 2:
-            res = _context2.v;
-            _context2.n = 3;
+            res = _context3.v;
+            _context3.n = 3;
             return res.json();
           case 3:
-            data = _context2.v;
+            data = _context3.v;
             msgs = [];
             data.forEach(function (h) {
               msgs.push({
@@ -47546,38 +47587,38 @@ function ChatbotPage_ChatbotPage() {
               });
             });
             setMessages(msgs);
-            _context2.n = 5;
+            _context3.n = 5;
             break;
           case 4:
-            _context2.p = 4;
-            _t2 = _context2.v;
+            _context3.p = 4;
+            _t3 = _context3.v;
             console.error("Error loading chatbot history");
           case 5:
-            _context2.p = 5;
+            _context3.p = 5;
             setLoadingHistory(false);
-            return _context2.f(5);
+            return _context3.f(5);
           case 6:
-            return _context2.a(2);
+            return _context3.a(2);
         }
-      }, _callee2, null, [[1, 4, 5, 6]]);
+      }, _callee3, null, [[1, 4, 5, 6]]);
     }));
     return _loadHistory.apply(this, arguments);
   }
   function handleSend() {
     return _handleSend.apply(this, arguments);
-  }
+  } // -------- DELETE CHAT HISTORY --------
   function _handleSend() {
-    _handleSend = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee3() {
-      var text, res, data, _t3;
-      return ChatbotPage_regenerator().w(function (_context3) {
-        while (1) switch (_context3.p = _context3.n) {
+    _handleSend = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee4() {
+      var text, res, data, _t4;
+      return ChatbotPage_regenerator().w(function (_context4) {
+        while (1) switch (_context4.p = _context4.n) {
           case 0:
             text = inputValue.trim();
             if (!(!text || !currentGameId || thinking)) {
-              _context3.n = 1;
+              _context4.n = 1;
               break;
             }
-            return _context3.a(2);
+            return _context4.a(2);
           case 1:
             setMessages(function (prev) {
               return [].concat(ChatbotPage_toConsumableArray(prev), [{
@@ -47587,8 +47628,8 @@ function ChatbotPage_ChatbotPage() {
             });
             setInputValue("");
             setThinking(true);
-            _context3.p = 2;
-            _context3.n = 3;
+            _context4.p = 2;
+            _context4.n = 3;
             return fetch("/app/chatbot/ask/", {
               method: "POST",
               credentials: "include",
@@ -47601,22 +47642,22 @@ function ChatbotPage_ChatbotPage() {
               })
             });
           case 3:
-            res = _context3.v;
-            _context3.n = 4;
+            res = _context4.v;
+            _context4.n = 4;
             return res.json();
           case 4:
-            data = _context3.v;
+            data = _context4.v;
             setMessages(function (prev) {
               return [].concat(ChatbotPage_toConsumableArray(prev), [{
                 role: "bot",
                 text: data.answer || "No response"
               }]);
             });
-            _context3.n = 6;
+            _context4.n = 6;
             break;
           case 5:
-            _context3.p = 5;
-            _t3 = _context3.v;
+            _context4.p = 5;
+            _t4 = _context4.v;
             setMessages(function (prev) {
               return [].concat(ChatbotPage_toConsumableArray(prev), [{
                 role: "bot",
@@ -47624,13 +47665,13 @@ function ChatbotPage_ChatbotPage() {
               }]);
             });
           case 6:
-            _context3.p = 6;
+            _context4.p = 6;
             setThinking(false);
-            return _context3.f(6);
+            return _context4.f(6);
           case 7:
-            return _context3.a(2);
+            return _context4.a(2);
         }
-      }, _callee3, null, [[2, 5, 6, 7]]);
+      }, _callee4, null, [[2, 5, 6, 7]]);
     }));
     return _handleSend.apply(this, arguments);
   }
@@ -47638,20 +47679,20 @@ function ChatbotPage_ChatbotPage() {
     return _handleDeleteHistory.apply(this, arguments);
   }
   function _handleDeleteHistory() {
-    _handleDeleteHistory = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee4(gameId) {
-      var confirmDelete, res, data, _t4;
-      return ChatbotPage_regenerator().w(function (_context4) {
-        while (1) switch (_context4.p = _context4.n) {
+    _handleDeleteHistory = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee5(gameId) {
+      var confirmDelete, res, data, _t5;
+      return ChatbotPage_regenerator().w(function (_context5) {
+        while (1) switch (_context5.p = _context5.n) {
           case 0:
             confirmDelete = window.confirm("Are you sure you want to delete chat history for this game?");
             if (confirmDelete) {
-              _context4.n = 1;
+              _context5.n = 1;
               break;
             }
-            return _context4.a(2);
+            return _context5.a(2);
           case 1:
-            _context4.p = 1;
-            _context4.n = 2;
+            _context5.p = 1;
+            _context5.n = 2;
             return fetch("/app/chatbot/delete/", {
               method: "POST",
               credentials: "include",
@@ -47659,36 +47700,43 @@ function ChatbotPage_ChatbotPage() {
                 "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                game_id: game_id
+                game_id: gameId
               })
             });
           case 2:
-            res = _context4.v;
-            _context4.n = 3;
+            res = _context5.v;
+            _context5.n = 3;
             return res.json();
           case 3:
-            data = _context4.v;
+            data = _context5.v;
             if (res.ok) {
-              _context4.n = 4;
+              _context5.n = 4;
               break;
             }
             alert(data.error || "Error deleting history.");
-            return _context4.a(2);
+            return _context5.a(2);
           case 4:
             alert("Chat history deleted successfully.");
+
+            // Stay on same chat and clear messages
             if (String(gameId) === String(currentGameId)) {
               setMessages([]);
             }
-            _context4.n = 6;
-            break;
+
+            // Refresh left game list without switching chat
+            _context5.n = 5;
+            return refreshGamesList();
           case 5:
-            _context4.p = 5;
-            _t4 = _context4.v;
-            alert("Connection error while deleting chat history.");
+            _context5.n = 7;
+            break;
           case 6:
-            return _context4.a(2);
+            _context5.p = 6;
+            _t5 = _context5.v;
+            alert("Connection error while deleting chat history.");
+          case 7:
+            return _context5.a(2);
         }
-      }, _callee4, null, [[1, 5]]);
+      }, _callee5, null, [[1, 6]]);
     }));
     return _handleDeleteHistory.apply(this, arguments);
   }
@@ -47716,7 +47764,9 @@ function ChatbotPage_ChatbotPage() {
     return /*#__PURE__*/react_default().createElement("div", {
       key: g.id,
       className: "chatbot-game-item" + (String(g.id) === String(currentGameId) ? " active" : ""),
-      onClick: function onClick() {
+      onClick: function onClick(e) {
+        // Ignore clicks on the trash icon
+        if (e.target.classList.contains("chatbot-delete-icon")) return;
         if (String(g.id) === String(currentGameId)) return;
         setCurrentGameId(g.id);
         loadHistory(g.id);
@@ -47732,9 +47782,8 @@ function ChatbotPage_ChatbotPage() {
       src: "/media/icons/Trash.png",
       alt: "Delete",
       title: "Delete chat history",
-      onClick: function onClick(e) {
-        e.stopPropagation();
-        handleDeleteHistory(g.id);
+      onClick: function onClick() {
+        return handleDeleteHistory(g.id);
       }
     }));
   }), filteredGames.length === 0 && /*#__PURE__*/react_default().createElement("div", {

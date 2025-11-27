@@ -10,33 +10,50 @@ function ChatbotPage() {
   const [thinking, setThinking] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  useEffect(() => {
-    async function fetchInit() {
-      try {
-        const res = await fetch("/app/chatbot/?format=json", {
-          credentials: "include",
-          headers: { "x-requested-with": "XMLHttpRequest" }
-        });
+  // -------- INITIAL LOAD --------
+  async function fetchInit() {
+    try {
+      const res = await fetch("/app/chatbot/?format=json", {
+        credentials: "include",
+        headers: { "x-requested-with": "XMLHttpRequest" }
+      });
 
-        const data = await res.json();
-        setGames(data.games || []);
+      const data = await res.json();
+      setGames(data.games || []);
 
-        const defaultId =
-          data.default_game_id ||
-          (data.games && data.games.length ? data.games[0].id : null);
+      const defaultId =
+        data.default_game_id ||
+        (data.games && data.games.length ? data.games[0].id : null);
 
-        if (defaultId) {
-          setCurrentGameId(defaultId);
-          await loadHistory(defaultId);
-        }
-      } catch (err) {
-        console.error("Error loading chatbot init:", err);
+      if (defaultId) {
+        setCurrentGameId(defaultId);
+        await loadHistory(defaultId);
       }
+    } catch (err) {
+      console.error("Error loading chatbot init:", err);
     }
+  }
 
+  useEffect(() => {
     fetchInit();
   }, []);
 
+  // -------- REFRESH ONLY GAMES LIST (NO CHAT SWITCH) --------
+  async function refreshGamesList() {
+    try {
+      const res = await fetch("/app/chatbot/?format=json", {
+        credentials: "include",
+        headers: { "x-requested-with": "XMLHttpRequest" }
+      });
+
+      const data = await res.json();
+      setGames(data.games || []);
+    } catch (err) {
+      console.error("Error refreshing game list:", err);
+    }
+  }
+
+  // -------- LOAD HISTORY FOR GIVEN GAME --------
   async function loadHistory(gameId) {
     setLoadingHistory(true);
     setMessages([]);
@@ -62,6 +79,7 @@ function ChatbotPage() {
     }
   }
 
+  // -------- SEND MESSAGE --------
   async function handleSend() {
     const text = inputValue.trim();
     if (!text || !currentGameId || thinking) return;
@@ -94,6 +112,7 @@ function ChatbotPage() {
     }
   }
 
+  // -------- DELETE CHAT HISTORY --------
   async function handleDeleteHistory(gameId) {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete chat history for this game?"
@@ -105,7 +124,7 @@ function ChatbotPage() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game_id })
+        body: JSON.stringify({ game_id: gameId })
       });
 
       const data = await res.json();
@@ -117,9 +136,13 @@ function ChatbotPage() {
 
       alert("Chat history deleted successfully.");
 
+      // Stay on same chat and clear messages
       if (String(gameId) === String(currentGameId)) {
         setMessages([]);
       }
+
+      // Refresh left game list without switching chat
+      await refreshGamesList();
     } catch {
       alert("Connection error while deleting chat history.");
     }
@@ -132,7 +155,8 @@ function ChatbotPage() {
   return (
     <div className="chatbot-page">
       <div className="chatbot-wrapper">
-        {/* LEFT */}
+
+        {/* LEFT SIDEBAR */}
         <div className="chatbot-sidebar">
           <div className="chatbot-search-box">
             <input
@@ -151,7 +175,10 @@ function ChatbotPage() {
                   "chatbot-game-item" +
                   (String(g.id) === String(currentGameId) ? " active" : "")
                 }
-                onClick={() => {
+                onClick={(e) => {
+                  // Ignore clicks on the trash icon
+                  if (e.target.classList.contains("chatbot-delete-icon")) return;
+
                   if (String(g.id) === String(currentGameId)) return;
                   setCurrentGameId(g.id);
                   loadHistory(g.id);
@@ -170,20 +197,18 @@ function ChatbotPage() {
                   src="/media/icons/Trash.png"
                   alt="Delete"
                   title="Delete chat history"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteHistory(g.id);
-                  }}
+                  onClick={() => handleDeleteHistory(g.id)}
                 />
               </div>
             ))}
+
             {filteredGames.length === 0 && (
               <div className="chatbot-empty-state">No games found.</div>
             )}
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* CHAT WINDOW */}
         <div className="chatbot-chat-container">
           <div className="chatbot-chat-box">
             <div className="chatbot-chat-messages">
@@ -225,6 +250,7 @@ function ChatbotPage() {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
