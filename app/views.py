@@ -463,6 +463,7 @@ def game_detail_page(request, pk):
 @jwt_required
 def api_game_detail(request, pk):
     game = get_object_or_404(Games, pk=pk)
+    record_user_history(request.user, game)
     plot = GamePlots.objects.filter(game_id=game).first()
 
     full_plot_html = markdown.markdown(plot.full_plot if plot else "")

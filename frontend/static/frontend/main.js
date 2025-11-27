@@ -47156,6 +47156,7 @@ function MyLibraryPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "
 function MyLibraryPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 // src/pages/MyLibraryPage.jsx
 
+ // ← ważne
 
 function MyLibraryPage_MyLibraryPage() {
   var _useState = (0,react.useState)([]),
@@ -47178,7 +47179,7 @@ function MyLibraryPage_MyLibraryPage() {
   // Pobieranie biblioteki
   function loadLibrary() {
     return _loadLibrary.apply(this, arguments);
-  }
+  } // 1. Ładowanie po wejściu na stronę
   function _loadLibrary() {
     _loadLibrary = MyLibraryPage_asyncToGenerator(/*#__PURE__*/MyLibraryPage_regenerator().m(function _callee() {
       var res, data;
@@ -47216,8 +47217,21 @@ function MyLibraryPage_MyLibraryPage() {
   }
   (0,react.useEffect)(function () {
     loadLibrary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2. Ładowanie po zmianie sortowania
+  (0,react.useEffect)(function () {
+    loadLibrary();
   }, [sort]);
+
+  // 3. Krytyczne – odświeżanie po powrocie strzałką "wstecz"
+  (0,react.useEffect)(function () {
+    window.onpageshow = function (event) {
+      if (event.persisted) {
+        loadLibrary(); // ← ponowny fetch mimo BFCache
+      }
+    };
+  }, []);
   var handleSearch = function handleSearch(e) {
     e.preventDefault();
     loadLibrary();
@@ -47276,8 +47290,8 @@ function MyLibraryPage_MyLibraryPage() {
     className: "library-page"
   }, /*#__PURE__*/react_default().createElement("h2", {
     className: "explore-heading"
-  }, /*#__PURE__*/react_default().createElement("a", {
-    href: "/app/my_library/",
+  }, /*#__PURE__*/react_default().createElement(Link, {
+    to: "/app/my_library/",
     className: "explore-link"
   }, "My Game Library")), /*#__PURE__*/react_default().createElement("form", {
     className: "search-wrap",
@@ -47319,8 +47333,8 @@ function MyLibraryPage_MyLibraryPage() {
     className: "row gy-5 justify-content-center"
   }, /*#__PURE__*/react_default().createElement("div", {
     className: "col-md-4 d-flex justify-content-center"
-  }, /*#__PURE__*/react_default().createElement("a", {
-    href: "/app/explore/",
+  }, /*#__PURE__*/react_default().createElement(Link, {
+    to: "/app/explore/",
     className: "text-decoration-none",
     style: {
       width: "100%",
@@ -47354,8 +47368,8 @@ function MyLibraryPage_MyLibraryPage() {
       alt: "No image"
     })), /*#__PURE__*/react_default().createElement("div", {
       className: "game-title"
-    }, /*#__PURE__*/react_default().createElement("a", {
-      href: "/app/games/".concat(game.id, "/")
+    }, /*#__PURE__*/react_default().createElement(Link, {
+      to: "/app/games/".concat(game.id, "/")
     }, game.title)), /*#__PURE__*/react_default().createElement("div", {
       className: "rating-section mb-3"
     }, /*#__PURE__*/react_default().createElement("div", {
