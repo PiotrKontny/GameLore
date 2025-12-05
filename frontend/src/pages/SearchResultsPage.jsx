@@ -1,4 +1,3 @@
-// src/pages/SearchResultsPage.jsx
 import React, { useEffect, useState } from "react";
 import "./SearchResultsPage.css";
 

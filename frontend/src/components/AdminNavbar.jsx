@@ -1,4 +1,3 @@
-// src/pages/AdminNavbar.jsx
 import React, { useEffect, useState } from "react";
 import "./AdminNavbar.css";
 

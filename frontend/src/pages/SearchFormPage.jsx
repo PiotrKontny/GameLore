@@ -1,4 +1,3 @@
-// src/pages/SearchFormPage.jsx
 import React, { useState, useEffect } from "react";
 import "./SearchFormPage.css";
 

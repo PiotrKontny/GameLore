@@ -1,4 +1,3 @@
-// src/pages/Navbar.jsx
 import React, { useEffect, useState } from "react";
 import "./Navbar.css";
 

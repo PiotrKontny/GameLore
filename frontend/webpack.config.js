@@ -1,4 +1,3 @@
-// webpack.config.js
 const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -8,8 +7,8 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, "./static/frontend"),
-    filename: "main.js",                     // może być też "[name].js"
-    publicPath: "/static/frontend/",         // KLUCZOWE
+    filename: "main.js",
+    publicPath: "/static/frontend/",
   },
 
   resolve: {

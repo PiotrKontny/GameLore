@@ -1,9 +1,7 @@
-// src/pages/GameDetailPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./GameDetailPage.css";
 
-/* --- CSRF --- */
 function getCookie(name) {
   const match = document.cookie.match(
     "(^|;)\\s*" + name + "\\s*=\\s*([^;]+)"

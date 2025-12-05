@@ -1,6 +1,5 @@
-// src/pages/MyLibraryPage.jsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";   // ← ważne
+import { Link } from "react-router-dom";
 import "./MyLibraryPage.css";
 
 function MyLibraryPage() {
@@ -9,7 +8,6 @@ function MyLibraryPage() {
   const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
 
-  // Pobieranie biblioteki
   async function loadLibrary() {
     setLoading(true);
     const res = await fetch(

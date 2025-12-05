@@ -1,4 +1,3 @@
-// src/pages/AdminPanelPage.js
 import React from "react";
 import "./AdminPanelPage.css";
 import AdminNavbar from "../components/AdminNavbar";

@@ -1,4 +1,3 @@
-// frontend/src/pages/ExplorePage.jsx
 import React, { useEffect, useState } from "react";
 import "./ExplorePage.css";
 import "bootstrap/dist/css/bootstrap.min.css";

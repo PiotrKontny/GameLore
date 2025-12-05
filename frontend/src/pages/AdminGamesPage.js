@@ -1,4 +1,3 @@
-// src/pages/AdminGamesPage.js
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./AdminGamesPage.css";

@@ -1,4 +1,3 @@
-// src/utils/fetchWithAuth.js
 import { navigate } from "./navigateGlobal";
 
 export async function fetchWithAuth(url, options = {}) {

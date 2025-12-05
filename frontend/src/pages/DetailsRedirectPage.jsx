@@ -1,4 +1,3 @@
-// src/pages/DetailsRedirectPage.jsx
 import { useSearchParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 

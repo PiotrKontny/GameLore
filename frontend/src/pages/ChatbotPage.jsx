@@ -1,4 +1,3 @@
-// src/pages/ChatbotPage.jsx
 import React, { useEffect, useState } from "react";
 import "./ChatbotPage.css";
 

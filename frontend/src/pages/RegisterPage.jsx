@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import "./RegisterPage.css";
 
