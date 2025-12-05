@@ -1,5 +1,4 @@
 // frontend/src/pages/ExplorePage.jsx
-
 import React, { useEffect, useState } from "react";
 import "./ExplorePage.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -16,7 +15,6 @@ function ExplorePage() {
 
   const [user, setUser] = useState(null);
 
-  /* === LOAD USER (identycznie jak w InformationPage) === */
   useEffect(() => {
     async function loadUser() {
       try {
@@ -62,7 +60,6 @@ function ExplorePage() {
 
   return (
     <div>
-      {/* === NAVBAR (dokładnie jak na InformationPage) === */}
       {user ? <Navbar user={user} /> : <NavbarLogin />}
 
       <div className="container text-center">
@@ -70,7 +67,6 @@ function ExplorePage() {
           <a href="/app/explore/">Explore Game Lores</a>
         </h2>
 
-        {/* Search */}
         <form className="search-wrap mb-3" onSubmit={handleSearch}>
           <div className="input-group mx-auto" style={{ maxWidth: "720px" }}>
             <input
@@ -97,7 +93,6 @@ function ExplorePage() {
           </div>
         </form>
 
-        {/* Genre Panel */}
         <div id="genrePanel" className="genre-panel">
           <div className="fw-semibold mb-2">Genres from the database</div>
 
@@ -123,7 +118,6 @@ function ExplorePage() {
           </a>
         </div>
 
-        {/* Sorter */}
         <div className="d-flex justify-content-center align-items-center mb-4 gap-3">
           <label className="fw-bold">Sort by:</label>
           <select
@@ -139,7 +133,6 @@ function ExplorePage() {
           </select>
         </div>
 
-        {/* GAMES GRID */}
         <div className="row gy-5 justify-content-center">
           {games.length > 0 ? (
             games.map((g) => (
@@ -195,7 +188,6 @@ function ExplorePage() {
   );
 }
 
-/* Helper for score badge colors */
 function getScoreColor(score) {
   if (score == null) return "blue";
   if (score >= 9.0) return "gold";

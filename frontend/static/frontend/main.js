@@ -1320,7 +1320,8 @@ module.exports = "data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, `:root {
+___CSS_LOADER_EXPORT___.push([module.id, `/* src//pages/AdminGamesPage.css */
+:root {
   --nav:#0f1836;
   --gold:#d6b679;
 }
@@ -1332,7 +1333,6 @@ body {
   color:#222;
 }
 
-/* NAVBAR */
 .navbar {
   background:var(--nav);
   padding:8px 20px;
@@ -1376,7 +1376,6 @@ body {
   object-fit:cover;
 }
 
-/* MAIN CONTENT */
 .table-container {
   max-width:1000px;
   margin:60px auto;
@@ -1402,7 +1401,6 @@ body {
   color:#1c2c6a;
 }
 
-/* SEARCH + SORT */
 .search-input {
   height:44px;
   padding:10px 16px;
@@ -1451,7 +1449,6 @@ body {
   width: 1%;
 }
 
-/* Sort row single-line fix */
 .sort-label {
   white-space: nowrap;
   font-size: 1rem;
@@ -1464,16 +1461,15 @@ body {
   vertical-align: middle;
 }
 
-/* ⭐ FINALNY, STABILNY SCORE + SPINNER LAYOUT ⭐ */
 .score-cell {
   position: relative;
 }
 
 .score-layout {
   display: grid;
-  grid-template-columns: 70px 36px; /* więcej miejsca dla spinnera */
+  grid-template-columns: 70px 36px;
   align-items: center;
-  gap: 20px; /* odstęp centralny */
+  gap: 20px;
   height: 40px;
 }
 
@@ -1486,7 +1482,6 @@ body {
   height: 32px;
 }
 
-/* Spinner — perfekcyjnie wycentrowany */
 .spinner-small {
   width: 20px;
   height: 20px;
@@ -29652,16 +29647,14 @@ var __webpack_unused_export__;
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, `:root {
+___CSS_LOADER_EXPORT___.push([module.id, `/* src//pages/ChatbotPage.css */
+:root {
   --nav:#0f1836;
   --gold:#d6b679;
   --shadow:0 12px 28px rgba(0,0,0,.25);
   --radius:18px;
 }
 
-/* -------------------------------- */
-/* PAGE WRAPPER */
-/* -------------------------------- */
 .chatbot-page {
   background:#f4f6fa;
   min-height: calc(100vh - 70px);
@@ -29673,9 +29666,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   overflow:hidden;
 }
 
-/* -------------------------------- */
-/* LEFT SIDEBAR */
-/* -------------------------------- */
 .chatbot-sidebar {
   width: 320px;
   background:white;
@@ -29700,9 +29690,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   padding-right: 5px;
 }
 
-/* -------------------------------- */
-/* GAME ITEM */
-/* -------------------------------- */
 .chatbot-game-item {
   position: relative;
   display: flex;
@@ -29725,9 +29712,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   overflow: hidden;
 }
 
-/* -------------------------------- */
-/* FIXED-SIZE THUMBNAILS */
-/* -------------------------------- */
 .chatbot-game-item img.cover {
   width: 42px;
   height: 58px;
@@ -29738,7 +29722,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   margin-bottom: 3px;
 }
 
-/* GAME ITEM TITLE */
 .chatbot-game-item .title {
   flex: 1;
   text-align: center;
@@ -29748,7 +29731,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   max-width: 180px;
 }
 
-/* HOVER & ACTIVE STATES */
 .chatbot-game-item:hover {
   background:#f4f6fa;
   transform:scale(1.01);
@@ -29765,7 +29747,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   background:#162a5c;
 }
 
-/* DELETE ICON */
 .chatbot-delete-icon {
   position: absolute;
   top: 6px;
@@ -29795,16 +29776,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   filter: invert(1) brightness(2.4);
 }
 
-/* -------------------------------- */
-/* RIGHT PANEL (CHAT) */
-/* -------------------------------- */
 .chatbot-chat-container {
   flex: 1;
   display: flex;
   padding: 25px;
 }
 
-/* CHATBOX - full width, responsive */
 .chatbot-chat-box {
   flex: 1;
   height: calc(100vh - 160px);
@@ -29817,7 +29794,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   padding: 25px;
 }
 
-/* MESSAGES */
 .chatbot-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -29857,7 +29833,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   border-bottom-left-radius: 0;
 }
 
-/* INPUT ROW */
 .chatbot-input-row {
   display: flex;
   gap: 10px;
@@ -29900,9 +29875,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   margin-top: 20px;
 }
 
-/* -------------------------------- */
-/* RESPONSIVE BREAKPOINTS */
-/* -------------------------------- */
 @media (max-width: 1100px) {
   .chatbot-sidebar {
     width: 260px;
@@ -29959,14 +29931,13 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   --gold:#d6b679;
 }
 
-/* NAVBAR */
 .navbar {
   background:var(--nav);
   padding:8px 20px;
   display:flex;
   align-items:center;
-  justify-content:flex-start; /* ← ważna zmiana */
-  gap: auto; /* niekonieczne, ale dla czytelności */
+  justify-content:flex-start;
+  gap: auto;
 }
 
 .brand img {
@@ -29974,7 +29945,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
 }
 
 .profile-chip {
-  margin-left: auto; /* ← to ustawia avatar po prawej */
+  margin-left: auto;
   display:inline-flex;
   align-items:center;
   gap:12px;
@@ -30242,7 +30213,8 @@ module.exports = "data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, `:root {
+___CSS_LOADER_EXPORT___.push([module.id, `/* src//pages/CompilationPage.css */
+:root {
   --nav:#0f1836;
   --gold:#d6b679;
   --radius:18px;
@@ -30271,7 +30243,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   margin-bottom: 28px;
 }
 
-/* LISTA GIER */
 .game-list {
   list-style: none;
   padding: 0;
@@ -30313,7 +30284,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   color: #f8e2a0;
 }
 
-/* BACK */
 .back-link {
   margin-top: 10px;
   background: none;
@@ -32229,7 +32199,6 @@ body {
   margin:0;
 }
 
-/* NAVBAR */
 .navbar {
   background:var(--nav);
   padding:8px 20px;
@@ -32270,7 +32239,6 @@ body {
   background:#fff;
 }
 
-/* MAIN CONTENT */
 .container {
   max-width:1200px;
   margin-top:50px;
@@ -32294,7 +32262,6 @@ body {
   color:#1c2c6a;
 }
 
-/* SEARCH + GENRES */
 .search-wrap {
   display:flex;
   justify-content:center;
@@ -32331,7 +32298,6 @@ body {
   color:#f5dca1;
 }
 
-/* GENRE PANEL */
 .genre-panel {
   border:1px solid #cfcfcf;
   border-radius:12px;
@@ -32362,7 +32328,6 @@ body {
   border-color:#000;
 }
 
-/* BUTTON SEARCH NEW GAME */
 .btn-primary {
   background:var(--nav);
   border:none;
@@ -32379,7 +32344,6 @@ body {
   color:#f5dca1;
 }
 
-/* SORTER */
 label.fw-bold {
   color:#222;
 }
@@ -32392,7 +32356,6 @@ select.form-select {
   min-width:230px;
 }
 
-/* GAME CARDS */
 .game-card {
   background:#fff;
   border-radius:var(--radius);
@@ -32441,7 +32404,6 @@ select.form-select {
   color:#1c2c6a;
 }
 
-/* SCORE + RATING */
 .rating-section {
   text-align:center;
 }
@@ -32497,7 +32459,6 @@ select.form-select {
   margin-top:80px;
 }
 
-/* RESPONSIVE */
 @media(max-width:640px){
   .brand img { height:54px; }
   .profile-chip img { width:42px; height:42px; }
@@ -32755,7 +32716,8 @@ module.exports = "data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, `:root {
+___CSS_LOADER_EXPORT___.push([module.id, `/* src//pages/AdminUsersPage.css */
+:root {
   --nav: #0f1836;
   --gold: #d6b679;
 }
@@ -32995,7 +32957,6 @@ body {
   color: #333;
 }
 
-/* NAVBAR */
 .navbar {
   background: var(--nav);
   padding: 8px 20px;
@@ -33046,14 +33007,12 @@ body {
   background: #fff;
 }
 
-/* MAIN */
 .main-logo {
   display: block;
   margin: 48px auto 28px;
   height: 180px;
 }
 
-/* Tiles */
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, 280px);
@@ -33486,14 +33445,12 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.admin-home {
   padding-bottom: 120px;
 }
 
-/* LOGO */
 .admin-home .main-logo {
   display: block;
   margin: 48px auto 28px;
   height: 220px;
 }
 
-/* GRID 4 kolumny */
 .admin-home .tiles {
   display: grid;
   grid-template-columns: repeat(4, 280px);
@@ -33504,7 +33461,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.admin-home {
   padding: 0;
 }
 
-/* KAFELKI */
 .admin-home .tile {
   width: 280px;
   height: 280px;
@@ -33522,7 +33478,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.admin-home {
   object-fit: cover;
 }
 
-/* Rząd admina – jeden kafelek na środku */
 .admin-home .tiles--admin {
   grid-template-columns: 280px;
   justify-content: center;
@@ -33571,7 +33526,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   --gold:#d6b679;
 }
 
-/* NAVBAR ADMINA */
 .admin-navbar {
   background: var(--nav);
   padding: 8px 20px;
@@ -33586,7 +33540,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   height: 72px;
 }
 
-/* CENTRALNY NAPIS "ADMIN PANEL" */
 .admin-navbar .navbar-center {
   position: absolute;
   left: 50%;
@@ -33598,7 +33551,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   letter-spacing: 1px;
 }
 
-/* PROFIL (prawa strona) */
 .admin-navbar .profile-chip {
   display: inline-flex;
   align-items: center;
@@ -33737,7 +33689,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   --gold: #d6b679;
 }
 
-/* NAVBAR */
 .navbar-login {
   background: var(--nav);
   padding: 8px 20px;
@@ -33751,15 +33702,13 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   height: 72px;
 }
 
-/* BLOK PRZYCISKÓW */
 .navbar-login .auth-actions {
   display: flex;
   align-items: center;
 }
 
-/* WSPÓLNE DLA LOGIN + REGISTER */
 .navbar-login .auth-actions a {
-  text-decoration: none;            /* ← usuwa podkreślenie */
+  text-decoration: none;
   font-weight: 700;
   border-radius: 12px;
   padding: 10px 18px;
@@ -33768,25 +33717,23 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root {
   transition: transform 0.18s ease, filter 0.18s ease;
 }
 
-/* LOGIN */
 .navbar-login .auth-actions .btn-login {
   background: #ffffff;
   color: var(--nav);
 }
 
 .navbar-login .auth-actions .btn-login:hover {
-  transform: translateY(-3px);      /* ← unoszenie */
+  transform: translateY(-3px);
   filter: brightness(0.92);
 }
 
-/* REGISTER */
 .navbar-login .auth-actions .btn-register {
   background: linear-gradient(135deg, #1c3faa, #0e7c86);
   color: #fff;
 }
 
 .navbar-login .auth-actions .btn-register:hover {
-  transform: translateY(-3px);      /* ← dodane unoszenie */
+  transform: translateY(-3px);
   filter: brightness(1.1);
 }
 `, ""]);
@@ -45357,7 +45304,7 @@ function InformationPage_InformationPage() {
     className: "info-page"
   }, /*#__PURE__*/react_default().createElement("div", {
     className: "info-container"
-  }, /*#__PURE__*/react_default().createElement("h2", null, "Introduction"), /*#__PURE__*/react_default().createElement("p", null, "Hello, my name is Peter and I am the creator of this web application,", " ", /*#__PURE__*/react_default().createElement("strong", null, "GameLore"), "."), /*#__PURE__*/react_default().createElement("p", null, "You are currently in the ", /*#__PURE__*/react_default().createElement("em", null, "Information"), " section of the website, where I aim to provide a clear explanation of how the application works. This is not meant to be an exhaustive technical document but rather an accessible overview of the system, its main features, and potential future developments."), /*#__PURE__*/react_default().createElement("h2", null, "How it works?"), /*#__PURE__*/react_default().createElement("p", null, "Before discussing the internal mechanisms of the website, it is worth clarifying several terms: ", /*#__PURE__*/react_default().createElement("strong", null, "web scraping"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "NLP"), ", and ", /*#__PURE__*/react_default().createElement("strong", null, "LLM"), "."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Web scraping"), " \u2013 a technique used to retrieve information from existing websites and store it either in a database (as in this project) or directly in memory."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "NLP (Natural Language Processing)"), " \u2013 a branch of artificial intelligence focused on analyzing and interpreting human language. In this application, NLP is used to generate summaries for games with sufficiently detailed plots."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "LLM (Large Language Models)"), " \u2013 advanced neural models that apply NLP to understand and interpret text. In this project, an LLM powers the chatbot, allowing users to ask questions about any game they are exploring.")), /*#__PURE__*/react_default().createElement("p", null, "GameLore uses two main scraping tools:", " ", /*#__PURE__*/react_default().createElement("strong", null, "Playwright"), ", which retrieves webpage data using a headless browser, and ", /*#__PURE__*/react_default().createElement("strong", null, "BeautifulSoup"), ", which extracts only the necessary parts of that data. Information is sourced from:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "MobyGames"), " \u2013 for metadata such as cover art, genre, release date, developers, and score."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Wikipedia"), " \u2013 for gathering game plots.")), /*#__PURE__*/react_default().createElement("p", null, "Suppose a user searches for a game not yet in the database \u2013", " ", /*#__PURE__*/react_default().createElement("em", null, "Elden Ring"), ", for example. The user inputs the title via the search feature available on the ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " and", " ", /*#__PURE__*/react_default().createElement("em", null, "My Library"), " pages. The backend launches a headless browser via Playwright, opens the relevant MobyGames search page, retrieves the first ten results, filters out invalid entries, and displays the remaining games to the user."), /*#__PURE__*/react_default().createElement("p", null, "When a game is selected, the scraping process begins. The system checks if the game already exists in the database. If not, Playwright opens the game\u2019s MobyGames page and determines whether the entry represents a standalone title, a compilation, or an add-on."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilations"), " \u2013 all titles included in the compilation are shown, and the user selects one."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Add-ons"), " \u2013 the link to the base game is stored, after which the system proceeds as with standalone titles.")), /*#__PURE__*/react_default().createElement("p", null, "Six attributes are then scraped: ", /*#__PURE__*/react_default().createElement("strong", null, "Title"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Released"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Genre"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Developers"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Moby Score"), ", and the", " ", /*#__PURE__*/react_default().createElement("strong", null, "cover image"), "."), /*#__PURE__*/react_default().createElement("p", null, "Next, the scraper attempts to reach the corresponding Wikipedia page using the formatted title. It searches for plot-related section headings such as ", /*#__PURE__*/react_default().createElement("em", null, "Plot"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Synopsis"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Premise"), ",", " ", /*#__PURE__*/react_default().createElement("em", null, "Story"), ", or ", /*#__PURE__*/react_default().createElement("em", null, "Lore"), ". If found, the plot section is extracted and structured."), /*#__PURE__*/react_default().createElement("p", null, "If none of these headings exist:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "add-ons"), ", the system uses the previously saved base-game link and tries again."), /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "standalone titles"), ", the description from MobyGames is used instead, along with a remark that the chatbot can provide additional plot information if needed.")), /*#__PURE__*/react_default().createElement("p", null, "Once scraping is complete, the user is redirected to the game\u2019s detail page. Two additional features become available:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Summary"), " \u2013 generated using Hugging Face Transformers, with each plot subsection summarized separately."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot"), " \u2013 powered by ", /*#__PURE__*/react_default().createElement("strong", null, "OpenRouter.ai"), ", which offers access to multiple LLMs through a unified API. The current model in use is ", /*#__PURE__*/react_default().createElement("strong", null, "Mistral 7B Instruct"), ".")), /*#__PURE__*/react_default().createElement("h2", null, "What are the website\u2019s features?"), /*#__PURE__*/react_default().createElement("p", null, "Beyond scraping and chatbot support, GameLore includes a number of additional features. Some are only available to logged-in users, while others \u2013 such as ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " \u2013 are publicly accessible."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Login and Register Pages"), " \u2013 enabling account creation and authentication."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Profile Page"), " \u2013 allows users to update their username, password, and profile picture."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Explore Page"), " \u2013 displays all games in the database and includes search and sorting tools."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Search and Results Pages"), " \u2013 for locating games not yet in the database."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilation Page"), " \u2013 shown when a selected entry is part of a compilation."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Game Detail Page"), " \u2013 contains all game information, including plot, summary, chatbot access, and the option to rate the game."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "My Library Page"), " \u2013 stores a user\u2019s browsing history."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot Page"), " \u2013 a dedicated interface for interacting with the chatbot.")), /*#__PURE__*/react_default().createElement("h2", null, "What\u2019s the website\u2019s future?"), /*#__PURE__*/react_default().createElement("p", null, "GameLore originally started with a much smaller scope \u2013 basic authentication, exploration, viewing scraped details, and basic chatbot and summary functionality. Over time, with helpful feedback from those around me, the project expanded significantly, gaining more advanced features such as sorting, improved scraping logic, and user profiles."), /*#__PURE__*/react_default().createElement("p", null, "However, the application is not perfect. Certain features could be improved, optimized, or expanded, but implementing these enhancements is not something I currently plan to pursue."), /*#__PURE__*/react_default().createElement("p", null, "Despite this, creating GameLore has been an enjoyable and meaningful experience, and one that I will look back on fondly in the future."))));
+  }, /*#__PURE__*/react_default().createElement("h2", null, "Introduction"), /*#__PURE__*/react_default().createElement("p", null, "Hello, my name is Peter and I am the creator of this web application,", " ", /*#__PURE__*/react_default().createElement("strong", null, "GameLore"), "."), /*#__PURE__*/react_default().createElement("p", null, "You are currently in the ", /*#__PURE__*/react_default().createElement("em", null, "Information"), " section of the website, where I aim to provide a clear explanation of how the application works. This is not meant to be an exhaustive technical document but rather an accessible overview of the system, its main features, and potential future developments."), /*#__PURE__*/react_default().createElement("h2", null, "How does it work?"), /*#__PURE__*/react_default().createElement("p", null, "Before discussing the internal mechanisms of the website, it is worth clarifying several terms: ", /*#__PURE__*/react_default().createElement("strong", null, "web scraping"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "NLP"), ", and ", /*#__PURE__*/react_default().createElement("strong", null, "LLM"), "."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Web scraping"), " - a technique used to retrieve information from existing websites and store it either in a database (as in this project) or directly in memory."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "NLP (Natural Language Processing)"), " - a branch of artificial intelligence focused on analyzing and interpreting human language. In this application, NLP is used to generate summaries for games with sufficiently detailed plots."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "LLM (Large Language Models)"), " - advanced neural models that apply NLP to understand and interpret text. In this project, an LLM powers the chatbot, allowing users to ask questions about any game they are exploring.")), /*#__PURE__*/react_default().createElement("p", null, "GameLore uses two main scraping tools:", " ", /*#__PURE__*/react_default().createElement("strong", null, "Playwright"), ", which retrieves webpage data using a headless browser, and ", /*#__PURE__*/react_default().createElement("strong", null, "BeautifulSoup"), ", which extracts only the necessary parts of that data. Information is sourced from:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "MobyGames"), " - for metadata such as cover art, genre, release date, developers, and score."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Wikipedia"), " - for gathering game plots.")), /*#__PURE__*/react_default().createElement("p", null, "Suppose a user searches for a game not yet in the database -", " ", /*#__PURE__*/react_default().createElement("em", null, "Elden Ring"), ", for example. The user inputs the title via the search feature available on the ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), " and", " ", /*#__PURE__*/react_default().createElement("em", null, "My Library"), " pages. The backend launches a headless browser via Playwright, opens the relevant MobyGames search page, retrieves the first ten results, filters out invalid entries, and displays the remaining games to the user."), /*#__PURE__*/react_default().createElement("p", null, "When a game is selected, the scraping process begins. The system checks if the game already exists in the database. If not, Playwright opens the game\u2019s MobyGames page and determines whether the entry represents a standalone title, a compilation, or an add-on."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilations"), " - all titles included in the compilation are shown, and the user selects one."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Add-ons"), " - the link to the base game is stored, after which the system proceeds as with standalone titles.")), /*#__PURE__*/react_default().createElement("p", null, "Six attributes are then scraped: ", /*#__PURE__*/react_default().createElement("strong", null, "Title"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Released on"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "Genre"), ",", " ", /*#__PURE__*/react_default().createElement("strong", null, "Developers"), ", ", /*#__PURE__*/react_default().createElement("strong", null, "MobyScore"), ", and the", " ", /*#__PURE__*/react_default().createElement("strong", null, "cover image"), "."), /*#__PURE__*/react_default().createElement("p", null, "Next, the scraper attempts to reach the corresponding Wikipedia page using the formatted title. It searches for plot-related section headings such as ", /*#__PURE__*/react_default().createElement("em", null, "Plot"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Synopsis"), ", ", /*#__PURE__*/react_default().createElement("em", null, "Premise"), ",", " ", /*#__PURE__*/react_default().createElement("em", null, "Story"), ", or ", /*#__PURE__*/react_default().createElement("em", null, "Lore"), ". If found, the plot section is extracted and structured."), /*#__PURE__*/react_default().createElement("p", null, "If none of these headings exist:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "add-ons"), ", the system uses the previously saved base-game link and tries again."), /*#__PURE__*/react_default().createElement("li", null, "For ", /*#__PURE__*/react_default().createElement("strong", null, "standalone titles"), ", the description from MobyGames is used instead, along with a remark that the chatbot can provide additional plot information if needed.")), /*#__PURE__*/react_default().createElement("p", null, "Once scraping is complete, the user is redirected to the game\u2019s detail page. Two additional features become available:"), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Summary"), " - generated using Hugging Face Transformers, with each plot subsection summarized separately."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot"), " - powered by ", /*#__PURE__*/react_default().createElement("strong", null, "OpenRouter.ai"), ", which offers access to multiple LLMs through a unified API. The current model in use is ", /*#__PURE__*/react_default().createElement("strong", null, "Mistral 7B Instruct"), ".")), /*#__PURE__*/react_default().createElement("h2", null, "What are the website\u2019s features?"), /*#__PURE__*/react_default().createElement("p", null, "Beyond scraping and chatbot support, GameLore includes a number of additional features. Some are only available to logged-in users, while others, such as ", /*#__PURE__*/react_default().createElement("em", null, "Explore"), ", are publicly accessible."), /*#__PURE__*/react_default().createElement("ul", null, /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Login and Register Pages"), " - enabling account creation and authentication."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Profile Page"), " - allows users to update their username, password, and profile picture."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Explore Page"), " - displays all games in the database and includes search and sorting tools."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Search and Results Pages"), " - for locating games not yet in the database."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Compilation Page"), " - shown when a selected entry is part of a compilation."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Game Detail Page"), " - contains all game information, including plot, summary, chatbot access, and the option to rate the game."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "My Library Page"), " - stores a user\u2019s browsing history."), /*#__PURE__*/react_default().createElement("li", null, /*#__PURE__*/react_default().createElement("strong", null, "Chatbot Page"), " - a dedicated interface for interacting with the chatbot.")), /*#__PURE__*/react_default().createElement("h2", null, "What\u2019s the website\u2019s future?"), /*#__PURE__*/react_default().createElement("p", null, "GameLore originally started with a much smaller scope - basic authentication, exploration, viewing scraped details, and basic chatbot and summary functionality. Over time, with helpful feedback from those around me, the project expanded significantly, gaining more advanced features such as sorting, improved scraping logic, and user profiles."), /*#__PURE__*/react_default().createElement("p", null, "However, the application is not perfect. Certain features could be improved, optimized, or expanded, but implementing these enhancements is not something I currently plan to pursue."), /*#__PURE__*/react_default().createElement("p", null, "Despite this, creating GameLore has been an enjoyable and meaningful experience, and one that I will look back on fondly in the future."))));
 }
 /* harmony default export */ const src_pages_InformationPage = (InformationPage_InformationPage);
 // EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/pages/ExplorePage.css
@@ -45667,8 +45614,6 @@ function ExplorePage_ExplorePage() {
     className: "no-games"
   }, "No games in the database yet."))));
 }
-
-/* Helper for score badge colors */
 function getScoreColor(score) {
   if (score == null) return "blue";
   if (score >= 9.0) return "gold";
@@ -47504,6 +47449,7 @@ function ChatbotPage_unsupportedIterableToArray(r, a) { if (r) { if ("string" ==
 function ChatbotPage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function ChatbotPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function ChatbotPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// src/pages/ChatbotPage.jsx
 
 
 function ChatbotPage_ChatbotPage() {
@@ -47535,8 +47481,6 @@ function ChatbotPage_ChatbotPage() {
     _useState12 = ChatbotPage_slicedToArray(_useState11, 2),
     inputValue = _useState12[0],
     setInputValue = _useState12[1];
-
-  // -------- INITIAL LOAD --------
   function fetchInit() {
     return _fetchInit.apply(this, arguments);
   }
@@ -47586,11 +47530,9 @@ function ChatbotPage_ChatbotPage() {
   (0,react.useEffect)(function () {
     fetchInit();
   }, []);
-
-  // -------- REFRESH ONLY GAMES LIST (NO CHAT SWITCH) --------
   function refreshGamesList() {
     return _refreshGamesList.apply(this, arguments);
-  } // -------- LOAD HISTORY FOR GIVEN GAME --------
+  }
   function _refreshGamesList() {
     _refreshGamesList = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee2() {
       var res, data, _t2;
@@ -47627,7 +47569,7 @@ function ChatbotPage_ChatbotPage() {
   }
   function loadHistory(_x) {
     return _loadHistory.apply(this, arguments);
-  } // -------- SEND MESSAGE --------
+  }
   function _loadHistory() {
     _loadHistory = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee3(gameId) {
       var res, data, msgs, _t3;
@@ -47678,7 +47620,7 @@ function ChatbotPage_ChatbotPage() {
   }
   function handleSend() {
     return _handleSend.apply(this, arguments);
-  } // -------- DELETE CHAT HISTORY --------
+  }
   function _handleSend() {
     _handleSend = ChatbotPage_asyncToGenerator(/*#__PURE__*/ChatbotPage_regenerator().m(function _callee4() {
       var text, res, data, _t4;
@@ -47789,13 +47731,9 @@ function ChatbotPage_ChatbotPage() {
             return _context5.a(2);
           case 4:
             alert("Chat history deleted successfully.");
-
-            // Stay on same chat and clear messages
             if (String(gameId) === String(currentGameId)) {
               setMessages([]);
             }
-
-            // Refresh left game list without switching chat
             _context5.n = 5;
             return refreshGamesList();
           case 5:
@@ -47837,7 +47775,6 @@ function ChatbotPage_ChatbotPage() {
       key: g.id,
       className: "chatbot-game-item" + (String(g.id) === String(currentGameId) ? " active" : ""),
       onClick: function onClick(e) {
-        // Ignore clicks on the trash icon
         if (e.target.classList.contains("chatbot-delete-icon")) return;
         if (String(g.id) === String(currentGameId)) return;
         setCurrentGameId(g.id);
@@ -47936,6 +47873,7 @@ function CompilationPage_unsupportedIterableToArray(r, a) { if (r) { if ("string
 function CompilationPage_arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function CompilationPage_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function CompilationPage_arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// src/pages/CompilationPage.jsx
 
 
 
@@ -48808,18 +48746,10 @@ function ErrorPage_ErrorPage(_ref) {
 
 
 
-// ADMIN
 
 
 
 
-
-// ERROR
-
-
-/**
- * Mostek do navigateGlobal – zapisuje hook useNavigate
- */
 function NavigationHandler() {
   var navigate = useNavigate();
   (0,react.useEffect)(function () {

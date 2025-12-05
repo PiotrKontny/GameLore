@@ -1,3 +1,4 @@
+/* src/pages/SearchResultsPage.css */
 :root {
   --nav:#0f1836;
   --gold:#d6b679;
@@ -5,14 +6,12 @@
   --radius:18px;
 }
 
-/* --- KONTEJNER --- */
 .results-container {
   padding: 40px 20px;
   max-width: 1000px;
   margin: 0 auto;
 }
 
-/* --- HEADER --- */
 .results-header {
   text-align: center;
   margin-bottom: 40px;
@@ -20,7 +19,7 @@
 
 .results-header h1 {
   color: var(--nav);
-  font-weight: 600;      /* 🔥 zmniejszony bold */
+  font-weight: 600;
   font-size: 2.2rem;
 }
 
@@ -29,7 +28,6 @@
   font-size: 1.05rem;
 }
 
-/* --- BACK BUTTON --- */
 .back-btn {
   display: inline-block;
   margin-top: 18px;
@@ -43,13 +41,11 @@
   transition: background .2s;
 }
 
-/* 🔥 usunięta strzałka — zostaw czysty tekst */
 .back-btn:hover {
   background:#182b5c;
   color:#f5dca1;
 }
 
-/* --- LOADER --- */
 .loader {
   margin-top: 20px;
   display:flex;
@@ -74,18 +70,15 @@
   to { transform: rotate(360deg); }
 }
 
-/* --- LISTA WYNIKÓW --- */
 .results-list {
   display:flex;
   flex-direction: column;
   gap: 22px;
 }
 
-/* --- POJEDYNCZY KAFEL --- */
-/* --- POJEDYNCZY KAFEL W GRIDZIE --- */
 .result-item {
   display: grid;
-  grid-template-columns: 80px 1fr;   /* 🔥 stała szerokość kolumny z obrazkiem */
+  grid-template-columns: 80px 1fr;
   align-items: center;
   background: white;
   border-radius: var(--radius);
@@ -93,7 +86,7 @@
   box-shadow: 0 3px 10px rgba(0,0,0,.12);
   cursor: pointer;
   transition: transform .15s ease, box-shadow .15s ease;
-  column-gap: 20px;                  /* 🔥 stała przerwa między obrazem a tekstem */
+  column-gap: 20px;
 }
 
 .result-item:hover {
@@ -101,16 +94,14 @@
   box-shadow: 0 8px 20px rgba(0,0,0,.18);
 }
 
-/* --- WRAPPER NA OBRAZEK --- */
 .result-thumb {
-  width: 80px;        /* 🔥 stała szerokość */
-  height: 80px;       /* 🔥 stała wysokość */
+  width: 80px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* --- OBRAZEK --- */
 .result-thumb img {
   width: 70px;
   height: 70px;
@@ -120,7 +111,6 @@
 }
 
 
-/* --- TEKST W KAFELKU --- */
 .result-info h5 {
   font-size:1.05rem;
   font-weight:600;

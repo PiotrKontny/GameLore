@@ -1,4 +1,4 @@
-// frontend/src/pages/InformationPage.jsx
+// src/pages/InformationPage.jsx
 import React, { useEffect, useState } from "react";
 
 import Navbar from "../components/Navbar";
@@ -30,12 +30,10 @@ function InformationPage() {
 
   return (
     <>
-      {/* navbar jest osobno, poza kontenerem z treścią */}
       {user ? <Navbar user={user} /> : <NavbarLogin />}
 
       <div className="info-page">
         <div className="info-container">
-          {/* INTRODUCTION */}
           <h2>Introduction</h2>
           <p>
             Hello, my name is Peter and I am the creator of this web application,{" "}
@@ -49,8 +47,7 @@ function InformationPage() {
             potential future developments.
           </p>
 
-          {/* HOW IT WORKS */}
-          <h2>How it works?</h2>
+          <h2>How does it work?</h2>
           <p>
             Before discussing the internal mechanisms of the website, it is worth
             clarifying several terms: <strong>web scraping</strong>,{" "}
@@ -59,18 +56,18 @@ function InformationPage() {
 
           <ul>
             <li>
-              <strong>Web scraping</strong> – a technique used to retrieve
+              <strong>Web scraping</strong> - a technique used to retrieve
               information from existing websites and store it either in a database
               (as in this project) or directly in memory.
             </li>
             <li>
-              <strong>NLP (Natural Language Processing)</strong> – a branch of
+              <strong>NLP (Natural Language Processing)</strong> - a branch of
               artificial intelligence focused on analyzing and interpreting human
               language. In this application, NLP is used to generate summaries for
               games with sufficiently detailed plots.
             </li>
             <li>
-              <strong>LLM (Large Language Models)</strong> – advanced neural
+              <strong>LLM (Large Language Models)</strong> - advanced neural
               models that apply NLP to understand and interpret text. In this
               project, an LLM powers the chatbot, allowing users to ask questions
               about any game they are exploring.
@@ -86,16 +83,16 @@ function InformationPage() {
 
           <ul>
             <li>
-              <strong>MobyGames</strong> – for metadata such as cover art, genre,
+              <strong>MobyGames</strong> - for metadata such as cover art, genre,
               release date, developers, and score.
             </li>
             <li>
-              <strong>Wikipedia</strong> – for gathering game plots.
+              <strong>Wikipedia</strong> - for gathering game plots.
             </li>
           </ul>
 
           <p>
-            Suppose a user searches for a game not yet in the database –{" "}
+            Suppose a user searches for a game not yet in the database -{" "}
             <em>Elden Ring</em>, for example. The user inputs the title via the
             search feature available on the <em>Explore</em> and{" "}
             <em>My Library</em> pages. The backend launches a headless browser via
@@ -113,19 +110,19 @@ function InformationPage() {
 
           <ul>
             <li>
-              <strong>Compilations</strong> – all titles included in the
+              <strong>Compilations</strong> - all titles included in the
               compilation are shown, and the user selects one.
             </li>
             <li>
-              <strong>Add-ons</strong> – the link to the base game is stored,
+              <strong>Add-ons</strong> - the link to the base game is stored,
               after which the system proceeds as with standalone titles.
             </li>
           </ul>
 
           <p>
             Six attributes are then scraped: <strong>Title</strong>,{" "}
-            <strong>Released</strong>, <strong>Genre</strong>,{" "}
-            <strong>Developers</strong>, <strong>Moby Score</strong>, and the{" "}
+            <strong>Released on</strong>, <strong>Genre</strong>,{" "}
+            <strong>Developers</strong>, <strong>MobyScore</strong>, and the{" "}
             <strong>cover image</strong>.
           </p>
 
@@ -157,64 +154,62 @@ function InformationPage() {
 
           <ul>
             <li>
-              <strong>Summary</strong> – generated using Hugging Face
+              <strong>Summary</strong> - generated using Hugging Face
               Transformers, with each plot subsection summarized separately.
             </li>
             <li>
-              <strong>Chatbot</strong> – powered by <strong>OpenRouter.ai</strong>
+              <strong>Chatbot</strong> - powered by <strong>OpenRouter.ai</strong>
               , which offers access to multiple LLMs through a unified API. The
               current model in use is <strong>Mistral 7B Instruct</strong>.
             </li>
           </ul>
 
-          {/* FEATURES */}
           <h2>What are the website’s features?</h2>
           <p>
             Beyond scraping and chatbot support, GameLore includes a number of
             additional features. Some are only available to logged-in users, while
-            others – such as <em>Explore</em> – are publicly accessible.
+            others, such as <em>Explore</em>, are publicly accessible.
           </p>
 
           <ul>
             <li>
-              <strong>Login and Register Pages</strong> – enabling account
+              <strong>Login and Register Pages</strong> - enabling account
               creation and authentication.
             </li>
             <li>
-              <strong>Profile Page</strong> – allows users to update their
+              <strong>Profile Page</strong> - allows users to update their
               username, password, and profile picture.
             </li>
             <li>
-              <strong>Explore Page</strong> – displays all games in the database
+              <strong>Explore Page</strong> - displays all games in the database
               and includes search and sorting tools.
             </li>
             <li>
-              <strong>Search and Results Pages</strong> – for locating games not
+              <strong>Search and Results Pages</strong> - for locating games not
               yet in the database.
             </li>
             <li>
-              <strong>Compilation Page</strong> – shown when a selected entry is
+              <strong>Compilation Page</strong> - shown when a selected entry is
               part of a compilation.
             </li>
             <li>
-              <strong>Game Detail Page</strong> – contains all game information,
+              <strong>Game Detail Page</strong> - contains all game information,
               including plot, summary, chatbot access, and the option to rate the
               game.
             </li>
             <li>
-              <strong>My Library Page</strong> – stores a user’s browsing
+              <strong>My Library Page</strong> - stores a user’s browsing
               history.
             </li>
             <li>
-              <strong>Chatbot Page</strong> – a dedicated interface for
+              <strong>Chatbot Page</strong> - a dedicated interface for
               interacting with the chatbot.
             </li>
           </ul>
 
-          {/* FUTURE */}
           <h2>What’s the website’s future?</h2>
           <p>
-            GameLore originally started with a much smaller scope – basic
+            GameLore originally started with a much smaller scope - basic
             authentication, exploration, viewing scraped details, and basic
             chatbot and summary functionality. Over time, with helpful feedback
             from those around me, the project expanded significantly, gaining more

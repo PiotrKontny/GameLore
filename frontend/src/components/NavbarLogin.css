@@ -1,9 +1,9 @@
+/* src/pages/NavbarLogin.css */
 :root {
   --nav: #0f1836;
   --gold: #d6b679;
 }
 
-/* NAVBAR */
 .navbar-login {
   background: var(--nav);
   padding: 8px 20px;
@@ -17,15 +17,13 @@
   height: 72px;
 }
 
-/* BLOK PRZYCISKÓW */
 .navbar-login .auth-actions {
   display: flex;
   align-items: center;
 }
 
-/* WSPÓLNE DLA LOGIN + REGISTER */
 .navbar-login .auth-actions a {
-  text-decoration: none;            /* ← usuwa podkreślenie */
+  text-decoration: none;
   font-weight: 700;
   border-radius: 12px;
   padding: 10px 18px;
@@ -34,24 +32,22 @@
   transition: transform 0.18s ease, filter 0.18s ease;
 }
 
-/* LOGIN */
 .navbar-login .auth-actions .btn-login {
   background: #ffffff;
   color: var(--nav);
 }
 
 .navbar-login .auth-actions .btn-login:hover {
-  transform: translateY(-3px);      /* ← unoszenie */
+  transform: translateY(-3px);
   filter: brightness(0.92);
 }
 
-/* REGISTER */
 .navbar-login .auth-actions .btn-register {
   background: linear-gradient(135deg, #1c3faa, #0e7c86);
   color: #fff;
 }
 
 .navbar-login .auth-actions .btn-register:hover {
-  transform: translateY(-3px);      /* ← dodane unoszenie */
+  transform: translateY(-3px);
   filter: brightness(1.1);
 }

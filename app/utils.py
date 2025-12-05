@@ -1,21 +1,24 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.exceptions import AuthenticationFailed
+# utils.py
+import os
+import re
+import urllib.parse
+from functools import wraps
+from io import BytesIO
+from shutil import copyfile
+
+import requests
+import time
+from PIL import Image
+from bs4 import BeautifulSoup
 from django.http import JsonResponse, Http404
 from django.shortcuts import redirect
 from django.utils import timezone
-from .models import UserModel, Games, UserHistory
 from playwright.async_api import async_playwright
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from transformers import pipeline
-from bs4 import BeautifulSoup
-from shutil import copyfile
-import urllib.parse
-import os
-import re
-import time
-from io import BytesIO
-import requests
-from PIL import Image
-from functools import wraps
+
+from .models import UserModel, Games, UserHistory
 
 
 # As the name suggests, this function records user history. But what does it mean exactly? Each user has his own user
@@ -427,15 +430,8 @@ def summarize_plot_sections(plot_tree: dict, total_threshold: int = 200) -> str 
 
 
 
-# === 🔽 NOWA FUNKCJA DODANA NA KOŃCU PLIKU ===
-# Działa podobnie jak summarize_plot_sections(), ale opiera się na gotowym markdownie z bazy (full_plot)
-# Nie wymaga ponownego scrapowania Wikipedii. Zachowuje nagłówki i streszcza sekcje osobno.
+# Summarizes when full plot has markdown
 def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) -> str | None:
-    """
-    Streszcza fabułę na podstawie istniejącego markdownu z bazy (###, ####, ##).
-    Zachowuje strukturę nagłówków i streszcza każdą sekcję osobno, z obsługą hierarchii.
-    """
-
     def word_count(t: str) -> int:
         return len((t or "").split())
 
@@ -451,36 +447,31 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
     current_h4 = None
     buffer = []
 
-    # --- Parsowanie markdownu ---
     for line in lines:
         heading_match = re.match(r'^(#+)\s+(.*)', line.strip())
         if heading_match:
             hashes, title = heading_match.groups()
             level = len(hashes)
 
-            # Zapisz poprzedni bufor zanim przejdziesz dalej
             if buffer:
                 if current_h3:
                     if current_h4:
                         sections[current_h3][current_h4] = "\n".join(buffer).strip()
                     else:
-                        # Jeśli h4 się skończyło, zapisujemy tekst bezpośrednio pod h3
                         if isinstance(sections[current_h3], str):
                             sections[current_h3] += "\n" + "\n".join(buffer).strip()
                         else:
                             sections[current_h3]["__main__"] = "\n".join(buffer).strip()
                 buffer = []
 
-            # Rozpoznaj poziom nagłówka
-            if level == 3:  # ### — poziom główny
+            if level == 3:
                 current_h3 = title.strip()
                 current_h4 = None
                 sections[current_h3] = {}
-            elif level == 4 and current_h3:  # #### — podrzędny do aktualnego ###
+            elif level == 4 and current_h3:
                 current_h4 = title.strip()
                 sections[current_h3][current_h4] = ""
             else:
-                # Inne poziomy (np. ##) ignorujemy lub traktujemy jak główny
                 current_h3 = title.strip()
                 current_h4 = None
                 sections[current_h3] = {}
@@ -488,7 +479,6 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
         else:
             buffer.append(line.strip())
 
-    # Zapisz końcowy bufor
     if buffer and current_h3:
         if current_h4:
             sections[current_h3][current_h4] = "\n".join(buffer).strip()
@@ -497,8 +487,6 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
 
     if not sections:
         return None
-
-    # --- Oblicz łączną liczbę słów ---
     total_words = 0
     for v in sections.values():
         if isinstance(v, dict):
@@ -510,9 +498,8 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
         return None
 
     out_lines = []
-    print(f"[SUMMARY] Rozpoczynam streszczanie fabuły ({len(sections)} sekcji, ~{total_words} słów).")
+    print(f"[SUMMARY] Summarizing the ({len(sections)} section, {total_words} total words).")
 
-    # --- Generowanie streszczeń ---
     for h3, content in sections.items():
         out_lines.append(f"### {h3}")
 
@@ -522,7 +509,7 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
                     continue
                 out_lines.append(f"#### {h4}" if h4 != "__main__" else "")
                 wc = word_count(text)
-                print(f"[SUMMARY] Sekcja: {h3} -> {h4} ({wc} słów)" if h4 != "__main__" else f"[SUMMARY] Sekcja: {h3} ({wc} słów)")
+                print(f"[SUMMARY] Section: {h3} -> {h4} ({wc} words)" if h4 != "__main__" else f"[SUMMARY] Section: {h3} ({wc} words)")
 
                 if wc < 80:
                     summary = text.strip()
@@ -536,7 +523,7 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
                     chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
                     partials = []
                     for i, ch in enumerate(chunks, 1):
-                        print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
+                        print(f"[SUMMARY]  -> part {i}/{len(chunks)} ({len(ch)} characters)")
                         res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
                         partials.append(res[0]["summary_text"])
                     summary = " ".join(partials)
@@ -559,7 +546,7 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
                 chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
                 partials = []
                 for i, ch in enumerate(chunks, 1):
-                    print(f"[SUMMARY]  → część {i}/{len(chunks)} ({len(ch)} znaków)")
+                    print(f"[SUMMARY]  -> part {i}/{len(chunks)} ({len(ch)} characters)")
                     res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
                     partials.append(res[0]["summary_text"])
                 summary = " ".join(partials)
@@ -567,7 +554,7 @@ def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) 
             out_lines.append("")
 
     elapsed = time.time() - start_time
-    print(f"[SUMMARY] Generowanie streszczenia zakończone w {elapsed:.1f}s.")
+    print(f"[SUMMARY] Summary generation finished in {elapsed:.1f}s.")
     return "\n".join(out_lines).strip()
 
 
@@ -580,16 +567,15 @@ async def search_mobygames(game_name: str):
     encoded_name = urllib.parse.quote(game_name)
     search_url = f"https://www.mobygames.com/search/?q={encoded_name}"
 
-    # 🧹 --- Wyczyść stare miniatury na samym początku ---
     try:
         media_root = "media/results"
         os.makedirs(media_root, exist_ok=True)
         for old in os.listdir(media_root):
             if old.startswith("result_") and old.endswith(".png"):
                 os.remove(os.path.join(media_root, old))
-        print("[CLEANUP] Folder 'media/results' wyczyszczony przed nowym wyszukiwaniem.")
+        print("[CLEANUP] The directory 'media/results' has been cleaned before the new search.")
     except Exception as e:
-        print(f"[!] Błąd przy czyszczeniu folderu results: {e}")
+        print(f"[CLEANUP] Error during cleanup: {e}")
 
     async with async_playwright() as p:
         # Playwright opens chromium browser to scrap info but # doesn't show browser window (because of headless=True)
@@ -606,9 +592,6 @@ async def search_mobygames(game_name: str):
         # Go to the website
         await page.goto(search_url, timeout=60000)
         await page.wait_for_load_state("networkidle")
-
-        # Czasem miniatury ładują się chwilę po wczytaniu treści strony,
-        # więc czekamy dodatkową sekundę, żeby były pewne źródła obrazków
         await page.wait_for_timeout(1500)
 
         # Case where there are no results
@@ -634,10 +617,9 @@ async def search_mobygames(game_name: str):
         await page.wait_for_selector("table.table.mb tbody tr", timeout=20000)
         rows = await page.query_selector_all("table.table.mb tbody tr")
 
-        # 📂 --- Folder już wyczyszczony powyżej, więc tutaj tylko definicja ---
         media_root = "media/results"
         results = []
-        index = 0  # licznik do numerowania plików result_1.png itd.
+        index = 0
 
         for row in rows[:10]:
             td = await row.query_selector("td:nth-child(2)")
@@ -652,12 +634,10 @@ async def search_mobygames(game_name: str):
             filtered = [ln for ln in lines if "mature content" not in ln.lower() and ln != "View Content"]
             clean_text = "\n".join(filtered)
 
-            # Pobiera link do gry
             link_el = await td.query_selector("b a") or await td.query_selector("a")
             href = await link_el.get_attribute("href") if link_el else None
             full_url = f"https://www.mobygames.com{href}" if href and not href.startswith("http") else href
 
-            # 📸 --- Zapis okładki wyniku ---
             try:
                 img_td = await row.query_selector("td:nth-child(1) img")
                 index += 1
@@ -685,7 +665,7 @@ async def search_mobygames(game_name: str):
                     if os.path.exists(default_icon):
                         copyfile(default_icon, out_path)
             except Exception as e:
-                print(f"[!] Błąd przy zapisie miniatury result_{index}: {e}")
+                print(f"Error during download of the result_{index}: {e}")
 
             results.append({"url": full_url, "description": clean_text})
 
@@ -818,7 +798,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 await browser.close()
                 return await scrape_game_info(base_game_url, media_root, save_image, is_base=True)
             else:
-                print(f"[INFO] 'Base Game' present, but '{title}' is not an edition → staying on this page.")
+                print(f"[INFO] 'Base Game' present, but '{title}' is not an edition -> staying on this page.")
 
         # The regular case of scraping the game. The variables bellow are the attributes Playwright tries to scrape from
         # MobyGames page for the chosen game
@@ -936,10 +916,8 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         paragraphs = [raw_text] if raw_text else []
                     moby_description = "\n".join(paragraphs).strip()
                     if moby_description:
-                        # --- Dodaj nagłówek markdown "## Description" ---
                         full_plot_md = f"## Description\n\n{moby_description}"
 
-                        # --- Generuj krótkie podsumowanie ---
                         words = len(moby_description.split())
                         if words > 200:
                             summarizer = get_summarizer()
@@ -956,14 +934,12 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         else:
                             summary_text = moby_description
 
-                        # --- Summary też w markdownie z nagłówkiem ---
                         summary_md = (
                             f"## Description\n\n{summary_text}\n\n"
                             "*This summary is based on the game's description from MobyGames. "
                             "For a detailed storyline, try asking the chatbot below.*"
                         )
 
-                        # --- Dodaj komunikat, że to nie fabuła ---
                         full_plot_md += (
                             "\n\n*Note: This section is based on the game's description from MobyGames "
                             "and may not represent the actual storyline. You can use the chatbot to learn more about the plot.*"
@@ -1006,20 +982,17 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "full_plot": full_plot_md,
             "summary": summary_md,
             "is_compilation": False,
-            "mobygames_url": url,  # <<< nowa linia
-            "wikipedia_url": wiki_url  # <<< nowa linia
+            "mobygames_url": url,
+            "wikipedia_url": wiki_url
         }
 
 
 
 
-# === 🔁 SCRAPE_GAME_INFO_ADMIN ===
-# Wersja scrape_game_info() używana w panelu administratora.
-# Różni się tym, że automatycznie generuje streszczenie (summary_md)
-# przy użyciu summarize_plot_sections() oraz nadpisuje stare dane gry.
+# Scrape game info but for admin that automatically makes the summary right after the scraping process
 async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = True):
 
-    print(f"[ADMIN RELOAD] Rozpoczynam pełne przeładowanie gry z URL: {url}")
+    print(f"[ADMIN RELOAD] Starting the scraping process for the url: {url}")
     start_time = time.time()
 
     async with async_playwright() as p:
@@ -1034,19 +1007,17 @@ async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = T
         await page.goto(url, timeout=30000)
         await page.wait_for_load_state("networkidle")
 
-        # --- SCRAPE PODSTAWOWYCH INFORMACJI ---
         title = None
         if await page.query_selector("h1.mb-0"):
             title = (await page.inner_text("h1.mb-0")).strip()
 
-        # --- WIKI SCRAPE ---
         full_plot_md = None
         summary_md = None
         wiki_url = None
 
         if title:
             wiki_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
-            print(f"[ADMIN RELOAD] Wikipedia lookup: {wiki_url}")
+            print(f"[ADMIN RELOAD] Wikipedia url: {wiki_url}")
 
             try:
                 await page.goto(wiki_url, timeout=30000)
@@ -1059,11 +1030,10 @@ async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = T
                 if structured_plot:
                     full_plot_md = build_markdown_with_headings(structured_plot)
                     summary_md = summarize_plot_sections(structured_plot)
-                    print("[ADMIN RELOAD] Streszczenie wygenerowane pomyślnie.")
+                    print("[ADMIN RELOAD] The summary has been successfully generated.")
             except Exception as e:
                 print(f"[ADMIN RELOAD] Wikipedia scrape failed: {e}")
 
-        # --- WERYFIKACJA ---
         if not full_plot_md:
             full_plot_md = "## No Plot Found\n\nNo plot could be scraped for this game."
         if not summary_md:
@@ -1071,7 +1041,7 @@ async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = T
 
         await browser.close()
         elapsed = time.time() - start_time
-        print(f"[ADMIN RELOAD] Zakończono w {elapsed:.1f}s")
+        print(f"[ADMIN RELOAD] Finished in {elapsed:.1f}s")
 
         return {
             "title": title or "Unknown",

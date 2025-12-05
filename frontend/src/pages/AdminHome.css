@@ -1,17 +1,16 @@
+/* src/pages/AdminHome.css */
 .admin-home {
   background: #f4f6fa;
   min-height: 100vh;
   padding-bottom: 120px;
 }
 
-/* LOGO */
 .admin-home .main-logo {
   display: block;
   margin: 48px auto 28px;
   height: 220px;
 }
 
-/* GRID 4 kolumny */
 .admin-home .tiles {
   display: grid;
   grid-template-columns: repeat(4, 280px);
@@ -22,7 +21,6 @@
   padding: 0;
 }
 
-/* KAFELKI */
 .admin-home .tile {
   width: 280px;
   height: 280px;
@@ -40,7 +38,6 @@
   object-fit: cover;
 }
 
-/* Rząd admina – jeden kafelek na środku */
 .admin-home .tiles--admin {
   grid-template-columns: 280px;
   justify-content: center;

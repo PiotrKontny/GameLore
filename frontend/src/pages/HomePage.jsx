@@ -1,3 +1,4 @@
+// src/pages/HomePage.jsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -37,12 +38,10 @@ function HomePage() {
 
   if (loading) return null;
 
-  // ---------------- ADMIN ----------------
   if (user && user.username.toLowerCase() === "admin") {
     return <AdminHomePage user={user} />;
   }
 
-  // ---------------- LOGGED OUT ----------------
   if (!user) {
     return (
       <div className="home-page">
@@ -73,7 +72,6 @@ function HomePage() {
     );
   }
 
-  // ---------------- LOGGED IN (normal user) ----------------
   return (
     <div className="home-page">
       <Navbar user={user} />

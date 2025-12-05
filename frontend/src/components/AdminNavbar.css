@@ -1,10 +1,10 @@
+/* src/pages/AdminNavbar.css */
 :root {
   --nav:#0f1836;
   --tile:#0f1836;
   --gold:#d6b679;
 }
 
-/* NAVBAR ADMINA */
 .admin-navbar {
   background: var(--nav);
   padding: 8px 20px;
@@ -19,7 +19,6 @@
   height: 72px;
 }
 
-/* CENTRALNY NAPIS "ADMIN PANEL" */
 .admin-navbar .navbar-center {
   position: absolute;
   left: 50%;
@@ -31,7 +30,6 @@
   letter-spacing: 1px;
 }
 
-/* PROFIL (prawa strona) */
 .admin-navbar .profile-chip {
   display: inline-flex;
   align-items: center;

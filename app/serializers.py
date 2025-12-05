@@ -1,3 +1,4 @@
+# serializers.py
 from rest_framework import serializers
 from .models import UserModel, Games, GamePlots, UserHistory, ChatBot, UserRatings
 

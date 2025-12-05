@@ -1,3 +1,4 @@
+/* src/pages/ChatbotPage.css */
 :root {
   --nav:#0f1836;
   --gold:#d6b679;
@@ -5,9 +6,6 @@
   --radius:18px;
 }
 
-/* -------------------------------- */
-/* PAGE WRAPPER */
-/* -------------------------------- */
 .chatbot-page {
   background:#f4f6fa;
   min-height: calc(100vh - 70px);
@@ -19,9 +17,6 @@
   overflow:hidden;
 }
 
-/* -------------------------------- */
-/* LEFT SIDEBAR */
-/* -------------------------------- */
 .chatbot-sidebar {
   width: 320px;
   background:white;
@@ -46,9 +41,6 @@
   padding-right: 5px;
 }
 
-/* -------------------------------- */
-/* GAME ITEM */
-/* -------------------------------- */
 .chatbot-game-item {
   position: relative;
   display: flex;
@@ -71,9 +63,6 @@
   overflow: hidden;
 }
 
-/* -------------------------------- */
-/* FIXED-SIZE THUMBNAILS */
-/* -------------------------------- */
 .chatbot-game-item img.cover {
   width: 42px;
   height: 58px;
@@ -84,7 +73,6 @@
   margin-bottom: 3px;
 }
 
-/* GAME ITEM TITLE */
 .chatbot-game-item .title {
   flex: 1;
   text-align: center;
@@ -94,7 +82,6 @@
   max-width: 180px;
 }
 
-/* HOVER & ACTIVE STATES */
 .chatbot-game-item:hover {
   background:#f4f6fa;
   transform:scale(1.01);
@@ -111,7 +98,6 @@
   background:#162a5c;
 }
 
-/* DELETE ICON */
 .chatbot-delete-icon {
   position: absolute;
   top: 6px;
@@ -141,16 +127,12 @@
   filter: invert(1) brightness(2.4);
 }
 
-/* -------------------------------- */
-/* RIGHT PANEL (CHAT) */
-/* -------------------------------- */
 .chatbot-chat-container {
   flex: 1;
   display: flex;
   padding: 25px;
 }
 
-/* CHATBOX - full width, responsive */
 .chatbot-chat-box {
   flex: 1;
   height: calc(100vh - 160px);
@@ -163,7 +145,6 @@
   padding: 25px;
 }
 
-/* MESSAGES */
 .chatbot-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -203,7 +184,6 @@
   border-bottom-left-radius: 0;
 }
 
-/* INPUT ROW */
 .chatbot-input-row {
   display: flex;
   gap: 10px;
@@ -246,9 +226,6 @@
   margin-top: 20px;
 }
 
-/* -------------------------------- */
-/* RESPONSIVE BREAKPOINTS */
-/* -------------------------------- */
 @media (max-width: 1100px) {
   .chatbot-sidebar {
     width: 260px;

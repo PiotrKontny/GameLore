@@ -1,16 +1,16 @@
+/* src/pages/Navbar.css */
 :root {
   --nav:#0f1836;
   --gold:#d6b679;
 }
 
-/* NAVBAR */
 .navbar {
   background:var(--nav);
   padding:8px 20px;
   display:flex;
   align-items:center;
-  justify-content:flex-start; /* ← ważna zmiana */
-  gap: auto; /* niekonieczne, ale dla czytelności */
+  justify-content:flex-start;
+  gap: auto;
 }
 
 .brand img {
@@ -18,7 +18,7 @@
 }
 
 .profile-chip {
-  margin-left: auto; /* ← to ustawia avatar po prawej */
+  margin-left: auto;
   display:inline-flex;
   align-items:center;
   gap:12px;

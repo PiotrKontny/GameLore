@@ -9,7 +9,6 @@ function ProfilePage() {
   const [msgPassword, setMsgPassword] = useState(null);
   const [msgPfp, setMsgPfp] = useState(null);
 
-  // pobranie profilu
   useEffect(() => {
     async function loadUser() {
       const res = await fetch("/app/api/profile/", {
@@ -26,7 +25,6 @@ function ProfilePage() {
 
   if (!user) return null;
 
-  // ========== ZMIANA USERNAME ==========
   const changeUsername = async (e) => {
     e.preventDefault();
     setMsgUsername(null);
@@ -69,7 +67,6 @@ function ProfilePage() {
     setUser({ ...user, username: newUsername });
   };
 
-  // ========== ZMIANA ZDJĘCIA ==========
   const changePfp = async (e) => {
     e.preventDefault();
     setMsgPfp(null);
@@ -101,7 +98,6 @@ function ProfilePage() {
     setUser(await reload.json());
   };
 
-  // ========== ZMIANA HASŁA ==========
   const changePassword = async (e) => {
     e.preventDefault();
     setMsgPassword(null);
@@ -134,7 +130,6 @@ function ProfilePage() {
     setMsgPassword({ text: data.message, error: false });
   };
 
-  // ========== LOGOUT ==========
   const logout = async () => {
     const form = new FormData();
     form.append("action", "logout");
@@ -158,7 +153,6 @@ function ProfilePage() {
     <div className="profile-container">
       <h2>Your Profile</h2>
 
-      {/* PROFILE PICTURE */}
       <div className="form-section text-center">
         <h5>Profile Picture</h5>
         {msgPfp && (
@@ -198,7 +192,6 @@ function ProfilePage() {
         </form>
       </div>
 
-      {/* USERNAME */}
       <div className="form-section">
         <h5>Change Username</h5>
         {msgUsername && (
@@ -230,7 +223,6 @@ function ProfilePage() {
         </form>
       </div>
 
-      {/* PASSWORD */}
       <div className="form-section">
         <h5>Change Password</h5>
         {msgPassword && (
@@ -272,7 +264,6 @@ function ProfilePage() {
         </form>
       </div>
 
-      {/* LOGOUT */}
       <div className="form-section logout-section text-center">
         <button className="btn btn-danger" onClick={logout}>
           Log Out

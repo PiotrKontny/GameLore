@@ -1,3 +1,4 @@
+/* src/pages/InformationPage.css */
 :root {
   --nav: #0f1836;
   --gold: #d6b679;
@@ -5,14 +6,12 @@
   --shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
 
-/* tło strony jak w GameDetailPage */
 .info-page {
   background: #f4f6fa;
   min-height: 100vh;
   padding: 40px 0 60px;
 }
 
-/* „karta” w środku – inspirowana .game-container */
 .info-container {
   max-width: 900px;
   margin: 0 auto;
@@ -25,7 +24,6 @@
   color: #1a1a1a;
 }
 
-/* Nagłówki sekcji */
 .info-container h2 {
   font-size: 34px;
   font-weight: 800;
@@ -35,7 +33,6 @@
   margin-bottom: 22px;
 }
 
-/* delikatna linia nad i pod pierwszym nagłówkiem */
 .info-container h2:first-of-type {
   margin-top: 10px;
 }
@@ -49,7 +46,6 @@
   max-width: 80%;
 }
 
-/* listy */
 .info-container ul {
   margin-left: 22px;
   margin-bottom: 20px;
@@ -59,7 +55,6 @@
   margin-bottom: 8px;
 }
 
-/* paragrafy */
 .info-container p {
   margin-bottom: 18px;
 }

@@ -11,7 +11,6 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.pop()) : "";
 }
 
-/* --- Score color helper --- */
 function getScoreColor(rawScore) {
   if (rawScore == null) return "blue";
   const score = Number(rawScore);
@@ -38,12 +37,10 @@ const GameDetailPage = () => {
   const [gameData, setGameData] = useState(null);
   const [activeTab, setActiveTab] = useState(TAB_FULL);
 
-  // SUMMARY
   const [summaryHtml, setSummaryHtml] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState("");
 
-  // RATING
   const [ratingStats, setRatingStats] = useState({
     avg: 0,
     votes: 0,
@@ -52,15 +49,11 @@ const GameDetailPage = () => {
   const [currentAvg, setCurrentAvg] = useState(0);
   const [hoverValue, setHoverValue] = useState(null);
 
-  // CHATBOT
   const [chatLoaded, setChatLoaded] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [chatThinking, setChatThinking] = useState(false);
 
-  /* -------------------------------------------
-   * 1. Fetch game data
-   * ------------------------------------------ */
   useEffect(() => {
     let cancelled = false;
 
@@ -75,8 +68,6 @@ const GameDetailPage = () => {
           },
         });
 
-        // ⬇️ KLUCZOWA ZMIANA: jeśli backend zwróci 404 (HTML, a nie JSON),
-        // NIE próbujemy czytać res.json(), tylko przenosimy użytkownika
         if (res.status === 404) {
           if (!cancelled) {
             setLoading(false);
@@ -134,9 +125,6 @@ const GameDetailPage = () => {
     };
   }, [gameId, navigate]);
 
-  /* -------------------------------------------
-   * 2. Detect summary placeholder
-   * ------------------------------------------ */
   const isSummaryMissing = useMemo(() => {
     if (!summaryHtml) return true;
     const clean = summaryHtml
@@ -158,9 +146,6 @@ const GameDetailPage = () => {
     );
   }, [summaryHtml]);
 
-  /* -------------------------------------------
-   * 3. Load rating
-   * ------------------------------------------ */
   useEffect(() => {
     if (!gameId) return;
 
@@ -193,9 +178,6 @@ const GameDetailPage = () => {
     loadRating();
   }, [gameId]);
 
-  /* -------------------------------------------
-   * 4. Save rating
-   * ------------------------------------------ */
   const handleStarClick = async (value) => {
     try {
       const res = await fetch(`/app/games/${gameId}/rating/`, {
@@ -224,9 +206,6 @@ const GameDetailPage = () => {
     }
   };
 
-  /* -------------------------------------------
-   * 5. SUMMARY – Generate Summary
-   * ------------------------------------------ */
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
     setSummaryError("");
@@ -261,9 +240,6 @@ const GameDetailPage = () => {
     }
   };
 
-  /* -------------------------------------------
-   * 6. CHATBOT – load history
-   * ------------------------------------------ */
   useEffect(() => {
     if (activeTab !== TAB_CHATBOT || chatLoaded) return;
 
@@ -349,9 +325,6 @@ const GameDetailPage = () => {
     }
   };
 
-  /* -------------------------------------------
-   * 7. Slider highlight style
-   * ------------------------------------------ */
   const highlightStyle = useMemo(() => {
     const index =
       activeTab === TAB_FULL
@@ -364,9 +337,6 @@ const GameDetailPage = () => {
     };
   }, [activeTab]);
 
-  /* -------------------------------------------
-   * 8. Render
-   * ------------------------------------------ */
   if (loading || !gameData) {
     return (
       <div className="game-detail-loading">
@@ -378,7 +348,6 @@ const GameDetailPage = () => {
   return (
     <div className="game-detail-page">
       <div className="game-container">
-        {/* TITLE */}
         <h2 className="game-title">{gameData.title}</h2>
 
         {gameData.cover_image && (
@@ -389,7 +358,6 @@ const GameDetailPage = () => {
           />
         )}
 
-        {/* BASIC INFO */}
         <div className="game-info">
           {gameData.release_date && (
             <span>
@@ -408,7 +376,6 @@ const GameDetailPage = () => {
           )}
         </div>
 
-        {/* SCORE */}
         {gameData.score != null && (
           <div className="score-line">
             <span>
@@ -426,7 +393,6 @@ const GameDetailPage = () => {
           </div>
         )}
 
-        {/* SOURCES */}
         {(gameData.mobygames_url ||
           gameData.wikipedia_url) && (
           <div className="sources">
@@ -534,7 +500,6 @@ const GameDetailPage = () => {
           </div>
         </div>
 
-        {/* FULL LORE */}
         {activeTab === TAB_FULL && (
           <div
             className="markdown-content"
@@ -544,7 +509,6 @@ const GameDetailPage = () => {
           />
         )}
 
-        {/* SUMMARY */}
         {activeTab === TAB_SUMMARY && (
           <div className="tab-pane">
             {isSummaryMissing && !isGeneratingSummary && (
@@ -582,7 +546,6 @@ const GameDetailPage = () => {
           </div>
         )}
 
-        {/* CHATBOT */}
         {activeTab === TAB_CHATBOT && (
           <div className="tab-pane">
             <div id="chat-window">

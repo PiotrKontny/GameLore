@@ -77,7 +77,6 @@ function AdminUsersPage() {
           </a>
         </h2>
 
-        {/* Search */}
         <form
           onSubmit={handleSearch}
           className="mb-4 text-center"
@@ -103,7 +102,6 @@ function AdminUsersPage() {
             </button>
           </div>
 
-          {/* Sort */}
           <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
             <label
               htmlFor="sortSelect"
@@ -129,7 +127,6 @@ function AdminUsersPage() {
           </div>
         </form>
 
-        {/* Users Table */}
         <table className="table table-striped align-middle">
           <thead>
             <tr>

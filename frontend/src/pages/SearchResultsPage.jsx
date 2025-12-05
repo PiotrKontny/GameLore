@@ -1,3 +1,4 @@
+// src/pages/SearchResultsPage.jsx
 import React, { useEffect, useState } from "react";
 import "./SearchResultsPage.css";
 
@@ -35,7 +36,6 @@ function SearchResultsPage() {
   return (
     <div className="results-container">
 
-      {/* === HEADER (wrócił cały, poprawny!) === */}
       <div className="results-header">
         <h1>Search Results for "{query}"</h1>
         <p>Click any result to explore its story.</p>
@@ -45,7 +45,6 @@ function SearchResultsPage() {
         </a>
       </div>
 
-      {/* === SPINNER POD NAGŁÓWKIEM === */}
       {(loading || loadingDetails) && (
         <div className="center-loader under-header">
           <div className="spinner"></div>
@@ -55,7 +54,6 @@ function SearchResultsPage() {
         </div>
       )}
 
-      {/* === LISTA KAFELEK (NIGDY NIE ZNIKA PRZY KLIKNIĘCIU) === */}
       {loading ? null : results.length === 0 ? (
         <p className="no-results">No results found.</p>
       ) : (

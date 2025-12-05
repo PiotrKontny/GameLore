@@ -1,3 +1,4 @@
+// src/pages/SearchFormPage.jsx
 import React, { useState, useEffect } from "react";
 import "./SearchFormPage.css";
 
@@ -6,7 +7,6 @@ function SearchFormPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // pobieramy usera do navbarowego bubble
   useEffect(() => {
     async function load() {
       const res = await fetch("/app/api/user/", {
@@ -46,7 +46,6 @@ function SearchFormPage() {
   return (
     <div className="search-page">
 
-      {/* CENTRAL BLOCK */}
       <div className="search-container">
         <img src="/media/icons/Logo.png" alt="GameLore" className="search-logo" />
 

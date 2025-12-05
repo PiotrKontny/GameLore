@@ -1,3 +1,4 @@
+/* src/pages/ChatbotPage.css */
 :root {
   --nav: #0f1836;
   --tile: #0f1836;
@@ -22,15 +23,13 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* MNIEJSZA GRUBOŚĆ Tytułu */
 .login-title {
   text-align: center;
   color: var(--nav);
   margin-bottom: 28px;
-  font-weight: 600;          /* ← było 700, teraz wygląda normalnie */
+  font-weight: 600;
 }
 
-/* CZERWONY NAPIS ZAMIAST BLOKU */
 .error-text {
   color: #c00;
   text-align: center;

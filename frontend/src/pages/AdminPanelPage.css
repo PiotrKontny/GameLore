@@ -1,3 +1,4 @@
+/* src/pages/AdminPanelPage.css */
 :root {
   --nav: #0f1836;
   --tile: #0f1836;
@@ -13,7 +14,6 @@ body {
   color: #333;
 }
 
-/* NAVBAR */
 .navbar {
   background: var(--nav);
   padding: 8px 20px;
@@ -64,14 +64,12 @@ body {
   background: #fff;
 }
 
-/* MAIN */
 .main-logo {
   display: block;
   margin: 48px auto 28px;
   height: 180px;
 }
 
-/* Tiles */
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, 280px);

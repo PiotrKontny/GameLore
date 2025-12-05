@@ -1,3 +1,4 @@
+/* src/pages/SearchFormPage.css */
 :root{
   --nav:#0f1836;
   --gold:#d6b679;
@@ -11,7 +12,6 @@
   font-family:"Segoe UI", Roboto, sans-serif;
 }
 
-/* NAVBAR */
 .navbar{
   background:var(--nav);
   padding:8px 20px;
@@ -45,7 +45,6 @@
   border:2px solid rgba(255,255,255,.6);
 }
 
-/* CENTRAL SEARCH BOX */
 .search-container{
   display:flex;
   flex-direction:column;

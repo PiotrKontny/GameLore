@@ -1,3 +1,4 @@
+/* src/pages/HomePage.css */
 :root {
   --nav:#0f1836;
   --tile:#0f1836;
@@ -13,14 +14,12 @@
   color: #333;
 }
 
-/* LOGO */
 .home-page .main-logo {
   display: block;
   margin: 48px auto 28px;
   height: 220px;
 }
 
-/* GRID 4 kolumny */
 .home-page .tiles {
   display: grid;
   grid-template-columns: repeat(4, 280px);
@@ -31,7 +30,6 @@
   max-width: 1400px;
 }
 
-/* TILE */
 .home-page .tile {
   width: 280px;
   height: 280px;
@@ -56,7 +54,6 @@
   border-radius: inherit;
 }
 
-/* disabled tiles */
 .home-page .tile.disabled {
   filter: grayscale(100%) brightness(.75);
   cursor: not-allowed;

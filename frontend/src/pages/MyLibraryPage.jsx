@@ -29,21 +29,18 @@ function MyLibraryPage() {
     setLoading(false);
   }
 
-  // 1. Ładowanie po wejściu na stronę
   useEffect(() => {
     loadLibrary();
   }, []);
 
-  // 2. Ładowanie po zmianie sortowania
   useEffect(() => {
     loadLibrary();
   }, [sort]);
 
-  // 3. Krytyczne – odświeżanie po powrocie strzałką "wstecz"
   useEffect(() => {
     window.onpageshow = (event) => {
       if (event.persisted) {
-        loadLibrary(); // ← ponowny fetch mimo BFCache
+        loadLibrary();
       }
     };
   }, []);
@@ -53,7 +50,6 @@ function MyLibraryPage() {
     loadLibrary();
   };
 
-  // usuwanie gry
   async function deleteGame(id) {
     if (!window.confirm("Are you sure you want to remove this game?"))
       return;
@@ -83,7 +79,6 @@ function MyLibraryPage() {
         </Link>
       </h2>
 
-      {/* SEARCH BAR */}
       <form className="search-wrap" onSubmit={handleSearch}>
         <div className="input-group mx-auto" style={{ maxWidth: "720px" }}>
           <input
@@ -97,7 +92,6 @@ function MyLibraryPage() {
         </div>
       </form>
 
-      {/* SORTER */}
       <div className="sort-row">
         <label className="me-2 fw-semibold">Sort by:</label>
         <select
@@ -111,11 +105,9 @@ function MyLibraryPage() {
         </select>
       </div>
 
-      {/* GAMES GRID */}
       <div className="library-container">
         <div className="row gy-5 justify-content-center">
 
-          {/* ADD CARD */}
           <div className="col-md-4 d-flex justify-content-center">
             <Link
               to="/app/explore/"
@@ -126,7 +118,6 @@ function MyLibraryPage() {
             </Link>
           </div>
 
-          {/* LISTA GIER */}
           {loading ? (
             <p className="text-muted text-center mt-4">Loading...</p>
           ) : games.length === 0 ? (

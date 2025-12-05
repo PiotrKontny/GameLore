@@ -1,3 +1,4 @@
+// src/pages/RegisterPage.jsx
 import React, { useState } from "react";
 import "./RegisterPage.css";
 
@@ -22,7 +23,6 @@ function RegisterPage() {
 
     const trimmedUsername = form.username.trim();
 
-    // --- Frontowa walidacja username ---
     if (trimmedUsername.length < 4) {
       setError("Username must be at least 4 characters long.");
       return;
@@ -33,7 +33,6 @@ function RegisterPage() {
       return;
     }
 
-    // --- Frontowa walidacja hasła ---
     if (form.password.length < 5) {
       setError("Password must be at least 5 characters long.");
       return;
@@ -48,7 +47,7 @@ function RegisterPage() {
         },
         body: JSON.stringify({
           ...form,
-          username: trimmedUsername, // zapisujemy bez spacji na końcach
+          username: trimmedUsername,
         }),
       });
 

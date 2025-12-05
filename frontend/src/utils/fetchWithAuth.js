@@ -15,7 +15,6 @@ export async function fetchWithAuth(url, options = {}) {
   let resp = await fetch(url, mergedOptions);
 
   if (resp.status === 401) {
-    // spróbuj odświeżyć token
     const refresh = await fetch("/app/api/refresh/", {
       method: "POST",
       credentials: "include",
@@ -26,14 +25,12 @@ export async function fetchWithAuth(url, options = {}) {
     });
 
     if (refresh.status === 200) {
-      // spróbuj ponownie oryginalny request
       resp = await fetch(url, mergedOptions);
       if (resp.status !== 401 && resp.status !== 403) {
         return resp;
       }
     }
 
-    // nadal 401 → przekierowanie na stronę błędu
     navigate("/error/401");
     return null;
   }

@@ -1,34 +1,35 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
-from django.db.models import Avg, Count
-from django.db.models.functions import Trim
-from django.http import FileResponse
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from rest_framework import viewsets, serializers
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.decorators import api_view, permission_classes
-from .serializers import (GamesSerializer, GamePlotsSerializer, UserHistorySerializer, UserSerializer,
-                          ChatBotSerializer, UserRatingSerializer)
-from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
-
-from .utils import (search_mobygames, scrape_game_info, record_user_history, jwt_required, get_jwt_user,
-                    CookieJWTAuthentication, _wants_json, summarize_plot_from_markdown, scrape_game_info_admin)
-from decimal import Decimal, InvalidOperation
-import markdown
+# views.py
 import asyncio
 import json
 import re
-import requests, os
+from decimal import Decimal, InvalidOperation
+import markdown
+import os
+import requests
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.db.models import Avg, Count
+from django.db.models.functions import Trim
+from django.http import FileResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from rest_framework import viewsets, serializers
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import Games, GamePlots, UserModel, UserHistory, ChatBot, UserRatings
+from .serializers import (GamesSerializer, GamePlotsSerializer, UserSerializer)
+from .utils import (search_mobygames, scrape_game_info, record_user_history, jwt_required, _wants_json,
+                    summarize_plot_from_markdown, scrape_game_info_admin)
 
 
 def react_index(request):

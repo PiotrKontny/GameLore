@@ -1,3 +1,4 @@
+// src/pages/ErrorPage.jsx
 import React from "react";
 import { useLocation } from "react-router-dom";
 import "./ErrorPage.css";

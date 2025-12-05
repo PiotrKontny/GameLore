@@ -1,3 +1,4 @@
+// src/pages/ChatbotPage.jsx
 import React, { useEffect, useState } from "react";
 import "./ChatbotPage.css";
 
@@ -10,7 +11,6 @@ function ChatbotPage() {
   const [thinking, setThinking] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  // -------- INITIAL LOAD --------
   async function fetchInit() {
     try {
       const res = await fetch("/app/chatbot/?format=json", {
@@ -38,7 +38,6 @@ function ChatbotPage() {
     fetchInit();
   }, []);
 
-  // -------- REFRESH ONLY GAMES LIST (NO CHAT SWITCH) --------
   async function refreshGamesList() {
     try {
       const res = await fetch("/app/chatbot/?format=json", {
@@ -53,7 +52,6 @@ function ChatbotPage() {
     }
   }
 
-  // -------- LOAD HISTORY FOR GIVEN GAME --------
   async function loadHistory(gameId) {
     setLoadingHistory(true);
     setMessages([]);
@@ -79,7 +77,6 @@ function ChatbotPage() {
     }
   }
 
-  // -------- SEND MESSAGE --------
   async function handleSend() {
     const text = inputValue.trim();
     if (!text || !currentGameId || thinking) return;
@@ -112,7 +109,6 @@ function ChatbotPage() {
     }
   }
 
-  // -------- DELETE CHAT HISTORY --------
   async function handleDeleteHistory(gameId) {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete chat history for this game?"
@@ -136,12 +132,10 @@ function ChatbotPage() {
 
       alert("Chat history deleted successfully.");
 
-      // Stay on same chat and clear messages
       if (String(gameId) === String(currentGameId)) {
         setMessages([]);
       }
 
-      // Refresh left game list without switching chat
       await refreshGamesList();
     } catch {
       alert("Connection error while deleting chat history.");
@@ -176,7 +170,6 @@ function ChatbotPage() {
                   (String(g.id) === String(currentGameId) ? " active" : "")
                 }
                 onClick={(e) => {
-                  // Ignore clicks on the trash icon
                   if (e.target.classList.contains("chatbot-delete-icon")) return;
 
                   if (String(g.id) === String(currentGameId)) return;
@@ -208,7 +201,6 @@ function ChatbotPage() {
           </div>
         </div>
 
-        {/* CHAT WINDOW */}
         <div className="chatbot-chat-container">
           <div className="chatbot-chat-box">
             <div className="chatbot-chat-messages">

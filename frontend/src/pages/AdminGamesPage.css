@@ -1,3 +1,4 @@
+/* src/pages/AdminGamesPage.css */
 :root {
   --nav:#0f1836;
   --gold:#d6b679;
@@ -10,7 +11,6 @@ body {
   color:#222;
 }
 
-/* NAVBAR */
 .navbar {
   background:var(--nav);
   padding:8px 20px;
@@ -54,7 +54,6 @@ body {
   object-fit:cover;
 }
 
-/* MAIN CONTENT */
 .table-container {
   max-width:1000px;
   margin:60px auto;
@@ -80,7 +79,6 @@ body {
   color:#1c2c6a;
 }
 
-/* SEARCH + SORT */
 .search-input {
   height:44px;
   padding:10px 16px;
@@ -129,7 +127,6 @@ body {
   width: 1%;
 }
 
-/* Sort row single-line fix */
 .sort-label {
   white-space: nowrap;
   font-size: 1rem;
@@ -142,16 +139,15 @@ body {
   vertical-align: middle;
 }
 
-/* ⭐ FINALNY, STABILNY SCORE + SPINNER LAYOUT ⭐ */
 .score-cell {
   position: relative;
 }
 
 .score-layout {
   display: grid;
-  grid-template-columns: 70px 36px; /* więcej miejsca dla spinnera */
+  grid-template-columns: 70px 36px;
   align-items: center;
-  gap: 20px; /* odstęp centralny */
+  gap: 20px;
   height: 40px;
 }
 
@@ -164,7 +160,6 @@ body {
   height: 32px;
 }
 
-/* Spinner — perfekcyjnie wycentrowany */
 .spinner-small {
   width: 20px;
   height: 20px;

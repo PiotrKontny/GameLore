@@ -1,3 +1,4 @@
+// src/pages/AdminGamesPage.js
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./AdminGamesPage.css";
@@ -159,7 +160,6 @@ function AdminGamesPage() {
                     </a>
                   </td>
 
-                  {/* SCORE + SPINNER */}
                   <td className="score-cell">
                     <div className="score-layout">
                       <input

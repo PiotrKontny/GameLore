@@ -1,3 +1,4 @@
+/* src/pages/GameDetailPage.css */
 :root {
   --nav: #0f1836;
   --gold: #d6b679;
@@ -22,7 +23,6 @@
   font-family: "Segoe UI", Roboto, sans-serif;
 }
 
-/* KARTA GRY */
 .game-container {
   max-width: 900px;
   margin: 0 auto;
@@ -65,7 +65,6 @@
   color: var(--nav);
 }
 
-/* Score pill */
 .score-line {
   display: flex;
   align-items: center;
@@ -105,7 +104,6 @@
   color: #fff;
 }
 
-/* Sources */
 .sources {
   text-align: center;
   margin: 16px 0 14px;
@@ -129,7 +127,6 @@
   color: #f5dca1;
 }
 
-/* Rating */
 #rating-section {
   text-align: center;
   margin: 10px 0 28px;
@@ -141,7 +138,6 @@
   transition: color 0.15s;
 }
 
-/* Segmented slider */
 .tab-wrapper {
   position: relative;
   display: flex;
@@ -190,7 +186,6 @@
   z-index: 1;
 }
 
-/* Treść */
 .markdown-content {
   font-size: 1.05rem;
   line-height: 1.7;
@@ -211,7 +206,6 @@
   font-style: italic;
 }
 
-/* Chatbot */
 #chat-window {
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -257,7 +251,6 @@
   margin-bottom: 10px;
 }
 
-/* Buttons */
 .btn.btn-primary {
   background: var(--nav);
   color: var(--gold);
@@ -272,14 +265,12 @@
   color: #f5dca1;
 }
 
-/* Spinner – złoty pierścień */
 .spinner-border.text-primary {
   color: transparent !important;
   border-color: rgba(214, 182, 121, 0.3);
   border-top-color: var(--gold) !important;
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .game-container {
     padding: 26px;

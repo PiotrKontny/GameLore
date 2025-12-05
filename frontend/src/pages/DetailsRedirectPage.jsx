@@ -1,3 +1,4 @@
+// src/pages/DetailsRedirectPage.jsx
 import { useSearchParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 
@@ -19,13 +20,10 @@ export default function DetailsRedirectPage() {
       const data = await res.json();
 
       if (data.redirect_game_id) {
-        // gra istnieje w bazie → przejdź do jej strony
         navigate(`/app/games/${data.redirect_game_id}`);
       } else if (data.redirect_compilation) {
-        // kompilacja → redirect
         navigate(`/app/compilation/?url=${encodeURIComponent(url)}`);
       } else if (data.new_game_id) {
-        // świeżo scrapnięta gra
         navigate(`/app/games/${data.new_game_id}`);
       } else {
         console.error("Unexpected details API response:", data);

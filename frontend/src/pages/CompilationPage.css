@@ -1,3 +1,4 @@
+/* src//pages/CompilationPage.css */
 :root {
   --nav:#0f1836;
   --gold:#d6b679;
@@ -27,7 +28,6 @@
   margin-bottom: 28px;
 }
 
-/* LISTA GIER */
 .game-list {
   list-style: none;
   padding: 0;
@@ -69,7 +69,6 @@
   color: #f8e2a0;
 }
 
-/* BACK */
 .back-link {
   margin-top: 10px;
   background: none;
