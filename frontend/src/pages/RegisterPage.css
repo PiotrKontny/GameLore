@@ -1,0 +1,76 @@
+.register-container {
+  max-width: 420px;
+  background: white;
+  margin: 120px auto;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+.register-container h2 {
+  text-align: center;
+  font-weight: 700;
+  color: #0b1330;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1b1f3b;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.btn-register {
+  background: #0f1836;
+  color: #d6b679;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  width: 100%;
+  font-weight: 600;
+}
+
+.login-redirect {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.login-redirect a {
+  color: #0f1836;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.error-box {
+  background: #ffd8d8;
+  border: 1px solid #e55;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #700;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.success-box {
+  background: #d8ffe1;
+  border: 1px solid #44aa55;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #084d1a;
+  margin-bottom: 14px;
+  text-align: center;
+}

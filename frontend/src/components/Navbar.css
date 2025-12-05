@@ -1,0 +1,51 @@
+:root {
+  --nav:#0f1836;
+  --gold:#d6b679;
+}
+
+.navbar {
+  background:var(--nav);
+  padding:8px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap: auto;
+}
+
+.brand img {
+  height:72px;
+}
+
+.profile-chip {
+  margin-left: auto;
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.30);
+  padding:8px 14px;
+  border-radius:14px;
+  color:#fff;
+  text-decoration:none;
+  white-space:nowrap;
+}
+
+.profile-chip span {
+  font-weight:700;
+  font-size:1.25rem;
+}
+
+.profile-chip img {
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid rgba(255,255,255,.6);
+  background:#fff;
+}
+
+@media(max-width:640px){
+  .brand img { height:54px; }
+  .profile-chip img { width:42px; height:42px; }
+  .profile-chip span { font-size:1.05rem; }
+}

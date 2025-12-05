@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserModel, Games, GamePlots, UserHistory, ChatBot
+from .models import UserModel, Games, GamePlots, UserHistory, ChatBot, UserRatings
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserModel
-        fields = ["id", "username", "email", "password"]
+        fields = ["id", "username", "email", "password", "profile_picture"]
 
     def create(self, validated_data):
         return UserModel.objects.create_user(
@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Games
-        fields = ['id', 'title', 'release_date', 'genre', 'studio', 'score', 'cover_image', 'created_at']
+        fields = ['id', 'title', 'release_date', 'genre', 'studio', 'score', 'cover_image', 'mobygames_url', 'wikipedia_url', 'created_at']
 
 
 class GamePlotsSerializer(serializers.ModelSerializer):
@@ -47,3 +47,10 @@ class ChatBotSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatBot
         fields = ['id', 'user_id', 'game_id', 'question', 'answer', 'created_at']
+
+
+class UserRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRatings
+        fields = ['id', 'user_id', 'game_id', 'rating', 'created_at', 'updated_at']
+

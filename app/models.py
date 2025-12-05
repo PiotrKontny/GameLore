@@ -1,10 +1,6 @@
-from django.utils.timezone import now
-import os
 from django.utils import timezone
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
-from django.core.validators import RegexValidator, FileExtensionValidator
 from django.contrib.auth.hashers import make_password, check_password
 
 
@@ -17,7 +13,7 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(username=username, email=email, **extra_fields)
         if password:
-            user.password = make_password(password)  # zapisze do kolumny user_password
+            user.password = make_password(password)
         else:
             user.password = make_password(self.make_random_password())
         user.save(using=self._db)
@@ -33,8 +29,16 @@ class UserModel(models.Model):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128, db_column='user_password')
     date_joined = models.DateTimeField(default=timezone.now)
+    profile_picture = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        default='profile_pictures/default_user.png',
+        db_column='profile_picture'
+    )
+    is_admin = models.BooleanField(default=False, db_column='is_admin')  # zostaw to
 
-    objects = UserManager()  # <<< DODANE
+    objects = UserManager()
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
@@ -43,38 +47,43 @@ class UserModel(models.Model):
         db_table = "Users"
         managed = False
 
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
 
-    @property
-    def is_active(self):
-        return True
-    @property
-    def is_authenticated(self):
-        return True
-    @property
-    def is_anonymous(self):
-        return False
+    def __str__(self):
+        return self.username
 
-    def __str__(self): return self.username
 
 class Games(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
     title = models.CharField(max_length=255, null=False, db_column='title')
-    # On MobyGames release dates are expressed like "October 1, 2025 on PlayStation 5" and there could be more release
-    # dates for different platforms, thus the usage of Varchar2(255)
     release_date = models.CharField(max_length=255, db_column='release_date')
     genre = models.CharField(max_length=100, null=True, db_column='genre')
     studio = models.TextField(db_column='studio')
     score = models.DecimalField(max_digits=3, decimal_places=1, db_column='score')
     cover_image = models.CharField(max_length=500, null=True, blank=True, db_column='cover_image')
+    mobygames_url = models.CharField(max_length=500, null=True, blank=True, db_column='mobygames_url')
+    wikipedia_url = models.CharField(max_length=500, null=True, blank=True, db_column='wikipedia_url')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:
         db_table = 'Games'
+
 
 class GamePlots(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
@@ -94,6 +103,10 @@ class UserHistory(models.Model):
 
     class Meta:
         db_table = 'UserHistory'
+        managed = False
+
+    def __str__(self):
+        return f"{self.user_id} -> {self.game_id} ({self.viewed_at})"
 
 class ChatBot(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
@@ -105,3 +118,21 @@ class ChatBot(models.Model):
 
     class Meta:
         db_table = 'ChatBot'
+
+
+class UserRatings(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
+    user_id = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name="ratings", db_column='user_id')
+    game_id = models.ForeignKey(Games, on_delete=models.CASCADE, related_name="game_ratings", db_column='game_id')
+    rating = models.IntegerField(db_column='rating')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
+    updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')
+
+    class Meta:
+        db_table = 'UserRatings'
+        managed = False
+        unique_together = ('user_id', 'game_id')
+
+    def __str__(self):
+        return f"{self.user_id} rated {self.game_id} = {self.rating}"
+

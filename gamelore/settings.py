@@ -1,20 +1,15 @@
-"""
-Django settings for Lost_Found_Pets project.
-"""
-
 from datetime import timedelta
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security
 SECRET_KEY = 'django-insecure-4j0a9kw(fa)yqh3xc4040emihqhpu-vn24%%iw0!f7j1@10-hl'
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '::1']
 
-# Apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,7 +25,6 @@ INSTALLED_APPS = [
     'frontend.apps.FrontendConfig',
 ]
 
-# Middleware
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -48,7 +42,7 @@ ROOT_URLCONF = 'gamelore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend' / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'static', 'frontend')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -64,7 +58,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'gamelore.wsgi.application'
 
-# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -79,7 +72,6 @@ DATABASES = {
     }
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -95,7 +87,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -105,7 +96,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-# JWT Settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -114,7 +104,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS Settings (Development)
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
@@ -129,18 +118,22 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
 STATIC_URL = 'static/'
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+LOGIN_URL = '/app/login/'
+AUTH_USER_MODEL = 'app.UserModel'
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# Default primary key field type
+handler404 = "app.views.react_404"
+handler500 = "app.views.react_500"
+handler403 = "app.views.react_403"
+handler400 = "app.views.react_400"
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

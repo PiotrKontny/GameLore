@@ -1,15 +1,218 @@
-import asyncio
 import os
 import re
 import urllib.parse
+from functools import wraps
 from io import BytesIO
-from decimal import Decimal
-import requests
-from bs4 import BeautifulSoup
-from PIL import Image
-from playwright.async_api import async_playwright
+from shutil import copyfile
 
+import requests
+import time
+from PIL import Image
+from bs4 import BeautifulSoup
+from django.http import JsonResponse, Http404
+from django.shortcuts import redirect
+from django.utils import timezone
+from playwright.async_api import async_playwright
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from transformers import pipeline
+
+from .models import UserModel, Games, UserHistory
+
+
+# As the name suggests, this function records user history. But what does it mean exactly? Each user has his own user
+# history with the games he has visited. If the game which he visits when opening game detail page hasn't been recorded
+# already in the database, it saves this pair of user id and game id. However, if the user already has the viewed game in his
+# history then the "viewed_at" column is updated
+def record_user_history(user, game, refresh_timestamp=True):
+    # The user history is not being recorded if the user hasn't logged in
+    if not user or not getattr(user, "is_authenticated", False):
+        return
+
+    try:
+        # Just in case, this piece of code checks if the user and the game are the objects from the database. This was
+        # used to handle one instance which appeared while developing the code, and it stayed since it doesn't disrupt
+        # anything, however I'm not sure if its absence wouldn't
+        if not isinstance(user, UserModel):
+            user = UserModel.objects.filter(username=user.username).first()
+        if not isinstance(game, Games):
+            game = Games.objects.filter(id=game.id).first()
+
+        if not user or not game:
+            return
+
+        # If the game exists in user's history then it just updates viewed_at attribute, if it doesn't, it creates a new
+        # record in the database
+        existing = UserHistory.objects.filter(user_id=user, game_id=game).first()
+        if existing:
+            if refresh_timestamp:
+                existing.viewed_at = timezone.now()
+                existing.save(update_fields=["viewed_at"])
+        else:
+            UserHistory.objects.create(user_id=user, game_id=game)
+
+    except Exception as e:
+        print(f"[record_user_history] Error: {e}")
+
+
+# This function checks whether the request expects a JSON response rather than a standard HTML error page.
+def _wants_json(request):
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return True
+    accept = request.headers.get("Accept", "")
+    if "application/json" in accept:
+        return True
+    return False
+
+# This is the function responsible for the main mechanism of authorization. It works as a decorator, so basically
+# something that I put before the functions in views.py to make those pages require an authorization handled by this
+# function.
+def jwt_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+
+        # This if statement is meant for the app's scalability as it ignores jwt_required decorator for the superusers
+        # also known as Django session admins. This app currently does not use it but it might in the future.
+        if getattr(request.user, "is_authenticated", False) and getattr(request.user, "is_superuser", False):
+            print("[JWT] SKIPPING JWT CHECK FOR ADMIN (session auth)")
+            return view_func(request, *args, **kwargs)
+
+        wants_json = _wants_json(request)
+        jwt_auth = JWTAuthentication()
+
+        token = None
+
+        # Checking the header Authorization Bearer (basically the access token given to each user after logging in)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            candidate = auth_header.split(" ", 1)[1].strip()
+            if candidate and candidate.lower() not in ("null", "undefined"):
+                token = candidate
+
+        # If there is no token found in the previous if statement then the app checks cookies
+        if not token:
+            token = request.COOKIES.get("access_token")
+
+        # No token means that the user is not logged in
+        if not token:
+            print("[JWT] There is no JSON Web Token (JWT)")
+
+            if wants_json:
+                return JsonResponse({"error": "There is no JWT"}, status=401)
+            else:
+                # Redirects to the already prepared error 401 page
+                return redirect("/error/401")
+
+        # JWTAuthentication requires Authorization Bearer token
+        request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
+
+        try:
+            # The attempt to authorize the token
+            user_auth_tuple = jwt_auth.authenticate(request)
+
+            # If the authenticate function returns None then the token is deemed as wrong or expired
+            if not user_auth_tuple:
+                print("[JWT] The token is wrong or expired (authenticate has returned None).")
+                if wants_json:
+                    return JsonResponse(
+                        {"error": "Token JWT is wrong or it expired."},
+                        status=403,
+                    )
+                else:
+                    return redirect("/error/403")
+
+            jwt_user, validated_token = user_auth_tuple
+
+            # Checking if the user exists in the database
+            mapped_user = (
+                UserModel.objects.filter(pk=jwt_user.pk).first()
+                or UserModel.objects.filter(username=jwt_user.username).first()
+                or UserModel.objects.filter(email=jwt_user.email).first()
+            )
+
+            if not mapped_user:
+                print("[JWT] The user from the token does not exist in the database.")
+                if wants_json:
+                    return JsonResponse({"error": "The user does not exist"}, status=403)
+                else:
+                    return redirect("/error/403")
+
+            # The user is authenticated
+            request.user = mapped_user
+            print(f"[JWT] Authenticated user: {mapped_user.username}")
+
+            return view_func(request, *args, **kwargs)
+
+        # The authentication failed due to SimpleJWT
+        except Http404:
+            # nie zmieniamy 404 na 500!!!
+            raise
+
+        except AuthenticationFailed as e:
+            print(f"[JWT] AuthenticationFailed: {e}")
+            if wants_json:
+                return JsonResponse({"error": "Token JWT is wrong or it expired."}, status=403)
+            else:
+                return redirect("/error/403")
+
+        except Exception as e:
+            print(f"[JWT] Authentication failed (internal error): {e!r}")
+            if wants_json:
+                return JsonResponse({"error": "Error in JWT authentication."}, status=500)
+            else:
+                return redirect("/error/500")
+
+    return _wrapped_view
+
+
+# Requesting user without throwing errors like jwt_required. Used for simpler functions like saving the game to history
+# or giving a rating. With its similarity to jwt_required, the explanation is not needed.
+def get_jwt_user(request):
+    jwt_auth = JWTAuthentication()
+
+    if "HTTP_AUTHORIZATION" not in request.META:
+        token = request.COOKIES.get("access_token")
+        if token:
+            request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
+
+    try:
+        user_auth_tuple = jwt_auth.authenticate(request)
+        if user_auth_tuple is not None:
+            jwt_user, _ = user_auth_tuple
+            mapped_user = (
+                UserModel.objects.filter(username=jwt_user.username).first()
+                or UserModel.objects.filter(email=jwt_user.email).first()
+            )
+            if mapped_user:
+                return mapped_user
+    except Exception as e:
+        print(f"[get_jwt_user] Auth error: {e}")
+    return None
+
+
+# This class allows JWT authentication using the access_token cookie when the Authorization header is not provided.
+class CookieJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        # First tries the standard authorization header method
+        header = self.get_header(request)
+        if header:
+            return super().authenticate(request)
+
+        # If there is no header then it tries to get token from cookies
+        raw_token = request.COOKIES.get("access_token")
+        if raw_token is None:
+            return None
+
+        # Token validation
+        validated_token = self.get_validated_token(raw_token)
+        try:
+            user = self.get_user(validated_token)
+        except Exception:
+            raise AuthenticationFailed("Invalid token in cookie", code="authentication_failed")
+
+        return (user, validated_token)
+
+
 
 # Model for summarization is used a couple of times in this file therefore it's declared at the beginning. It's also in
 # case of future need to change the summarization model
@@ -225,6 +428,135 @@ def summarize_plot_sections(plot_tree: dict, total_threshold: int = 200) -> str 
     return "\n".join(out_lines).strip()
 
 
+
+# Summarizes when full plot has markdown
+def summarize_plot_from_markdown(full_plot_md: str, total_threshold: int = 200) -> str | None:
+    def word_count(t: str) -> int:
+        return len((t or "").split())
+
+    if not full_plot_md or "No Plot Found" in full_plot_md:
+        return None
+
+    start_time = time.time()
+    summarizer = get_summarizer()
+    lines = full_plot_md.splitlines()
+
+    sections = {}
+    current_h3 = None
+    current_h4 = None
+    buffer = []
+
+    for line in lines:
+        heading_match = re.match(r'^(#+)\s+(.*)', line.strip())
+        if heading_match:
+            hashes, title = heading_match.groups()
+            level = len(hashes)
+
+            if buffer:
+                if current_h3:
+                    if current_h4:
+                        sections[current_h3][current_h4] = "\n".join(buffer).strip()
+                    else:
+                        if isinstance(sections[current_h3], str):
+                            sections[current_h3] += "\n" + "\n".join(buffer).strip()
+                        else:
+                            sections[current_h3]["__main__"] = "\n".join(buffer).strip()
+                buffer = []
+
+            if level == 3:
+                current_h3 = title.strip()
+                current_h4 = None
+                sections[current_h3] = {}
+            elif level == 4 and current_h3:
+                current_h4 = title.strip()
+                sections[current_h3][current_h4] = ""
+            else:
+                current_h3 = title.strip()
+                current_h4 = None
+                sections[current_h3] = {}
+
+        else:
+            buffer.append(line.strip())
+
+    if buffer and current_h3:
+        if current_h4:
+            sections[current_h3][current_h4] = "\n".join(buffer).strip()
+        else:
+            sections[current_h3]["__main__"] = "\n".join(buffer).strip()
+
+    if not sections:
+        return None
+    total_words = 0
+    for v in sections.values():
+        if isinstance(v, dict):
+            total_words += sum(word_count(x) for x in v.values())
+        else:
+            total_words += word_count(v)
+
+    if total_words <= total_threshold:
+        return None
+
+    out_lines = []
+    print(f"[SUMMARY] Summarizing the ({len(sections)} section, {total_words} total words).")
+
+    for h3, content in sections.items():
+        out_lines.append(f"### {h3}")
+
+        if isinstance(content, dict):
+            for h4, text in content.items():
+                if not text.strip():
+                    continue
+                out_lines.append(f"#### {h4}" if h4 != "__main__" else "")
+                wc = word_count(text)
+                print(f"[SUMMARY] Section: {h3} -> {h4} ({wc} words)" if h4 != "__main__" else f"[SUMMARY] Section: {h3} ({wc} words)")
+
+                if wc < 80:
+                    summary = text.strip()
+                elif wc < 200:
+                    res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+                    summary = res[0]["summary_text"]
+                elif wc < 500:
+                    res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+                    summary = res[0]["summary_text"]
+                else:
+                    chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
+                    partials = []
+                    for i, ch in enumerate(chunks, 1):
+                        print(f"[SUMMARY]  -> part {i}/{len(chunks)} ({len(ch)} characters)")
+                        res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                        partials.append(res[0]["summary_text"])
+                    summary = " ".join(partials)
+
+                out_lines.append(summary.strip())
+                out_lines.append("")
+
+        else:
+            text = content.strip()
+            wc = word_count(text)
+            if wc < 80:
+                summary = text
+            elif wc < 200:
+                res = summarizer(text, max_length=120, min_length=50, do_sample=False)
+                summary = res[0]["summary_text"]
+            elif wc < 500:
+                res = summarizer(text, max_length=160, min_length=80, do_sample=False)
+                summary = res[0]["summary_text"]
+            else:
+                chunks = [text[i:i + 3500] for i in range(0, len(text), 3500)]
+                partials = []
+                for i, ch in enumerate(chunks, 1):
+                    print(f"[SUMMARY]  -> part {i}/{len(chunks)} ({len(ch)} characters)")
+                    res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
+                    partials.append(res[0]["summary_text"])
+                summary = " ".join(partials)
+            out_lines.append(summary.strip())
+            out_lines.append("")
+
+    elapsed = time.time() - start_time
+    print(f"[SUMMARY] Summary generation finished in {elapsed:.1f}s.")
+    return "\n".join(out_lines).strip()
+
+
 # When the user searches a game on the website, the scraper is activated, and it scrapes whatever MobyGames shows as a
 # result of searching the same game. This is the fist instance of using PlayWright in this code. Async function needed
 # for Playwright's asynchronous nature of "await" which, as the name implies, waits for the attributes to be scrapped
@@ -234,13 +566,22 @@ async def search_mobygames(game_name: str):
     encoded_name = urllib.parse.quote(game_name)
     search_url = f"https://www.mobygames.com/search/?q={encoded_name}"
 
+    try:
+        media_root = "media/results"
+        os.makedirs(media_root, exist_ok=True)
+        for old in os.listdir(media_root):
+            if old.startswith("result_") and old.endswith(".png"):
+                os.remove(os.path.join(media_root, old))
+        print("[CLEANUP] The directory 'media/results' has been cleaned before the new search.")
+    except Exception as e:
+        print(f"[CLEANUP] Error during cleanup: {e}")
+
     async with async_playwright() as p:
         # Playwright opens chromium browser to scrap info but # doesn't show browser window (because of headless=True)
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        # User agent needed, so it doesn't consider Playwright as a bot. My understanding of this part might be
-        # insufficient however, because this part of code is a solution I found on the internet
+        # User agent needed, so it doesn't consider Playwright as a bot.
         await page.set_extra_http_headers({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -250,6 +591,7 @@ async def search_mobygames(game_name: str):
         # Go to the website
         await page.goto(search_url, timeout=60000)
         await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(1500)
 
         # Case where there are no results
         try:
@@ -262,12 +604,8 @@ async def search_mobygames(game_name: str):
             print(f"[!] Error while checking for 'No results found': {e}")
 
         # When searching a game on MobyGames there is a field of text at the top of the page which informs you that this
-        # page either excludes or includes games marked as Adult. In my experiments sometimes it was includes and
-        # sometimes excludes therefore I made an if case for both of them. Either way if the website includes adult
-        # games then it's not supposed to anything, however if it excludes adult games then it's supposed to click the
-        # button to show those adult games
+        # page either excludes or includes games marked as Adult.
         adult_toggle = page.locator("p:has-text('This search excludes games marked as Adult')")
-        # Basically if this adult_toggle doesn't perfectly match the text above then do this
         if await adult_toggle.count() > 0:
             click_here = adult_toggle.locator("a:has-text('Click here')")
             if await click_here.count() > 0:
@@ -278,10 +616,10 @@ async def search_mobygames(game_name: str):
         await page.wait_for_selector("table.table.mb tbody tr", timeout=20000)
         rows = await page.query_selector_all("table.table.mb tbody tr")
 
-        # Playwright scrapes first 10 results the search result shows, however on MobyGames the search result doesn't
-        # contain only games but also groups (series of games) and people, but the only thing needed are the games so in
-        # the end the only ones saved are the ones marked either game or adult game.
+        media_root = "media/results"
         results = []
+        index = 0
+
         for row in rows[:10]:
             td = await row.query_selector("td:nth-child(2)")
             if not td:
@@ -292,27 +630,47 @@ async def search_mobygames(game_name: str):
 
             clean_text = re.sub(r'^(ADULT\s+)?GAME:\s*', '', text, flags=re.IGNORECASE).strip()
             lines = [ln.strip() for ln in clean_text.splitlines() if ln.strip()]
-
-            # In some cases like Cyberpunk 2077, the games are hidden behind so called age-gate, which prevents the user
-            # from viewing mature content. To get over that restriction one needs to click "View Content" button and
-            # choose his age from the slider. However, this is not the case for web scraping as it moves in UI as well
-            # as in html and is able to scrap the needed material from tags like class="text-muted" or
-            # class="blurred-content" and thanks to that it avoids the age restriction entirely. But at the same time
-            # what stays is the annoying "mature content" and "view content" tags which are not taken into results list
             filtered = [ln for ln in lines if "mature content" not in ln.lower() and ln != "View Content"]
             clean_text = "\n".join(filtered)
 
-            # Playwright scrapes the games description which is under the game's name on MobyGames but also the links to
-            # those results
             link_el = await td.query_selector("b a") or await td.query_selector("a")
             href = await link_el.get_attribute("href") if link_el else None
             full_url = f"https://www.mobygames.com{href}" if href and not href.startswith("http") else href
 
+            try:
+                img_td = await row.query_selector("td:nth-child(1) img")
+                index += 1
+                if img_td:
+                    src = await img_td.get_attribute("src")
+                    if src and src.startswith("http"):
+                        resp = requests.get(src, timeout=10)
+                        if resp.status_code == 200:
+                            out_path = os.path.join(media_root, f"result_{index}.png")
+                            with open(out_path, "wb") as f:
+                                f.write(resp.content)
+                        else:
+                            default_icon = os.path.join(media_root, "default_icon.png")
+                            out_path = os.path.join(media_root, f"result_{index}.png")
+                            if os.path.exists(default_icon):
+                                copyfile(default_icon, out_path)
+                    else:
+                        default_icon = os.path.join(media_root, "default_icon.png")
+                        out_path = os.path.join(media_root, f"result_{index}.png")
+                        if os.path.exists(default_icon):
+                            copyfile(default_icon, out_path)
+                else:
+                    default_icon = os.path.join(media_root, "default_icon.png")
+                    out_path = os.path.join(media_root, f"result_{index}.png")
+                    if os.path.exists(default_icon):
+                        copyfile(default_icon, out_path)
+            except Exception as e:
+                print(f"Error during download of the result_{index}: {e}")
+
             results.append({"url": full_url, "description": clean_text})
+
             if len(results) >= 5:
                 break
 
-        # A case when the result search shows no results or less than 5 "GAME: " results
         if len(results) == 0:
             print("[INFO] No valid game results found in search results.")
             await browser.close()
@@ -439,7 +797,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 await browser.close()
                 return await scrape_game_info(base_game_url, media_root, save_image, is_base=True)
             else:
-                print(f"[INFO] 'Base Game' present, but '{title}' is not an edition → staying on this page.")
+                print(f"[INFO] 'Base Game' present, but '{title}' is not an edition -> staying on this page.")
 
         # The regular case of scraping the game. The variables bellow are the attributes Playwright tries to scrape from
         # MobyGames page for the chosen game
@@ -524,7 +882,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                 if structured_plot:
                     # Made solely for markdown library which differentiates different headings
                     full_plot_md = build_markdown_with_headings(structured_plot)
-                    summary_md = summarize_plot_sections(structured_plot)
+                    #summary_md = summarize_plot_sections(structured_plot)
             except Exception as e:
                 print(f"[!] Wikipedia scrape failed: {e}")
 
@@ -540,6 +898,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         await page.click(sel)
                         await page.wait_for_timeout(500)
                         break
+
                 html_desc = None
                 for selector in ["#description-text", "#description-text .text-content",
                                  "div#description", "div.description-content"]:
@@ -547,6 +906,7 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         html_desc = await page.inner_html(selector)
                         if html_desc:
                             break
+
                 if html_desc:
                     soup_desc = BeautifulSoup(html_desc, "html.parser")
                     paragraphs = [p.get_text(" ", strip=True) for p in soup_desc.find_all("p")]
@@ -555,32 +915,59 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
                         paragraphs = [raw_text] if raw_text else []
                     moby_description = "\n".join(paragraphs).strip()
                     if moby_description:
-                        full_plot_md = moby_description
+                        full_plot_md = f"## Description\n\n{moby_description}"
+
                         words = len(moby_description.split())
                         if words > 200:
                             summarizer = get_summarizer()
                             if words < 500:
                                 res = summarizer(moby_description, max_length=160, min_length=80, do_sample=False)
-                                summary_md = res[0]["summary_text"]
+                                summary_text = res[0]["summary_text"]
                             else:
                                 chunks = [moby_description[i:i + 3500] for i in range(0, len(moby_description), 3500)]
                                 partials = []
                                 for ch in chunks:
                                     res = summarizer(ch, max_length=180, min_length=80, do_sample=False)
                                     partials.append(res[0]["summary_text"])
-                                summary_md = " ".join(partials)
+                                summary_text = " ".join(partials)
                         else:
-                            summary_md = moby_description
+                            summary_text = moby_description
+
+                        summary_md = (
+                            f"## Description\n\n{summary_text}\n\n"
+                            "*This summary is based on the game's description from MobyGames. "
+                            "For a detailed storyline, try asking the chatbot below.*"
+                        )
+
+                        full_plot_md += (
+                            "\n\n*Note: This section is based on the game's description from MobyGames "
+                            "and may not represent the actual storyline. You can use the chatbot to learn more about the plot.*"
+                        )
+
+
             except Exception as e:
                 print(f"[!] Fallback Moby description error: {e}")
 
         # When the game has absolutely no plot available anywhere then the app returns this as a final measure instead
         # of just having None in the database
         if not full_plot_md:
-            full_plot_md = "No plot available"
-        if not summary_md:
-            summary_md = "No summary available"
+            full_plot_md = (
+                "## No Plot Found\n\n"
+                "No plot was found for this game. "
+                "It might be a gameplay-focused title without a defined storyline.\n\n"
+                "*Tip: You can ask the chatbot to learn more about the game's background or lore.*"
+            )
 
+        if not summary_md:
+            summary_md = (
+                "## No Summary Available\n\n"
+                "No summary was found for this game. "
+                "You can use the chatbot to learn more about its background, lore, or general storyline."
+            )
+
+        await browser.close()
+
+        # What this entire file returns at the end of the day
         await browser.close()
 
         # What this entire file returns at the end of the day
@@ -591,8 +978,74 @@ async def scrape_game_info(url: str, media_root: str, save_image: bool = True, i
             "genre": ", ".join(genre) if genre else None,
             "score": moby_score,
             "cover_image": local_image_relpath,
-            #"cover_image_relpath": local_image_relpath,
             "full_plot": full_plot_md,
             "summary": summary_md,
-            "is_compilation": False
+            "is_compilation": False,
+            "mobygames_url": url,
+            "wikipedia_url": wiki_url
         }
+
+
+
+
+# Scrape game info but for admin that automatically makes the summary right after the scraping process
+async def scrape_game_info_admin(url: str, media_root: str, save_image: bool = True):
+
+    print(f"[ADMIN RELOAD] Starting the scraping process for the url: {url}")
+    start_time = time.time()
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.set_extra_http_headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/140.0.0.0 Safari/537.36"
+        })
+
+        await page.goto(url, timeout=30000)
+        await page.wait_for_load_state("networkidle")
+
+        title = None
+        if await page.query_selector("h1.mb-0"):
+            title = (await page.inner_text("h1.mb-0")).strip()
+
+        full_plot_md = None
+        summary_md = None
+        wiki_url = None
+
+        if title:
+            wiki_url = f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
+            print(f"[ADMIN RELOAD] Wikipedia url: {wiki_url}")
+
+            try:
+                await page.goto(wiki_url, timeout=30000)
+                html = await page.content()
+                soup = BeautifulSoup(html, "html.parser")
+                for e in soup.select("span.mw-editsection, div.hatnote, sup.reference"):
+                    e.decompose()
+
+                structured_plot = extract_plot_structure(soup)
+                if structured_plot:
+                    full_plot_md = build_markdown_with_headings(structured_plot)
+                    summary_md = summarize_plot_sections(structured_plot)
+                    print("[ADMIN RELOAD] The summary has been successfully generated.")
+            except Exception as e:
+                print(f"[ADMIN RELOAD] Wikipedia scrape failed: {e}")
+
+        if not full_plot_md:
+            full_plot_md = "## No Plot Found\n\nNo plot could be scraped for this game."
+        if not summary_md:
+            summary_md = "## No Summary Available\n\nNo summary could be generated."
+
+        await browser.close()
+        elapsed = time.time() - start_time
+        print(f"[ADMIN RELOAD] Finished in {elapsed:.1f}s")
+
+        return {
+            "title": title or "Unknown",
+            "full_plot": full_plot_md,
+            "summary": summary_md,
+            "wikipedia_url": wiki_url,
+        }
+
