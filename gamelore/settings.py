@@ -60,7 +60,7 @@ WSGI_APPLICATION = 'gamelore.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'mysql.connector.django',
         'NAME': 'gamelore',
         'USER': 'root',
         'PASSWORD': 'root',
