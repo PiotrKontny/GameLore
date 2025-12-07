@@ -9,15 +9,16 @@ frontend/node_modules/
 media/*
 
 !media/game_icons/
-!media/icons/
 !media/profile_pictures/
 !media/results/
+!media/icons/
 
 media/game_icons/*
-media/icons/*
 media/profile_pictures/*
 media/results/*
 
+!media/icons/*
+!media/profile_pictures/default_user.png
 !media/results/default_icon.png
 
 *.py[cod]
