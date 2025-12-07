@@ -18,6 +18,7 @@ media/profile_pictures/*
 media/results/*
 
 !media/icons/*
+!media/profile_pictures/default_user.png
 !media/results/default_icon.png
 
 *.py[cod]
